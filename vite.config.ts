@@ -1,6 +1,7 @@
 import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
-import { defineConfig } from 'vite';
+import { resolve } from 'node:path';
+import { defineConfig, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { pwaOptions } from './src/sw-config';
 
@@ -19,6 +20,24 @@ function commit(): string {
   }
 }
 
+/**
+ * En développement, la version est lue au démarrage du serveur : on le redémarre quand `package.json`
+ * (numéro) ou l'historique git (commit) change, pour que Réglages → Version reste juste.
+ */
+function restartOnVersionChange(): Plugin {
+  return {
+    name: 'cavavin-restart-on-version-change',
+    apply: 'serve',
+    configureServer(server) {
+      const watched = [resolve('package.json'), resolve('.git/logs/HEAD')];
+      server.watcher.add(watched);
+      server.watcher.on('change', (file) => {
+        if (watched.includes(file)) void server.restart();
+      });
+    },
+  };
+}
+
 export default defineConfig({
   base,
   server: { port: 5173, strictPort: true },
@@ -29,5 +48,5 @@ export default defineConfig({
     __APP_COMMIT__: JSON.stringify(commit()),
     __APP_BUILD_TIME__: JSON.stringify(new Date().toISOString()),
   },
-  plugins: [VitePWA(pwaOptions)],
+  plugins: [VitePWA(pwaOptions), restartOnVersionChange()],
 });
