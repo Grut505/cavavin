@@ -1,0 +1,138 @@
+.cave-map {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.rack h2 {
+  font-size: 1.05rem;
+  margin-bottom: var(--space-2);
+}
+
+.rack svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.rack__frame {
+  fill: var(--surface);
+  stroke: var(--border);
+  stroke-width: 2;
+}
+
+.shelf {
+  cursor: pointer;
+  outline: none;
+}
+.shelf__hit {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 2;
+  transition: fill 120ms ease;
+}
+.shelf:hover .shelf__hit {
+  fill: var(--accent-soft);
+}
+.shelf:focus-visible .shelf__hit,
+.shelf--selected .shelf__hit {
+  fill: var(--accent-soft);
+  stroke: var(--accent);
+}
+.shelf__board {
+  fill: var(--accent);
+  opacity: 0.55;
+}
+.shelf__bottle {
+  fill: var(--accent);
+}
+.shelf__name {
+  fill: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+}
+.shelf__count {
+  fill: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.shelf__empty {
+  fill: var(--text-muted);
+  font-size: 11px;
+  font-style: italic;
+}
+
+.rack__none {
+  font-size: 0.9rem;
+}
+
+.places {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.place {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--tap);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  font-weight: 600;
+}
+.place:hover,
+.place--selected {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* Choix de la position sur l'étagère */
+.pos-wrap svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.pos__frame {
+  fill: var(--surface);
+  stroke: var(--border);
+  stroke-width: 2;
+}
+.pos__zone {
+  cursor: pointer;
+  outline: none;
+}
+.pos__hit {
+  fill: var(--surface-2);
+  stroke: var(--border);
+  stroke-width: 1.5;
+  transition: fill 120ms ease;
+}
+.pos__zone:hover .pos__hit {
+  fill: var(--accent-soft);
+}
+.pos__zone:focus-visible .pos__hit {
+  stroke: var(--accent);
+  stroke-width: 3;
+}
+.pos__zone--selected .pos__hit {
+  fill: var(--accent-soft);
+  stroke: var(--accent);
+  stroke-width: 3;
+}
+.pos__label {
+  fill: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+}
+.pos__zone--selected .pos__label {
+  fill: var(--accent);
+}
+.pos__count {
+  fill: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
