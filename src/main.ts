@@ -6,6 +6,8 @@ import { decorateWithSyncStatus } from './ui/components/sync-status';
 import { Router, type Route } from './ui/router';
 import { fr } from './ui/strings.fr';
 import { accessDeniedView, purgeLocalData } from './ui/views/access-denied';
+import { homeView } from './ui/views/home';
+import { personView } from './ui/views/person';
 import { addHubView } from './ui/views/add-hub';
 import { addWineView, editWineView } from './ui/views/add-wine';
 import { caveConfigView } from './ui/views/cave-config';
@@ -29,6 +31,7 @@ async function boot(): Promise<void> {
   void tryRenewSilently();
 
   const routes: Route[] = [
+    { path: '/accueil', nav: { label: fr.nav.home, icon: 'home' }, render: homeView },
     { path: '/cave', nav: { label: fr.nav.cave, icon: 'cave' }, render: caveView },
     { path: '/cave/config', parent: '/cave', render: caveConfigView },
     { path: '/etagere/:id', parent: '/cave', render: shelfDetailView },
@@ -41,6 +44,7 @@ async function boot(): Promise<void> {
     { path: '/propositions', parent: '/ajouter', render: proposalsView },
     { path: '/reglages', nav: { label: fr.nav.settings, icon: 'settings' }, render: settingsView },
     { path: '/personnes', parent: '/reglages', render: personsView },
+    { path: '/personne/:id', parent: '/reglages', render: personView },
     { path: '/avis', parent: '/reglages', render: syncNoticesView },
     { path: '/connexion', render: signInView },
     { path: '/refuse', render: accessDeniedView },
@@ -69,7 +73,7 @@ async function boot(): Promise<void> {
     if (header) header.after(reconnectBanner(ctx.scheduler, { signIn: () => requestToken(true) }));
   };
 
-  new Router(ctx, routes, ready ? '/cave' : '/connexion', ['/connexion', '/refuse'], decorate).mount(root);
+  new Router(ctx, routes, ready ? '/accueil' : '/connexion', ['/connexion', '/refuse'], decorate).mount(root);
 }
 
 void boot();

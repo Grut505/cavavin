@@ -43,6 +43,8 @@ export interface Filters {
   qtyMin: number | null;
   qtyMax: number | null;
   locationIds: string[];
+  /** Identifiant de la personne qui a offert la bouteille (fiches « cadeau »). */
+  giftFrom: string | null;
   /** Inclut les fiches sans bouteille en stock. */
   includeHistory: boolean;
 }
@@ -57,6 +59,7 @@ export function emptyFilters(): Filters {
     qtyMin: null,
     qtyMax: null,
     locationIds: [],
+    giftFrom: null,
     includeHistory: false,
   };
 }
@@ -70,6 +73,7 @@ export function activeFilterCount(f: Filters): number {
     (f.vintageMin !== null || f.vintageMax !== null ? 1 : 0) +
     (f.qtyMin !== null || f.qtyMax !== null ? 1 : 0) +
     (f.locationIds.length > 0 ? 1 : 0) +
+    (f.giftFrom !== null ? 1 : 0) +
     (f.includeHistory ? 1 : 0)
   );
 }
@@ -143,6 +147,7 @@ export function matches(row: WineRow, f: Filters): boolean {
   if (f.qtyMin !== null && row.quantity < f.qtyMin) return false;
   if (f.qtyMax !== null && row.quantity > f.qtyMax) return false;
   if (f.locationIds.length > 0 && !row.locations.some((l) => f.locationIds.includes(l.id))) return false;
+  if (f.giftFrom !== null && !(wine.gift && wine.gift_from === f.giftFrom)) return false;
   return true;
 }
 

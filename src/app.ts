@@ -37,8 +37,8 @@ export async function createContext(): Promise<AppContext> {
  * appareil, on ouvre directement la cave à partir des données locales (aucun réseau ni connexion Google
  * n'est nécessaire pour consulter) ; sinon, on passe par la connexion.
  */
-export function initialHash(ready: boolean): '#/cave' | '#/connexion' {
-  return ready ? '#/cave' : '#/connexion';
+export function initialHash(ready: boolean): '#/accueil' | '#/connexion' {
+  return ready ? '#/accueil' : '#/connexion';
 }
 
 /** Vrai quand la feuille a déjà été initialisée et synchronisée sur cet appareil. */

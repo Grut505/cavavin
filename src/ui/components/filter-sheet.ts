@@ -22,6 +22,8 @@ export interface FilterSheetInput {
   sort: SortSpec;
   /** Bouteilles par emplacement, pour guider le choix. */
   counts: Map<string, number>;
+  /** Personnes (donateurs de cadeaux) proposées dans « Offert par ». */
+  persons?: { id: string; name: string }[];
 }
 
 const toggle = <T>(list: T[], v: T): T[] => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
@@ -80,6 +82,27 @@ export function openFilterSheet(input: FilterSheetInput): Promise<Filters | null
         return h('label', { class: 'field grow' }, h('span', { class: 'field__label' }, label), input);
       };
 
+      const giftGroup = (): HTMLElement | null => {
+        const named = new Map((input.persons ?? []).map((p) => [p.id, p.name] as const));
+        const ids = new Set<string>(draft.giftFrom ? [draft.giftFrom] : []);
+        for (const r of input.rows) if (r.quantity > 0 && r.wine.gift && r.wine.gift_from) ids.add(r.wine.gift_from);
+        if (ids.size === 0) return null;
+        const options = [...ids]
+          .map((id) => ({ id, name: named.get(id) ?? 'Personne retirée de la liste' }))
+          .sort((a, b) => a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' }));
+        return group(
+          'Offert par',
+          h(
+            'div',
+            { class: 'chips' },
+            options.map((o) => chip(o.name, draft.giftFrom === o.id, () => {
+                draft.giftFrom = draft.giftFrom === o.id ? null : o.id;
+                render();
+              })),
+          ),
+        );
+      };
+
       const render = (): void => {
         const colors = [...new Set<WineColor>([...facets.colors, ...draft.colors])];
         const countries = [...new Set([...facets.countries, ...draft.countries])];
@@ -128,6 +151,7 @@ export function openFilterSheet(input: FilterSheetInput): Promise<Filters | null
           ...furnitureGroups.map(({ f, shelves }) => group(f.name, h('div', { class: 'chips' }, shelves.map(locChip)))),
           places.length > 0 ? group('Autres lieux', h('div', { class: 'chips' }, places.map(locChip))) : null,
           toSort.length > 0 ? group('À ranger', h('div', { class: 'chips' }, toSort.map(locChip))) : null,
+          giftGroup(),
           group(
             'Historique',
             chip('Inclure les fiches sans bouteille en stock', draft.includeHistory, () => (draft.includeHistory = !draft.includeHistory)),

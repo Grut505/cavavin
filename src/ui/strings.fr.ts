@@ -1,7 +1,7 @@
 // Textes de l'interface (français), centralisés.
 export const fr = {
   appName: 'Cavavin',
-  nav: { cave: 'Cave', list: 'Liste', add: 'Ajouter', settings: 'Réglages' },
+  nav: { home: 'Accueil', cave: 'Cave', list: 'Liste', add: 'Ajouter', settings: 'Réglages' },
   signIn: {
     title: 'Ma cave',
     tagline: 'Votre stock de vin, partout, même sans réseau.',

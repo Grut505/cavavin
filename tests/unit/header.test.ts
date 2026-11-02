@@ -13,6 +13,8 @@ import { personsView } from '../../src/ui/views/personnes';
 import { proposalsView } from '../../src/ui/views/proposals';
 import { settingsView } from '../../src/ui/views/settings';
 import { wineListView } from '../../src/ui/views/wine-list';
+import { homeView } from '../../src/ui/views/home';
+import { personView } from '../../src/ui/views/person';
 import { shelfDetailView } from '../../src/ui/views/shelf-detail';
 import { contextOf, makeDevice, makeSheet, wineFields } from '../contract/helpers';
 
@@ -43,6 +45,8 @@ describe('en-tête commun', () => {
     const wine = await d.repo.addWine(wineFields(), [{ location_id: shelf.id, quantity: 1, position_hint: null }]);
     const ctx = contextOf(d);
     const views: [string, HTMLElement][] = [
+      ['accueil', await homeView(ctx)],
+      ['personne absente', await personView(ctx, { id: 'nope' })],
       ['cave', await caveView(ctx)],
       ['cave vide', await caveView(contextOf(await makeDevice(await makeSheet(), 'x')))],
       ['config', caveConfigView(ctx)],

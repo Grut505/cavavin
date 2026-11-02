@@ -46,7 +46,7 @@ export function personsView(ctx: AppContext): HTMLElement {
       return h(
         'li',
         { class: 'list__item' },
-        h('span', { class: 'grow' }, p.name),
+        h('a', { class: 'grow list__link', href: `#/personne/${p.id}` }, p.name),
         n > 0 ? h('span', { class: 'badge', 'aria-label': `${n} bouteille${n > 1 ? 's' : ''} offerte${n > 1 ? 's' : ''}` }, String(n)) : null,
         h(
           'button',

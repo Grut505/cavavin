@@ -48,6 +48,7 @@ function normalizeFilters(raw: unknown): Filters | null {
     qtyMin: intOrNull(r.qtyMin),
     qtyMax: intOrNull(r.qtyMax),
     locationIds: strings(r.locationIds),
+    giftFrom: typeof r.giftFrom === 'string' ? r.giftFrom : null,
     includeHistory: r.includeHistory === true,
   };
 }
@@ -63,6 +64,7 @@ export function wineListView(ctx: AppContext): HTMLElement {
   let counts = new Map<string, number>();
   let thumbs = new Map<string, string>();
   let people = new Map<string, string>();
+  let personList: { id: string; name: string }[] = [];
   let query = '';
 
   const root = h('main', { class: 'view' });
@@ -126,7 +128,7 @@ export function wineListView(ctx: AppContext): HTMLElement {
     saveAndDraw();
   });
   filterBtn.addEventListener('click', async () => {
-    const next = await openFilterSheet({ rows, locations, furniture, filters, sort, counts });
+    const next = await openFilterSheet({ rows, locations, furniture, filters, sort, counts, persons: personList });
     if (next) {
       filters = next;
       saveAndDraw();
@@ -226,6 +228,7 @@ export function wineListView(ctx: AppContext): HTMLElement {
     furniture = furn;
     thumbs = th;
     people = new Map(persons.map((p) => [p.id, p.name]));
+    personList = persons.map((p) => ({ id: p.id, name: p.name }));
     counts = bottleCounts(stocks);
     rows = buildRows({ wines, stocks, locations, furniture });
     if (!root.querySelector('.toolbar')) {

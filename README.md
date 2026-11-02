@@ -5,7 +5,7 @@ vivent dans **votre Google Sheet**, lue et écrite depuis le navigateur ; une co
 rend l'application utilisable hors-ligne, et les modifications sont synchronisées au retour du réseau.
 Aucun serveur, aucune clé d'API.
 
-Spécification, plan et contrats : [`specs/001-bottle-inventory/`](specs/001-bottle-inventory/).
+Spécification, plan et contrats : [`specs/001-bottle-inventory/`](specs/001-bottle-inventory/) (socle) et [`specs/002-accueil-stats-a-boire/`](specs/002-accueil-stats-a-boire/) (Accueil : à boire, statistiques, cadeaux par personne).
 
 ## Installation
 
