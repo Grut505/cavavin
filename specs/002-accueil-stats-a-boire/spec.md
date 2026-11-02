@@ -6,7 +6,7 @@
 
 **Status**: Draft
 
-**Input**: User description: "Accueil : stats globales (répartition couleur/région/millésime/appellation, valeur et prix, consommation dans le temps depuis l'historique des sorties, maturité), module « quoi boire et quand » (règles sur la fenêtre de garde : à boire maintenant / bientôt / en retard / trop tôt, plus suggestion par occasion via un prompt à coller dans le projet Claude, sans clé d'API), fiche personne listant les bouteilles offertes (en stock et déjà sorties) avec filtre « Offert par » dans la Liste. Nouvel onglet « Accueil » (À boire en haut, puis stats) ; barre à 5 onglets. Fonctionne hors-ligne, données locales."
+**Input**: User description: "Accueil : stats globales (répartition couleur/région/millésime/appellation, valeur et prix, consommation dans le temps depuis l'historique des sorties, maturité), module « quoi boire et quand » (règles sur la fenêtre de garde : à boire maintenant / bientôt / en retard / trop tôt), fiche personne listant les bouteilles offertes (en stock et déjà sorties) avec filtre « Offert par » dans la Liste. Nouvel onglet « Accueil » (À boire en haut, puis stats) ; barre à 5 onglets. Fonctionne hors-ligne, données locales."
 
 > Suite de [001-bottle-inventory](../001-bottle-inventory/spec.md), qui annonçait « top à boire » et « statistiques » comme fonctions séparées. Cette fonctionnalité **ne crée aucune nouvelle donnée** : tout est calculé à partir des fiches, stocks, sorties et personnes déjà présents dans la feuille.
 
@@ -15,7 +15,7 @@
 ### Session 2026-11-02
 
 - Q: Où retrouver les bouteilles offertes par personne ? → A: Une fiche par personne (depuis Réglages > Personnes) listant ses bouteilles en stock et déjà sorties, plus un filtre « Offert par » dans la Liste.
-- Q: Comment fonctionne « quoi boire et quand » ? → A: Des règles sur la fenêtre de garde calculées dans l'application, plus une suggestion par occasion : l'application prépare un prompt à coller dans le projet Claude de l'utilisateur (aucune clé d'API, aucun appel d'IA par l'application).
+- Q: Comment fonctionne « quoi boire et quand » ? → A: Des règles sur la fenêtre de garde calculées dans l'application. ~~Suggestion par occasion via un prompt à coller dans Claude~~ **remplacée (2026-11-02)** : à la lecture d'étiquette, le projet Claude propose une **liste de mets conseillés** stockée dans la fiche ; « Quoi boire ce soir » cherche le plat saisi dans ces mets, localement, avec tolérance aux fautes de frappe (aucune clé d'API, aucun appel d'IA par l'application).
 - Q: Quelles statistiques ? → A: Répartition (couleur, région/pays, millésime, appellation), valeur et prix, consommation dans le temps, maturité.
 - Q: Où dans la navigation ? → A: Un nouvel onglet « Accueil » (« À boire » en haut, puis statistiques) ; la barre passe à 5 onglets.
 
@@ -74,20 +74,24 @@ Sous « À boire », l'Accueil présente des statistiques : répartition du stoc
 
 ---
 
-### User Story 4 - Suggestion de bouteilles selon l'occasion (Priority: P3)
+### User Story 4 - Quoi boire ce soir, d'après les mets (Priority: P3)
 
-L'utilisateur décrit une occasion (plat, convives, budget, envie) ; l'application prépare un prompt contenant la liste de ses bouteilles candidates avec leur maturité, qu'il copie et colle dans son projet Claude pour obtenir une sélection argumentée parmi sa cave.
+Lors du référencement d'une bouteille, le projet Claude propose une liste de **mets conseillés** (par exemple « magret de canard », « fromages à pâte dure »), qui est enregistrée dans la fiche et modifiable. Sur l'Accueil, l'utilisateur saisit un plat ou un ingrédient et l'application sort les bouteilles en stock dont les mets correspondent, les plus à point d'abord. La recherche pardonne les fautes de frappe et les variations d'écriture.
 
-**Why this priority**: valeur ajoutée par rapport aux règles seules, mais dépend d'une étape manuelle hors application ; sans clé d'API, c'est le seul mode possible.
+**Why this priority**: répond à la question « qu'est-ce que j'ouvre avec ce plat ? » sans aucun appel externe au moment de la recherche : l'intelligence est apportée une fois pour toutes à l'ajout de la bouteille.
 
-**Independent Test**: après saisie d'une occasion, le prompt copié contient l'occasion, les consignes et la liste des candidates ; il se colle tel quel dans une conversation Claude.
+**Independent Test**: avec des fiches portant des mets, la saisie d'un plat (même mal orthographié) retourne les bonnes bouteilles, triées par maturité, avec le met qui a déclenché la correspondance.
 
 **Acceptance Scenarios**:
 
-1. **Given** une cave non vide, **When** l'utilisateur saisit « magret de canard, 4 personnes » et touche « Préparer le prompt », **Then** le prompt est copié dans le presse-papiers avec confirmation, et contient l'occasion et les bouteilles en stock (domaine, cuvée, millésime, appellation, couleur, quantité, maturité, emplacement).
-2. **Given** une cave de plusieurs centaines de fiches, **When** le prompt est préparé, **Then** il reste d'une taille collable : les bouteilles les plus urgentes et pertinentes sont gardées, et l'utilisateur est prévenu si la liste a été tronquée.
-3. **Given** que le presse-papiers est refusé, **When** l'utilisateur touche « Préparer le prompt », **Then** le prompt s'affiche dans un champ sélectionnable pour copie manuelle.
-4. **Given** l'absence de réseau, **When** l'utilisateur prépare le prompt, **Then** la préparation fonctionne ; seul le collage dans Claude nécessite le réseau.
+1. **Given** une étiquette lue par le projet Claude, **When** la proposition est importée, **Then** la fiche pré-remplit les mets conseillés (4 à 8 en général), que l'utilisateur peut corriger avant d'enregistrer.
+2. **Given** des fiches avec mets, **When** l'utilisateur saisit « magrett de canars pour 4 personnes », **Then** les bouteilles dont les mets contiennent « magret de canard » sont listées malgré les fautes, sans que le nombre de convives ni les mots courants gênent.
+3. **Given** des résultats, **When** ils s'affichent, **Then** les bouteilles à boire maintenant (« à finir » d'abord) passent avant les trop jeunes, chaque résultat indique le met correspondant, sa maturité et sa fenêtre de garde, et un tap ouvre la fiche.
+4. **Given** un plat composé de plusieurs mots dont une partie seulement correspond (« canard laqué »), **When** au moins la moitié des mots significatifs est retrouvée, **Then** la bouteille est proposée, moins bien classée qu'une correspondance complète.
+5. **Given** aucune correspondance, **When** la recherche aboutit à zéro résultat, **Then** l'écran le dit clairement et indique combien de fiches en stock n'ont aucun mets renseigné.
+6. **Given** des fiches existantes sans mets, **When** l'utilisateur ouvre l'écran, **Then** elles restent utilisables partout ailleurs ; elles n'apparaissent simplement pas dans cette recherche tant que leurs mets ne sont pas renseignés (à la main ou par un nouveau passage dans le projet Claude).
+7. **Given** des mets déjà présents dans la cave, **When** l'écran s'affiche, **Then** les plus fréquents sont proposés comme raccourcis de recherche.
+8. **Given** l'absence de réseau, **When** l'utilisateur cherche un plat, **Then** la recherche fonctionne intégralement.
 
 ---
 
@@ -114,10 +118,12 @@ L'utilisateur décrit une occasion (plat, convives, budget, envie) ; l'applicati
 - **FR-006**: Le système MUST afficher la valeur de la cave (somme prix d'achat × quantité), le prix moyen par bouteille, et le nombre de fiches sans prix non comptées ; les montants en euros, format français (cf. 001 FR-002b).
 - **FR-007**: Le système MUST afficher la consommation à partir de l'historique des sorties : bouteilles sorties par mois sur les 12 derniers mois et total par motif (bue, offerte, cassée, autre).
 - **FR-008**: Le système MUST afficher la répartition de la cave par catégorie de maturité (FR-002).
-- **FR-009**: Le système MUST proposer, sur l'Accueil, une zone « Quoi boire ce soir ? » où l'utilisateur décrit une occasion en texte libre (plat, convives, budget, envie) et obtient un prompt prêt à coller dans son projet Claude.
-- **FR-010**: Le prompt MUST contenir l'occasion, des consignes de réponse (sélection argumentée limitée aux bouteilles fournies, par ordre de préférence, en privilégiant les bouteilles à finir) et la liste des bouteilles en stock avec domaine, cuvée, millésime, appellation, couleur, quantité, catégorie de maturité et emplacement, sans photos.
-- **FR-011**: Le système MUST garder le prompt à une taille collable en retenant en priorité les bouteilles les plus urgentes, et MUST informer l'utilisateur lorsque la liste est tronquée.
-- **FR-012**: Le système MUST copier le prompt dans le presse-papiers avec confirmation, ou à défaut l'afficher dans un champ sélectionnable. L'application n'appelle aucun service d'IA, ne contient aucune clé d'API et n'importe pas la réponse de Claude.
+- **FR-009**: Le système MUST enregistrer dans chaque fiche une liste de **mets conseillés** (texte libre, éléments séparés ; 12 au maximum, doublons ignorés), facultative, modifiable dans le formulaire de la fiche et affichée sur la fiche détaillée.
+- **FR-010**: Le projet Claude MUST proposer, à chaque lecture d'étiquette, 4 à 8 mets courts en français (plats, ingrédients, fromages) en estimation d'après le vin, l'appellation, la couleur et le style, ou rien s'il n'est pas raisonnablement sûr ; la proposition les transmet dans un champ dédié, repris à la validation de la fiche et à la mise à jour d'une fiche existante (champ vide ou différent proposé, jamais écrasé sans accord).
+- **FR-011**: Le système MUST proposer, sur l'Accueil, une zone « Quoi boire ce soir ? » où l'utilisateur saisit un plat ou un ingrédient et obtient les bouteilles **en stock** dont les mets correspondent, recherchées localement.
+- **FR-012**: La recherche MUST être permissive : insensible à la casse, aux accents et aux ligatures (« bœuf » = « boeuf »), tolérante aux fautes de frappe (lettre oubliée, en trop, inversée ou fausse), aux pluriels et aux débuts de mot, et ignorer les mots courants (« un », « de », « pour »…), les nombres et les mentions de convives. Une bouteille est proposée dès qu'au moins la moitié des mots significatifs est retrouvée.
+- **FR-012a**: Les résultats MUST être classés par qualité de correspondance (complète d'abord), puis par maturité (à boire maintenant et « à finir » avant les autres, trop tôt en dernier), et afficher le met correspondant, la maturité et la fenêtre de garde.
+- **FR-012b**: L'application n'appelle aucun service d'IA, ne contient aucune clé d'API ; l'intelligence vient uniquement des mets enregistrés à l'ajout de la bouteille.
 - **FR-013**: Le système MUST proposer une fiche par personne, accessible depuis Réglages > Personnes, listant les bouteilles qu'elle a offertes : « En stock » (titre, quantité, emplacement) et « Déjà sorties » (titre, date et motif de sortie).
 - **FR-014**: Le système MUST ajouter à la Liste un filtre « Offert par » (une personne), combinable avec les filtres existants, apparaissant comme filtre actif effaçable, et restreint aux bouteilles en stock.
 - **FR-015**: Le système MUST calculer tout cela localement, hors-ligne, à partir des données déjà synchronisées, sans nouvelle colonne ni nouvel onglet dans la feuille ; un changement de données se reflète à l'affichage suivant.
@@ -129,7 +135,7 @@ L'utilisateur décrit une occasion (plat, convives, budget, envie) ; l'applicati
 - **Statistique de répartition** : décompte de bouteilles par valeur d'un axe (couleur, région/pays, millésime, appellation) ; calculée.
 - **Consommation** : décompte des sorties par mois et par motif, issu de l'historique des sorties existant.
 - **Cadeau par personne** : lien entre une personne, ses fiches « cadeau », les stocks restants et les sorties de ces fiches. Aucune nouvelle donnée : la fiche porte déjà « offert par ».
-- **Prompt d'occasion** : texte éphémère assemblé à partir de l'occasion saisie et du stock ; jamais conservé dans la feuille.
+- **Mets conseillés** : liste de plats/ingrédients portée par la fiche (colonne `pairings` en schéma v4, dans `Vins` et `Propositions`), alimentée par le projet Claude à la lecture d'étiquette et corrigeable à la main.
 
 ## Success Criteria *(mandatory)*
 
@@ -139,7 +145,7 @@ L'utilisateur décrit une occasion (plat, convives, budget, envie) ; l'applicati
 - **SC-002**: 100 % des fiches en stock apparaissent dans exactement une catégorie de maturité, y compris celles à fenêtre incomplète.
 - **SC-003**: Sur un jeu de données de référence, 100 % des totaux affichés (répartitions, valeur, consommation) correspondent au calcul manuel.
 - **SC-004**: Retrouver toutes les bouteilles offertes par une personne, en stock et déjà sorties, prend moins de 10 secondes.
-- **SC-005**: Préparer un prompt d'occasion prêt à coller prend moins de 20 secondes, saisie de l'occasion comprise.
+- **SC-005**: Pour un plat saisi avec une ou deux fautes de frappe, les bonnes bouteilles sont proposées en moins de 10 secondes, sans réseau.
 - **SC-006**: Avec 1000 fiches, l'Accueil s'affiche en moins de 1 seconde perçue et fonctionne intégralement sans réseau.
 - **SC-007**: Un test sur iPhone confirme que les cinq onglets restent lisibles et tapables à une main, sans défilement horizontal.
 
@@ -150,5 +156,6 @@ L'utilisateur décrit une occasion (plat, convives, budget, envie) ; l'applicati
 - Seuls les stocks actifs (quantité > 0) entrent dans l'« À boire », les répartitions et la valeur.
 - Le marquage « cadeau » est porté par la fiche : toutes les bouteilles d'une fiche « cadeau » sont comptées comme offertes par la personne indiquée.
 - L'historique des sorties existant (date, motif, fiche) est suffisant pour la consommation ; les sorties antérieures à l'existence de l'historique n'y figurent pas.
-- Le prompt d'occasion est destiné au projet Claude déjà décrit dans `claude-project/` ; ses consignes générales y sont déjà posées, le prompt n'ajoute que l'occasion et la liste.
-- Hors périmètre : rappels de rachat, accords mets-vins calculés par l'application, graphiques interactifs avancés, export des statistiques, import de la réponse de Claude dans l'application.
+- Les mets sont des estimations de Claude, pas une vérité : l'utilisateur les corrige. Les fiches créées avant cette fonctionnalité n'ont pas de mets tant qu'on ne les complète pas ; aucune extraction rétroactive n'est faite par l'application.
+- Ajout d'une colonne `pairings` à la feuille (constitution IV : documentée dans `contracts/sheet-schema.md`, migration automatique rétro-compatible, schéma v4).
+- Hors périmètre : rappels de rachat, accords mets-vins calculés ou inventés par l'application (elle ne fait que chercher dans les mets enregistrés), graphiques interactifs avancés, export des statistiques, import automatique de mets sur les fiches existantes.

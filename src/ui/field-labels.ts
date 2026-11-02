@@ -16,6 +16,7 @@ export const FIELD_LABELS: Record<ReconcilableField, string> = {
   notes: 'Notes',
   tannin: 'Tanin',
   dryness: 'Sucre',
+  pairings: 'Mets conseillés',
 };
 
 export function formatFieldValue(field: ReconcilableField, v: unknown): string {

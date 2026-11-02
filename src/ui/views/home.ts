@@ -1,7 +1,7 @@
 // Accueil : « À boire » en premier, puis « Quoi boire ce soir ? » et les statistiques globales (spec 002).
 import type { AppContext } from '../../app';
 import { MATURITY_HINTS, MATURITY_LABELS, maturityGroups, windowText, type Maturity, type MaturityEntry } from '../../domain/maturity';
-import { buildOccasionPrompt } from '../../domain/occasion';
+import { pairingVocabulary, searchByDish } from '../../domain/pairing';
 import { buildRows, type WineRow } from '../../domain/query';
 import {
   cellarValue,
@@ -89,50 +89,84 @@ function toDrinkSection(rows: WineRow[], thumbs: Map<string, string>, year: numb
 
 // --- Quoi boire ce soir ? ---
 
-function occasionSection(rows: WineRow[], year: number): HTMLElement {
-  const area = h('textarea', {
+/** Recherche des bouteilles en stock dont les mets conseillés correspondent au plat saisi (tolérante aux fautes). */
+function dishSection(rows: WineRow[], thumbs: Map<string, string>, year: number): HTMLElement {
+  const input = h('input', {
     class: 'field__input',
-    rows: '2',
-    id: 'occasion',
-    placeholder: 'Ex. magret de canard, 4 personnes, autour de 30 €…',
-    style: 'min-height:72px;padding:12px',
+    type: 'search',
+    id: 'dish',
+    placeholder: 'Ex. magret de canard, risotto aux champignons…',
+    autocomplete: 'off',
+    autocapitalize: 'off',
+    spellcheck: 'false',
+    enterkeyhint: 'search',
   });
   const status = h('p', { class: 'muted', role: 'status', 'aria-live': 'polite' });
-  const out = h('textarea', { class: 'field__input', readonly: true, rows: '8', 'aria-label': 'Prompt pour Claude', style: 'font-size:0.8rem;font-family:ui-monospace,monospace' });
-  const details = h('details', { hidden: true }, h('summary', { style: 'min-height:44px;display:flex;align-items:center;cursor:pointer' }, 'Voir le prompt'), out);
+  const results = h('ul', { class: 'tbd__list dish__results' });
+  const chips = h('div', { class: 'chips' });
 
-  const prepare = async (): Promise<void> => {
-    const p = buildOccasionPrompt(area.value, rows, year);
-    if (p.included === 0) {
-      status.textContent = 'Aucune bouteille en stock : rien à proposer à Claude.';
+  const vocab = pairingVocabulary(rows, 8);
+  for (const v of vocab) {
+    chips.append(
+      h('button', { class: 'btn btn--small', type: 'button', onClick: () => { input.value = v.label; search(); } }, v.label),
+    );
+  }
+
+  function search(): void {
+    const q = input.value;
+    const res = searchByDish(rows, q, year);
+    results.replaceChildren();
+    if (res.tokens.length === 0) {
+      status.textContent =
+        vocab.length === 0
+          ? 'Aucun mets n’est encore renseigné : ils sont ajoutés par Claude à la lecture d’étiquette, ou à la main sur la fiche.'
+          : 'Tapez un plat ou un ingrédient, ou choisissez un mets de votre cave.';
       return;
     }
-    out.value = p.text;
-    details.removeAttribute('hidden');
-    const note = p.truncated ? ` La liste est limitée aux ${p.included} bouteilles les plus urgentes sur ${p.total}.` : '';
-    try {
-      await navigator.clipboard.writeText(p.text);
-      status.textContent = `Prompt copié. Collez-le dans votre projet Claude.${note}`;
-    } catch {
-      details.setAttribute('open', '');
-      out.focus();
-      out.select();
-      status.textContent = `Copie automatique impossible : le texte est sélectionné, copiez-le à la main.${note}`;
+    if (res.matches.length === 0) {
+      status.textContent = `Aucune bouteille ne correspond à « ${q.trim()} ».${res.withoutPairings > 0 ? ` ${plural(res.withoutPairings, 'fiche n’a', 'fiches n’ont')} aucun mets renseigné.` : ''}`;
+      return;
     }
-  };
+    status.textContent = `${plural(res.matches.length, 'fiche correspond', 'fiches correspondent')}, les plus à point d’abord.${res.withoutPairings > 0 ? ` ${plural(res.withoutPairings, 'fiche n’a', 'fiches n’ont')} aucun mets renseigné.` : ''}`;
+    for (const m of res.matches.slice(0, 12)) {
+      const w = m.row.wine;
+      const note = [MATURITY_LABELS[m.info.category] + (m.info.finishing ? ' (à finir)' : ''), m.window ? `garde ${m.window}` : '', `Accord : ${m.matched.join(', ')}`].filter(Boolean).join(' · ');
+      results.append(
+        h(
+          'li',
+          { class: 'tbd__item' },
+          renderWineCard(m.row, { href: `#/vin/${w.id}`, thumb: thumbs.get(w.id) }),
+          h('p', { class: `tbd__note${m.info.finishing || m.info.category === 'late' ? ' tbd__note--urgent' : ''}` }, note),
+        ),
+      );
+    }
+  }
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  input.addEventListener('input', () => {
+    clearTimeout(timer);
+    timer = setTimeout(search, 150);
+  });
 
+  const form = h(
+    'form',
+    {
+      class: 'card stack',
+      onSubmit: (e: Event) => {
+        e.preventDefault();
+        search();
+      },
+    },
+    h('label', { class: 'field', for: 'dish' }, h('span', { class: 'field__label' }, 'Plat ou ingrédient'), input),
+    vocab.length > 0 ? chips : null,
+    status,
+  );
+  search();
   return h(
     'section',
     { class: 'home__section', 'aria-labelledby': 'h-occ' },
     h('h2', { id: 'h-occ' }, 'Quoi boire ce soir ?'),
-    h(
-      'div',
-      { class: 'card stack' },
-      h('label', { class: 'field', for: 'occasion' }, h('span', { class: 'field__label' }, 'Occasion, plat, convives, budget'), area),
-      h('button', { class: 'btn btn--primary', type: 'button', onClick: () => void prepare() }, 'Préparer le prompt pour Claude'),
-      status,
-      details,
-    ),
+    form,
+    results,
   );
 }
 
@@ -246,7 +280,7 @@ export async function homeView(ctx: AppContext): Promise<HTMLElement> {
     { class: 'view home' },
     pageHeader({ title: 'Accueil', subtitle: total === 0 ? null : bottles(total) }),
     toDrinkSection(rows, thumbs, year),
-    occasionSection(rows, year),
+    dishSection(rows, thumbs, year),
     statsSection(rows, outflows, year, now),
   );
 }

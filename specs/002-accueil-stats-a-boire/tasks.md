@@ -3,8 +3,9 @@
 - [X] T001 [US1] `src/domain/maturity.ts` + tests (catégories, « à finir », tri, fenêtre) — `tests/unit/home-domain.test.ts`
 - [X] T002 [US3] `src/domain/stats.ts` + tests (répartition, valeur, consommation 12 mois)
 - [X] T003 [US2] `src/domain/gifts.ts` + filtre `giftFrom` (`query.ts`, `wine-list.ts`, `filter-sheet.ts`) + tests
-- [X] T004 [US4] `src/domain/occasion.ts` + tests (contenu, priorité, troncature)
+- [X] T004 [US4] ~~prompt d'occasion~~ remplacé par la recherche par mets : `src/domain/pairing.ts` (recherche tolérante) + `pairing-list.ts` + tests (`tests/unit/pairing.test.ts`)
 - [X] T005 [US1] [US3] [US4] Écran Accueil `src/ui/views/home.ts` (+ `home.css`) + tests `tests/unit/home-ui.test.ts`
 - [X] T006 [US2] Fiche personne `src/ui/views/person.ts`, lien depuis Réglages > Personnes
 - [X] T007 Navigation 5 onglets, icône, route d'ouverture `/accueil` (`main.ts`, `app.ts`, `sign-in.ts`)
-- [ ] T008 Vérification sur iPhone : 5 onglets lisibles à une main, Accueil < 1 s avec 1000 fiches, copie du prompt dans Safari (SC-005 à SC-007)
+- [X] T008 [US4] Champ `pairings` : types, schéma v4 + migration (`tests/contract/schema-v4.test.ts`), formulaire, fiche détaillée, proposition/rapprochement, prompts `claude-project/` et `src/scan/prompt.ts`, contrats
+- [ ] T009 Vérification sur iPhone : 5 onglets lisibles à une main, Accueil < 1 s avec 1000 fiches, copie du prompt dans Safari (SC-005 à SC-007)

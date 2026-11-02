@@ -4,11 +4,6 @@ import { homeView } from '../../src/ui/views/home';
 import { personView } from '../../src/ui/views/person';
 import { contextOf, makeDevice, makeSheet, wineData } from '../contract/helpers';
 
-const click = (el: Element | null | undefined): void => {
-  if (!el) throw new Error('élément introuvable');
-  el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-};
-
 beforeEach(() => {
   document.body.innerHTML = '';
 });
@@ -52,16 +47,32 @@ describe('Accueil', () => {
     expect(tiles).toContain('1 fiche sans prix');
     expect(el.textContent).toContain('Par couleur');
     expect(el.textContent).toContain('Consommation');
+  });
 
-    const writeText = vi.fn(async () => undefined);
-    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
-    (el.querySelector('#occasion') as HTMLTextAreaElement).value = 'magret, 4 personnes';
-    click([...el.querySelectorAll('button')].find((b) => b.textContent?.includes('Préparer le prompt')));
-    await vi.waitFor(() => expect(writeText).toHaveBeenCalled());
-    const text = (writeText.mock.calls[0] as unknown as [string])[0];
-    expect(text).toContain('magret, 4 personnes');
-    expect(text).toContain('Passée');
-    expect(el.textContent).toContain('Prompt copié');
+  it('« Quoi boire ce soir » cherche dans les mets des fiches, avec fautes de frappe', async () => {
+    const { d, ctx, shelf } = await setup();
+    const year = new Date().getFullYear();
+    const duck = await d.repo.create('wine', wineData({ cuvee: 'Canard', pairings: 'magret de canard; agneau rôti', drink_from: year - 1, drink_until: year + 5 }));
+    const fish = await d.repo.create('wine', wineData({ cuvee: 'Poisson', color: 'blanc', pairings: 'poisson grillé', drink_from: year - 1, drink_until: year + 5 }));
+    const bare = await d.repo.create('wine', wineData({ cuvee: 'Sans mets' }));
+    for (const w of [duck, fish, bare]) await d.repo.create('stock', { wine_id: w.id, location_id: shelf.id, quantity: 1, position_hint: null });
+
+    const el = await homeView(ctx);
+    document.body.append(el);
+    expect(el.textContent).toContain('Tapez un plat ou un ingrédient');
+    expect([...el.querySelectorAll('.chips .btn')].map((b) => b.textContent)).toContain('magret de canard');
+
+    const input = el.querySelector('#dish') as HTMLInputElement;
+    input.value = 'un magrett de canars pour 4 personnes';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    await vi.waitFor(() => expect(el.querySelectorAll('.dish__results .wine-card')).toHaveLength(1));
+    expect(el.querySelector('.dish__results')!.textContent).toContain('Canard');
+    expect(el.querySelector('.dish__results')!.textContent).toContain('Accord : magret de canard');
+
+    input.value = 'sushi';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    await vi.waitFor(() => expect(el.textContent).toContain('Aucune bouteille ne correspond à « sushi »'));
+    expect(el.textContent).toContain('1 fiche n’a aucun mets renseigné');
   });
 });
 

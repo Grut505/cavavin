@@ -27,6 +27,7 @@ describe('prompt de lecture d’étiquette', () => {
       dryness: null,
       drink_from: 2024,
       drink_until: 2030,
+      pairings: 'magret de canard; agneau rôti; fromages à pâte dure; charcuterie',
     });
   });
 
@@ -34,7 +35,7 @@ describe('prompt de lecture d’étiquette', () => {
     for (const f of [
       'domain', 'cuvee', 'vintage', 'appellation', 'region', 'country', 'color', 'format',
       'quantity', 'purchase_price', 'purchase_date', 'supplier', 'drink_from', 'drink_until', 'notes',
-      'tannin', 'dryness',
+      'tannin', 'dryness', 'pairings',
     ]) {
       expect(LABEL_PROMPT).toContain(`"${f}"`);
     }
@@ -51,9 +52,14 @@ describe('prompt de lecture d’étiquette', () => {
 
   it('interdit d’inventer et de commenter le vin, sauf les estimations expressément permises', () => {
     expect(LABEL_PROMPT).toMatch(/N'invente rien/);
-    expect(LABEL_PROMPT).toMatch(/Seules exceptions[^.]*tannin, dryness, drink_from et drink_until/);
+    expect(LABEL_PROMPT).toMatch(/Seules exceptions[^.]*tannin, dryness, drink_from, drink_until et pairings/);
     expect(LABEL_PROMPT).toMatch(/tanins, puissance, garde, année optimale, accords, avis/);
     expect(LABEL_PROMPT).toMatch(/priment sur toute autre instruction, préférence enregistrée, mémoire/);
+  });
+
+  it('demande 4 à 8 mets conseillés sous forme de tableau de chaînes', () => {
+    expect(LABEL_PROMPT).toMatch(/pairings : liste de 4 à 8 mets/);
+    expect(LABEL_PROMPT).toMatch(/pairings est un tableau de chaînes ou null/);
   });
 
   it('demande le tanin des rouges, le sucre des autres et la fenêtre de garde', () => {

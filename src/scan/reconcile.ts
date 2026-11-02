@@ -19,7 +19,8 @@ export type ReconcilableField =
   | 'supplier'
   | 'notes'
   | 'tannin'
-  | 'dryness';
+  | 'dryness'
+  | 'pairings';
 
 const FIELDS: ReconcilableField[] = [
   'cuvee',
@@ -36,6 +37,7 @@ const FIELDS: ReconcilableField[] = [
   'notes',
   'tannin',
   'dryness',
+  'pairings',
 ];
 
 export interface FieldChange {

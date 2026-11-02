@@ -1,7 +1,7 @@
 // Schéma des onglets de la feuille — voir contracts/sheet-schema.md
 import type { EntityKind } from '../domain/types';
 
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 export type FieldType = 'text' | 'int' | 'num' | 'bool';
 
@@ -64,6 +64,8 @@ const wineFields: FieldDef[] = [
   // v3
   b('gift'),
   t('gift_from', true),
+  // v4
+  t('pairings', true),
 ];
 
 const photoFields: FieldDef[] = [
@@ -106,6 +108,8 @@ export const KIND_FIELDS: Record<EntityKind, FieldDef[]> = {
     // v2
     i('tannin', true),
     t('dryness', true),
+    // v4
+    t('pairings', true),
   ],
   person: [t('name'), i('order')],
 };

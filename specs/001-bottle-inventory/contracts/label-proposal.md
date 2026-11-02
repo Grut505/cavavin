@@ -24,6 +24,7 @@ La lecture d'étiquette est faite **hors de l'application**, par un projet Claud
   "drink_until": null,
   "tannin": null,
   "dryness": null,
+  "pairings": ["magret de canard", "agneau rôti", "fromages à pâte dure"],
   "notes": null,
   "confidence": { "domain": 0.95, "vintage": 0.9 }
 }
@@ -34,6 +35,7 @@ La lecture d'étiquette est faite **hors de l'application**, par un projet Claud
 - `tannin` : entier de 1 (très souple) à 5 (très tannique), **rouges uniquement** ; `null` sinon.
 - `dryness` : `sec`, `demi-sec`, `moelleux` ou `doux` (effervescent : brut et extra-brut = `sec`), pour les blancs, rosés, effervescents et liquoreux ; `null` pour un rouge.
 - `drink_from` / `drink_until` : fenêtre de dégustation. Le projet Claude peut l'**estimer** d'après sa connaissance du vin (`null` s'il n'est pas raisonnablement sûr). `tannin`, `dryness` et la fenêtre de garde sont les seules estimations permises ; tout le reste vient de l'étiquette ou de l'utilisateur.
+- `pairings` (v4, spec 002) : tableau de 4 à 8 mets courts en français qui s'accordent avec le vin (ou texte « a; b » dans la colonne de la feuille), **estimés** par le projet Claude d'après le vin, l'appellation, la couleur et le style ; `null` s'il n'est pas raisonnablement sûr. L'application en fait la base de « Quoi boire ce soir » (recherche tolérante aux fautes). Les estimations permises sont désormais `tannin`, `dryness`, la fenêtre de garde et `pairings`.
 - La fenêtre de garde est **obligatoire** pour enregistrer la fiche dans l'application : si la proposition l'omet (`null`), le formulaire la demande.
 - `target_wine_id` : si le projet Claude sait quelle fiche existante mettre à jour (id fourni par l'utilisateur ou trouvé dans la feuille), il le renseigne ; sinon l'application détecte le doublon par la clé normalisée (FR-004) et propose « ajouter » / « compléter ».
 - Un message peut contenir un objet ou un **tableau** d'objets (plusieurs bouteilles).

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { giftsOf } from '../../src/domain/gifts';
 import { classify, maturityGroups, windowText } from '../../src/domain/maturity';
-import { buildOccasionPrompt } from '../../src/domain/occasion';
 import { activeFilterCount, buildRows, emptyFilters, queryRows, type WineRow } from '../../src/domain/query';
 import { cellarValue, consumption, distribution, NOT_SET, overview, topSlices } from '../../src/domain/stats';
 import type { Outflow, Wine } from '../../src/domain/types';
@@ -114,25 +113,5 @@ describe('cadeaux par personne', () => {
     const f = { ...emptyFilters(), giftFrom: 'P1' };
     expect(queryRows(rows, f, { key: 'domain', dir: 'asc' }).map((r) => r.wine.id)).toEqual([a.id]);
     expect(activeFilterCount(f)).toBe(1);
-  });
-});
-
-describe('prompt d’occasion', () => {
-  it('contient l’occasion, les consignes et les bouteilles, urgentes d’abord', () => {
-    const rows = [row(wine({ cuvee: 'Tôt', drink_from: 2035, drink_until: 2045 })), row(wine({ cuvee: 'Tard', drink_from: 2010, drink_until: 2020 }))];
-    const p = buildOccasionPrompt('magret, 4 personnes', rows, Y);
-    expect(p.text).toContain('Occasion : magret, 4 personnes');
-    expect(p.text).toContain('uniquement parmi les bouteilles de la liste');
-    expect(p.text.indexOf('Tard')).toBeLessThan(p.text.indexOf('Tôt'));
-    expect(p.text).toContain('En retard');
-    expect(p.truncated).toBe(false);
-  });
-
-  it('tronque aux plus urgentes au-delà du maximum', () => {
-    const rows = Array.from({ length: 5 }, (_, i) => row(wine({ cuvee: `V${i}`, drink_from: 2000 + i, drink_until: 2010 + i })));
-    const p = buildOccasionPrompt('', rows, Y, 3);
-    expect(p).toMatchObject({ included: 3, total: 5, truncated: true });
-    expect(p.text).toContain('3 sur 5');
-    expect(p.text).toContain('pas de contrainte particulière');
   });
 });

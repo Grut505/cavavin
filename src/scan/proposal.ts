@@ -1,5 +1,6 @@
 // Propositions de fiche issues du projet Claude — voir contracts/label-proposal.md.
 import { normalizeText } from '../domain/normalize';
+import { joinPairings, parsePairings } from '../domain/pairing-list';
 import { BOTTLE_FORMATS, WINE_COLORS } from '../domain/types';
 import { MIN_YEAR, formatDateFr, parseDate, type WineDraft, emptyDraft } from '../domain/wine';
 
@@ -22,6 +23,8 @@ export interface ProposalData {
   notes: string | null;
   tannin: number | null;
   dryness: string | null;
+  /** Mets conseillés, séparés par des points-virgules. */
+  pairings: string | null;
   /** Objet source tel que reçu (pour audit). */
   raw_json: string;
 }
@@ -197,6 +200,15 @@ function parseOne(raw: Record<string, unknown>, label: string, warnings: string[
     if (!format) warn('format');
   }
 
+  /** Liste de chaînes (attendu) ou texte « a; b » (colonne de la feuille). */
+  const pairings = (): string | null => {
+    const v = raw.pairings;
+    if (v === undefined || v === null || v === '') return null;
+    if (typeof v === 'string' || (Array.isArray(v) && v.every((x) => typeof x === 'string'))) return joinPairings(parsePairings(v as string | string[]));
+    warn('pairings');
+    return null;
+  };
+
   let dryness: string | null = null;
   if (raw.dryness !== undefined && raw.dryness !== null && raw.dryness !== '') {
     dryness = normDryness(raw.dryness) ?? null;
@@ -222,6 +234,7 @@ function parseOne(raw: Record<string, unknown>, label: string, warnings: string[
     notes: str('notes'),
     tannin: int('tannin', 1, 5),
     dryness,
+    pairings: pairings(),
     raw_json: JSON.stringify(raw),
   };
   if (!data.domain && !data.cuvee && !data.appellation) {
@@ -279,5 +292,6 @@ export function proposalToDraft(p: Pick<ProposalData, Exclude<Field, 'quantity' 
     notes: s(p.notes),
     tannin: s(p.tannin),
     dryness: s(p.dryness),
+    pairings: s(p.pairings).split(';').map((x) => x.trim()).filter(Boolean).join(', '),
   };
 }

@@ -2,6 +2,7 @@
 import type { AppContext } from '../../app';
 import { bottleCounts } from '../../domain/locations';
 import { OUTFLOW_REASON_LABELS, outflowsOf } from '../../domain/stock';
+import { pairingsOf } from '../../domain/pairing-list';
 import { formatDateFr, wineTitle } from '../../domain/wine';
 import type { Furniture, Location, Wine } from '../../domain/types';
 import { renderCaveMap, bottlesLabel } from '../cave-map/cave-map';
@@ -42,6 +43,7 @@ function facts(wine: Wine, giftName: string | null): [string, string][] {
     ['Prix d’achat', wine.purchase_price !== null ? eur(wine.purchase_price) : ''],
     ['Date d’achat', formatDateFr(wine.purchase_date)],
     ['Fournisseur', wine.supplier ?? ''],
+    ['Mets conseillés', pairingsOf(wine).join(', ')],
     ['Cadeau', wine.gift ? (giftName ? `Offert par ${giftName}` : 'Oui') : ''],
     ['Notes', wine.notes ?? ''],
   ];

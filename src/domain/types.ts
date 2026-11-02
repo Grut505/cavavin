@@ -72,6 +72,8 @@ export interface Wine extends Base {
   gift: boolean;
   /** Identifiant de la personne qui l'a offerte (liste « Personnes » des réglages). */
   gift_from: string | null;
+  /** Mets conseillés, séparés par des points-virgules (proposés par Claude à la lecture d'étiquette). */
+  pairings: string | null;
 }
 
 /** Personne de la liste paramétrable (donateurs de cadeaux). */
@@ -144,6 +146,7 @@ export interface Proposal extends Base {
   raw_json: string | null;
   tannin: number | null;
   dryness: string | null;
+  pairings: string | null;
 }
 
 export interface EntityMap {

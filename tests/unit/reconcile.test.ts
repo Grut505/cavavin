@@ -31,6 +31,7 @@ const proposal = (over: Partial<ProposalData> = {}): ProposalData => ({
   notes: null,
   tannin: null,
   dryness: null,
+  pairings: null,
   raw_json: '{}',
   ...over,
 });

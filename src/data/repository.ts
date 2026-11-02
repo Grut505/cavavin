@@ -435,6 +435,7 @@ export class Repository {
       raw_json: p.raw_json,
       tannin: p.tannin,
       dryness: p.dryness,
+      pairings: p.pairings,
     });
   }
 

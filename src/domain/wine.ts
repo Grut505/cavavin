@@ -8,6 +8,7 @@ import {
   type Wine,
   type WineColor,
 } from './types';
+import { joinPairings, parsePairings } from './pairing-list';
 
 /** Champs de la fiche modifiables par l'utilisateur (hors champs techniques). */
 export type WineFields = Pick<
@@ -31,6 +32,7 @@ export type WineFields = Pick<
   | 'dryness'
   | 'gift'
   | 'gift_from'
+  | 'pairings'
 >;
 
 /** Valeurs telles que saisies dans le formulaire (texte brut). */
@@ -56,6 +58,8 @@ export interface WineDraft {
   gift: string;
   /** Identifiant de la personne (liste des réglages), seulement si cadeau. */
   gift_from: string;
+  /** Mets conseillés (virgules ou points-virgules). */
+  pairings: string;
 }
 
 export const NO_CUVEE = '—';
@@ -82,6 +86,7 @@ export function emptyDraft(): WineDraft {
     dryness: '',
     gift: '',
     gift_from: '',
+    pairings: '',
   };
 }
 
@@ -225,6 +230,7 @@ export function validateWine(draft: WineDraft, now: Date = new Date()): Validati
       dryness,
       gift: draft.gift === 'true',
       gift_from: draft.gift === 'true' ? text(draft.gift_from) : null,
+      pairings: joinPairings(parsePairings(draft.pairings)),
     },
   };
 }
@@ -260,5 +266,6 @@ export function draftFromWine(w: Wine): WineDraft {
     dryness: s(w.dryness),
     gift: w.gift ? 'true' : '',
     gift_from: s(w.gift_from),
+    pairings: parsePairings(w.pairings ?? null).join(', '),
   };
 }
