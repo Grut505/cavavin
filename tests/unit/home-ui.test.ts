@@ -4,6 +4,11 @@ import { homeView } from '../../src/ui/views/home';
 import { personView } from '../../src/ui/views/person';
 import { contextOf, makeDevice, makeSheet, wineData } from '../contract/helpers';
 
+const click = (el: Element | null | undefined): void => {
+  if (!el) throw new Error('élément introuvable');
+  el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+};
+
 beforeEach(() => {
   document.body.innerHTML = '';
 });
