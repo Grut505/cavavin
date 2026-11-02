@@ -17,4 +17,5 @@
 - [X] T016 Avis après avoir bu (`tasting-dialog.ts`) et annulation d'une sortie (`toast.ts`, `repo.undoOutflows`) (FR-023, FR-024)
 - [X] T017 Liste de courses : `to_buy` (schéma v5), `shopping.ts`, vue `/courses`, boutons Accueil et fiche (FR-025)
 - [X] T018 Pastille « à boire en priorité » sur l'onglet Accueil (`Router.setBadge`, `urgentBottles`) (FR-026)
+- [X] T019 Fusion de doublons : `merge.ts`, `repo.mergeWines`, `merge-dialog.ts`, bouton sur la fiche (FR-027)
 - [ ] T009 Vérification sur iPhone : 5 onglets lisibles à une main, Accueil < 1 s avec 1000 fiches, copie du prompt dans Safari (SC-005 à SC-007)

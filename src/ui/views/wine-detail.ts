@@ -8,6 +8,7 @@ import type { Furniture, Location, Wine } from '../../domain/types';
 import { renderCaveMap, bottlesLabel } from '../cave-map/cave-map';
 import { openAddStockDialog } from '../components/add-stock-dialog';
 import { locationLabel } from '../components/location-picker';
+import { openMergeDialog } from '../components/merge-dialog';
 import { openMoveDialog } from '../components/move-dialog';
 import { openOutflowDialog, type StockChoice } from '../components/outflow-dialog';
 import { pageHeader } from '../components/page-header';
@@ -161,6 +162,7 @@ export async function wineDetailView(ctx: AppContext, params: { id?: string }): 
           { class: 'btn btn--small', type: 'button', 'aria-pressed': String(wine.to_buy === true), onClick: () => void ctx.repo.setToBuy(wine.id, wine.to_buy !== true).then(() => draw()) },
           wine.to_buy === true ? 'Dans ma liste de courses ✓' : 'Ajouter à la liste de courses',
         ),
+        h('button', { class: 'btn btn--small', type: 'button', onClick: () => void refreshAfter(openMergeDialog(ctx, { wine })) }, 'Fusionner avec une autre fiche'),
       ),
       h(
         'section',

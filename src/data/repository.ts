@@ -31,6 +31,7 @@ import {
   validateMoveTarget,
   type DeletionDecision,
 } from '../domain/locations';
+import { mergePatch } from '../domain/merge';
 import { assertPersonName, nextPersonOrder, sortPersons } from '../domain/people';
 import { validateMove, validateOutflow } from '../domain/stock';
 import type { WineFields } from '../domain/wine';
@@ -425,6 +426,41 @@ export class Repository {
   /** Retire une personne de la liste. Les fiches qui la citent gardent la référence et le nom reste affiché. */
   async removePerson(id: string): Promise<void> {
     await this.remove('person', id);
+  }
+
+  /**
+   * Fusionne la fiche `absorbedId` dans `keepId` : bouteilles (stocks fusionnés par emplacement), historique des
+   * sorties, miniature si la fiche conservée n'en a pas, champs vides comblés ; la fiche absorbée est supprimée.
+   */
+  async mergeWines(keepId: string, absorbedId: string): Promise<void> {
+    if (keepId === absorbedId) throw new Error('Choisissez deux fiches différentes.');
+    const keep = await this.get('wine', keepId);
+    const absorbed = await this.get('wine', absorbedId);
+    if (!keep || !absorbed) throw new Error('Fiche introuvable.');
+
+    const stocks = (await this.db.getAll('stock')).filter((s) => !s.deleted && s.quantity > 0);
+    for (const st of stocks.filter((s) => s.wine_id === absorbedId)) {
+      const same = stocks.find((s) => s.wine_id === keepId && s.location_id === st.location_id);
+      if (same) {
+        await this.adjustStock(same.id, st.quantity); // même emplacement : on additionne
+        await this.adjustStock(st.id, -st.quantity); // et l'ancien stock est vidé (sans sortie : ce n'est pas une consommation)
+      } else {
+        await this.patch('stock', st.id, { wine_id: keepId });
+      }
+    }
+    for (const o of (await this.list('outflow')).filter((x) => x.wine_id === absorbedId)) {
+      await this.patch('outflow', o.id, { wine_id: keepId });
+    }
+    if (!keep.thumb_ref && absorbed.thumb_ref) {
+      const photo = (await this.list('photo')).find((p) => p.id === absorbed.thumb_ref);
+      if (photo) {
+        await this.patch('photo', photo.id, { wine_id: keepId });
+        await this.patch('wine', keepId, { thumb_ref: photo.id });
+      }
+    }
+    const fields = mergePatch(keep, absorbed);
+    if (Object.keys(fields).length > 0) await this.patch('wine', keepId, fields);
+    await this.remove('wine', absorbedId);
   }
 
   /** Ajoute ou retire une fiche de la liste de courses. */
