@@ -199,10 +199,10 @@ Projet unique statique : `src/`, `tests/`, `apps-script/` à la racine du dépô
 
 **Independent Test** : un compte non partagé obtient « accès refusé » sans donnée ; un compte autorisé reste utilisable sans reconnexion quotidienne.
 
-- [ ] T070 [P] [US6] Tests de gestion d'erreurs d'accès (403 ⇒ aucun cache affiché, 401 ⇒ bandeau reconnexion, outbox intacte) dans tests/contract/auth-errors.test.ts
-- [ ] T071 [US6] Écran « accès refusé » et purge du cache local si le compte n'est pas autorisé dans src/ui/views/access-denied.ts et src/data/local-db.ts
-- [ ] T072 [US6] Bandeau « Reconnecter » (un tap) et reprise de sync après reconnexion dans src/ui/components/reconnect-banner.ts
-- [ ] T073 [US6] Mémoriser le compte et tenter le renouvellement silencieux du jeton à l'ouverture dans src/auth/google-auth.ts
+- [X] T070 [P] [US6] Tests de gestion d'erreurs d'accès (403 ⇒ aucun cache affiché, 401 ⇒ bandeau reconnexion, outbox intacte) dans tests/contract/auth-errors.test.ts
+- [X] T071 [US6] Écran « accès refusé » et purge du cache local si le compte n'est pas autorisé dans src/ui/views/access-denied.ts et src/data/local-db.ts
+- [X] T072 [US6] Bandeau « Reconnecter » (un tap) et reprise de sync après reconnexion dans src/ui/components/reconnect-banner.ts
+- [X] T073 [US6] Mémoriser le compte et tenter le renouvellement silencieux du jeton à l'ouverture dans src/auth/google-auth.ts
 
 ---
 
@@ -210,10 +210,10 @@ Projet unique statique : `src/`, `tests/`, `apps-script/` à la racine du dépô
 
 - [ ] T074 [P] Audit accessibilité (contraste AA, focus visible, libellés ARIA, tailles tactiles) sur tous les écrans dans src/ui/
 - [ ] T075 [P] Finitions design : mode sombre, états vide/chargement/erreur, transitions discrètes dans src/ui/styles/
-- [ ] T076 [P] Rédiger README.md (installation, variables d'environnement, déploiement GitHub Pages, mise en place du projet Claude (claude-project/README.md), ajout de colonnes à la feuille)
+- [X] T076 [P] Rédiger README.md (installation, variables d'environnement, déploiement GitHub Pages, mise en place du projet Claude (claude-project/README.md), ajout de colonnes à la feuille)
 - [ ] T077 Test de charge sur 500–1000 fiches (sync incrémentale, rendu de la liste) et mesure du premier affichage < 2 s en 4G simulée (Lighthouse/DevTools, mode installé) avec correctifs, résultats consignés dans specs/001-bottle-inventory/quickstart.md §8
 - [ ] T078 Exécuter le parcours complet de specs/001-bottle-inventory/quickstart.md sur iPhone 16 et consigner le résultat du renouvellement de jeton (research.md §3)
-- [ ] T079 Revue de conformité à la constitution (secrets, schéma documenté, dépendances) et mise à jour de specs/001-bottle-inventory/plan.md si nécessaire
+- [X] T079 Revue de conformité à la constitution (secrets, schéma documenté, dépendances) et mise à jour de specs/001-bottle-inventory/plan.md si nécessaire
 
 ---
 

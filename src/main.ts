@@ -1,8 +1,11 @@
 import './ui/styles/base.css';
 import { createContext, initialHash, isSheetReady } from './app';
+import { requestToken, tryRenewSilently } from './auth/google-auth';
+import { reconnectBanner } from './ui/components/reconnect-banner';
 import { decorateWithSyncStatus } from './ui/components/sync-status';
 import { Router, type Route } from './ui/router';
 import { fr } from './ui/strings.fr';
+import { accessDeniedView, purgeLocalData } from './ui/views/access-denied';
 import { addHubView } from './ui/views/add-hub';
 import { addWineView, editWineView } from './ui/views/add-wine';
 import { caveConfigView } from './ui/views/cave-config';
@@ -22,6 +25,8 @@ async function boot(): Promise<void> {
   const ctx = await createContext();
   // La synchronisation tourne en arrière-plan : à l'ouverture, après chaque écriture, au retour du réseau.
   ctx.scheduler.start();
+  // Jeton expiré mais compte connu : renouvellement silencieux (sans bloquer l'ouverture).
+  void tryRenewSilently();
 
   const routes: Route[] = [
     { path: '/cave', nav: { label: fr.nav.cave, icon: 'cave' }, render: caveView },
@@ -38,6 +43,7 @@ async function boot(): Promise<void> {
     { path: '/personnes', parent: '/reglages', render: personsView },
     { path: '/avis', parent: '/reglages', render: syncNoticesView },
     { path: '/connexion', render: signInView },
+    { path: '/refuse', render: accessDeniedView },
   ];
 
   // Hors-ligne d'abord : si la feuille est déjà prête sur cet appareil, on ouvre la cave
@@ -45,7 +51,25 @@ async function boot(): Promise<void> {
   const ready = await isSheetReady(ctx);
   if (!window.location.hash) window.location.hash = initialHash(ready);
 
-  new Router(ctx, routes, ready ? '/cave' : '/connexion', ['/connexion'], (view) => decorateWithSyncStatus(view, ctx.scheduler)).mount(root);
+  // Accès refusé par Google : on n'affiche plus aucune donnée. Le cache est purgé s'il n'y a rien à
+  // perdre ; sinon (modifications non envoyées) il est conservé, masqué, jusqu'au changement de compte.
+  let deniedHandled = false;
+  ctx.scheduler.subscribe(() => {
+    if (ctx.scheduler.status().state !== 'denied' || deniedHandled) return;
+    deniedHandled = true;
+    void (async () => {
+      if ((await ctx.repo.pendingCount()) === 0) await purgeLocalData(ctx);
+      window.location.hash = '#/refuse';
+    })();
+  });
+
+  const decorate = (view: HTMLElement): void => {
+    decorateWithSyncStatus(view, ctx.scheduler);
+    const header = view.querySelector('.app-header');
+    if (header) header.after(reconnectBanner(ctx.scheduler, { signIn: () => requestToken(true) }));
+  };
+
+  new Router(ctx, routes, ready ? '/cave' : '/connexion', ['/connexion', '/refuse'], decorate).mount(root);
 }
 
 void boot();

@@ -14,7 +14,7 @@ import { caveView } from '../../src/ui/views/cave';
 import { settingsView } from '../../src/ui/views/settings';
 import { syncNoticesView } from '../../src/ui/views/sync-notices';
 import { wineListView } from '../../src/ui/views/wine-list';
-import { makeDevice, makeSheet, wineFields } from '../contract/helpers';
+import { contextOf, makeDevice, makeSheet, wineFields } from '../contract/helpers';
 
 /** Marge large : les rendus ralentissent quand toute la suite tourne en parallèle. */
 const waitFor = <T>(fn: () => T | Promise<T>): Promise<T> => vi.waitFor(fn, { timeout: 4000, interval: 20 });
@@ -304,5 +304,40 @@ describe('parcours hors-ligne complet', () => {
     expect(sheets.records('Vins').find((v) => v.id === wine.id)).toMatchObject({ domain: 'Ajoutée hors-ligne' });
     expect(sheets.records('Sorties')).toHaveLength(1);
     scheduler.stop();
+  });
+});
+
+describe('bandeau « Reconnecter »', () => {
+  it('n’apparaît qu’en état « non connecté » et relance la connexion au tap', async () => {
+    const { reconnectBanner } = await import('../../src/ui/components/reconnect-banner');
+    const sched = fakeScheduler(status());
+    const signIn = vi.fn(async () => 'token');
+    const el = reconnectBanner(sched, { signIn });
+    document.body.append(el);
+    expect(el.hasAttribute('hidden')).toBe(true);
+
+    sched.set({ state: 'auth', pending: 2 });
+    expect(el.hasAttribute('hidden')).toBe(false);
+    expect(el.textContent).toContain('2 modifications conservées');
+    click(el.querySelector('button'));
+    expect(signIn).toHaveBeenCalledTimes(1);
+
+    await waitFor(() => expect(el.querySelector('button')?.hasAttribute('disabled')).toBe(false));
+    sched.set({ state: 'synced', pending: 0 });
+    expect(el.hasAttribute('hidden')).toBe(true);
+  });
+});
+
+describe('écran « accès refusé »', () => {
+  it('annonce le refus et efface les données locales au changement de compte', async () => {
+    const { accessDeniedView } = await import('../../src/ui/views/access-denied');
+    const sheets = await makeSheet();
+    const d = await makeDevice(sheets, 'dev-denied');
+    const ctx = contextOf(d);
+    const el = await accessDeniedView(ctx);
+    expect(el.textContent).toContain('Accès refusé');
+    click(el.querySelector('button'));
+    await waitFor(async () => expect(await d.db.getMeta('sheet_ready')).toBeUndefined());
+    expect(window.location.hash).toBe('#/connexion');
   });
 });

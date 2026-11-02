@@ -172,3 +172,18 @@ export function signOut(): void {
     google.accounts.oauth2.revoke(t, () => undefined);
   }
 }
+
+/**
+ * À l'ouverture : si un compte est connu mais que le jeton a expiré, tente un renouvellement sans
+ * interaction. Échoue en silence (fenêtre bloquée, hors-ligne…) : le bandeau « Reconnecter » prend le relais.
+ */
+export async function tryRenewSilently(): Promise<boolean> {
+  if (currentToken() || !stored?.email) return currentToken() !== null;
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return false;
+  try {
+    await requestToken(false);
+    return true;
+  } catch {
+    return false;
+  }
+}
