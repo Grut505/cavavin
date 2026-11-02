@@ -79,8 +79,8 @@ function toDrinkSection(rows: WineRow[], thumbs: Map<string, string>, year: numb
       for (const e of g.entries.slice(shown, shown + PAGE)) list.append(entryRow(e, thumbs, year, onDrink));
       shown = Math.min(g.entries.length, shown + PAGE);
       const left = g.entries.length - shown;
-      more.textContent = `Afficher ${plural(left, 'fiche restante', 'fiches restantes')}`;
-      more.toggleAttribute('hidden', left === 0);
+      if (left === 0) more.remove();
+      else more.textContent = `Afficher ${plural(left, 'fiche restante', 'fiches restantes')}`;
     };
     more.addEventListener('click', showMore);
     showMore();
@@ -96,7 +96,7 @@ function toDrinkSection(rows: WineRow[], thumbs: Map<string, string>, year: numb
           h('span', { class: 'tbd__hint muted' }, MATURITY_HINTS[g.category]),
         ),
         list,
-        more,
+        shown < g.entries.length ? more : null,
       ),
     );
   }

@@ -40,6 +40,7 @@ describe('Accueil', () => {
     expect(el.querySelector('.tbd--late')!.textContent).toContain('Passée');
     expect(el.querySelector('.tbd--late a[href^="#/vin/"]')).not.toBeNull();
     expect(el.textContent).toContain('dépassée depuis 2 ans');
+    expect(el.textContent).not.toContain('Afficher'); // pas de « fiches restantes » quand tout tient dans le premier lot
 
     const tiles = el.querySelector('.tiles')!.textContent!;
     expect(tiles).toContain('3'); // bouteilles
@@ -77,6 +78,26 @@ describe('Accueil', () => {
     input.dispatchEvent(new Event('input', { bubbles: true }));
     await vi.waitFor(() => expect(el.textContent).toContain('Aucune bouteille ne correspond à « sushi »'));
     expect(el.textContent).toContain('1 fiche n’a aucun mets renseigné');
+  });
+});
+
+describe('Accueil : pagination d’« À boire »', () => {
+  it('n’affiche « Afficher n fiches restantes » que s’il en reste, et le retire une fois tout affiché', async () => {
+    const { d, ctx, shelf } = await setup();
+    const year = new Date().getFullYear();
+    for (let i = 0; i < 12; i++) {
+      const w = await d.repo.create('wine', wineData({ cuvee: `V${i}`, drink_from: year - 1, drink_until: year + 9 }));
+      await d.repo.create('stock', { wine_id: w.id, location_id: shelf.id, quantity: 1, position_hint: null });
+    }
+    const el = await homeView(ctx);
+    document.body.append(el);
+    const group = el.querySelector('.tbd--now')!;
+    expect(group.querySelectorAll('.tbd__item')).toHaveLength(10);
+    const more = [...group.querySelectorAll('button')].find((b) => b.textContent?.startsWith('Afficher'))!;
+    expect(more.textContent).toBe('Afficher 2 fiches restantes');
+    click(more);
+    expect(group.querySelectorAll('.tbd__item')).toHaveLength(12);
+    expect(group.textContent).not.toContain('Afficher');
   });
 });
 

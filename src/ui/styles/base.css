@@ -246,3 +246,8 @@ textarea {
 .app-header + * {
   margin-top: var(--space-2);
 }
+
+/* L'attribut hidden doit toujours l'emporter sur les `display` des composants (boutons, bandeaux…). */
+[hidden] {
+  display: none !important;
+}
