@@ -5,7 +5,7 @@ vivent dans **votre Google Sheet**, lue et écrite depuis le navigateur ; une co
 rend l'application utilisable hors-ligne, et les modifications sont synchronisées au retour du réseau.
 Aucun serveur, aucune clé d'API.
 
-Spécification, plan et contrats : [`specs/001-bottle-inventory/`](specs/001-bottle-inventory/) (socle) et [`specs/002-accueil-stats-a-boire/`](specs/002-accueil-stats-a-boire/) (Accueil : à boire, statistiques, cadeaux par personne).
+Spécification, plan et contrats : [`specs/001-bottle-inventory/`](specs/001-bottle-inventory/) (socle) et [`specs/002-accueil-stats-a-boire/`](specs/002-accueil-stats-a-boire/) (Accueil : à boire, statistiques, cadeaux par personne), [`specs/003-acces-renforce/`](specs/003-acces-renforce/) (adresses autorisées, verrou Face ID).
 
 ## Installation
 
@@ -25,6 +25,7 @@ Commandes : `npm test`, `npm run lint`, `npm run typecheck`, `npm run build`.
 |---|---|
 | `VITE_GOOGLE_CLIENT_ID` | ID client OAuth « Application Web » (public par nature) |
 | `VITE_SHEET_ID` | Identifiant de la feuille (entre `/d/` et `/edit` dans l'URL) |
+| `VITE_ALLOWED_EMAILS` | Facultatif : comptes Google autorisés, séparés par des virgules (défense en profondeur ; le vrai contrôle reste le partage de la feuille) |
 | `VITE_BASE` | Chemin de base (fixé par le workflow de déploiement : `/<nom-du-dépôt>/`) |
 
 En local : `.env.local` (ignoré par git). En production : **Repository variables** GitHub
@@ -60,6 +61,12 @@ L'application lit par **nom d'en-tête**, pas par position : ajoutez vos propres
 elles sont ignorées et jamais écrasées. L'onglet d'origine n'est jamais modifié. Les évolutions du schéma
 (ajout de colonnes ou d'onglets, rétro-compatibles) sont migrées automatiquement à la synchronisation ;
 voir [`contracts/sheet-schema.md`](specs/001-bottle-inventory/contracts/sheet-schema.md).
+
+## Accès privé
+
+- **Les données** sont protégées par le partage de la feuille Google (jamais « toute personne disposant du lien »). Un compte non partagé obtient « Accès refusé ».
+- **La connexion** est limitée par les *Test users* de l'écran de consentement Google Cloud et, en plus, par la variable `VITE_ALLOWED_EMAILS` (adresses autorisées, casse ignorée).
+- **Verrou Face ID** (Réglages) : Face ID, Touch ID ou le code de l'appareil à l'ouverture et après 1 minute en arrière-plan (WebAuthn, l'app doit pouvoir créer une clé de plateforme : sur iPhone, l'installer sur l'écran d'accueil). C'est un verrou de confort local ; il ne chiffre pas les données. En cas de blocage : « Déverrouillage impossible ? » efface les données de l'appareil (la cave se retrouve depuis la feuille).
 
 ## Session Google
 

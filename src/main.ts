@@ -1,6 +1,9 @@
 import './ui/styles/base.css';
 import { createContext, initialHash, isSheetReady } from './app';
-import { requestToken, tryRenewSilently } from './auth/google-auth';
+import { enforceAllowlist, requestToken, tryRenewSilently } from './auth/google-auth';
+import { disableLock } from './auth/app-lock';
+import { installLock } from './ui/components/lock-screen';
+import { confirmDialog } from './ui/components/dialog';
 import { reconnectBanner } from './ui/components/reconnect-banner';
 import { decorateWithSyncStatus } from './ui/components/sync-status';
 import { Router, type Route } from './ui/router';
@@ -27,6 +30,12 @@ async function boot(): Promise<void> {
   const root = document.getElementById('app')!;
   const ctx = await createContext();
   // La synchronisation tourne en arrière-plan : à l'ouverture, après chaque écriture, au retour du réseau.
+  // Compte connu mais absent de la liste d'adresses autorisées : session fermée, cave masquée.
+  const accountAllowed = enforceAllowlist();
+  if (!accountAllowed) {
+    if ((await ctx.repo.pendingCount()) === 0) await purgeLocalData(ctx);
+    window.location.hash = '#/refuse';
+  }
   ctx.scheduler.start();
   // Jeton expiré mais compte connu : renouvellement silencieux (sans bloquer l'ouverture).
   void tryRenewSilently();
@@ -74,6 +83,22 @@ async function boot(): Promise<void> {
     const header = view.querySelector('.app-header');
     if (header) header.after(reconnectBanner(ctx.scheduler, { signIn: () => requestToken(true) }));
   };
+
+  // Verrou Face ID (facultatif) : écran de verrouillage à l'ouverture et après un séjour en arrière-plan.
+  installLock({
+    onForgot: async () => {
+      const ok = await confirmDialog({
+        title: 'Déverrouillage impossible ?',
+        message: 'Les données de cet appareil seront effacées et le verrou désactivé. Votre cave reste dans la feuille Google : reconnectez-vous pour la retrouver. Les modifications non synchronisées seront perdues.',
+        confirmLabel: 'Effacer et me reconnecter',
+        danger: true,
+      });
+      if (!ok) throw new Error('annulé');
+      await purgeLocalData(ctx);
+      disableLock();
+      window.location.hash = '#/connexion';
+    },
+  });
 
   new Router(ctx, routes, ready ? '/accueil' : '/connexion', ['/connexion', '/refuse'], decorate).mount(root);
 }

@@ -69,6 +69,10 @@ export function signInView(ctx: AppContext): HTMLElement {
     try {
       await requestToken(true);
     } catch (e) {
+      if (e instanceof AuthError && e.code === 'not_allowed') {
+        set({ step: 'denied', email: e.email, detail: 'Ce compte ne figure pas dans la liste des comptes autorisés de l’application.' });
+        return;
+      }
       set({ step: 'idle', message: describeError(e) });
       return;
     }

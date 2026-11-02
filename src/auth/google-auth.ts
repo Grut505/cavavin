@@ -18,7 +18,9 @@ interface Stored {
 export class AuthError extends Error {
   constructor(
     message: string,
-    readonly code: 'popup_blocked' | 'denied' | 'unavailable' | 'expired',
+    readonly code: 'popup_blocked' | 'denied' | 'unavailable' | 'expired' | 'not_allowed',
+    /** Compte concerné (pour `not_allowed`). */
+    readonly email?: string,
   ) {
     super(message);
     this.name = 'AuthError';
@@ -26,6 +28,22 @@ export class AuthError extends Error {
 }
 
 type Listener = () => void;
+
+/** Adresses autorisées (variable `VITE_ALLOWED_EMAILS`, séparées par virgule, point-virgule ou espace), en minuscules. */
+export function parseAllowedEmails(raw: string | undefined): string[] {
+  return (raw ?? '')
+    .split(/[\s,;]+/)
+    .map((e) => e.trim().toLowerCase())
+    .filter((e) => e !== '');
+}
+
+export const allowedEmails = (): string[] => parseAllowedEmails(import.meta.env.VITE_ALLOWED_EMAILS);
+
+/** Vrai si aucune liste n'est configurée, ou si l'adresse (casse ignorée) y figure. */
+export function isEmailAllowed(email: string | undefined, allowed: string[] = allowedEmails()): boolean {
+  if (allowed.length === 0) return true;
+  return !!email && allowed.includes(email.trim().toLowerCase());
+}
 
 let stored: Stored | null = load();
 let tokenClient: google.accounts.oauth2.TokenClient | null = null;
@@ -151,8 +169,17 @@ export async function requestToken(interactive: boolean): Promise<string> {
       hint: stored?.email,
     });
   });
-  if (!stored?.email) {
+  const allowed = allowedEmails();
+  if (!stored?.email || allowed.length > 0) {
     const email = await fetchEmail(token);
+    if (!isEmailAllowed(email, allowed)) {
+      signOut();
+      throw new AuthError(
+        email ? `Le compte ${email} n’est pas autorisé à utiliser cette application.` : 'Impossible de vérifier le compte Google.',
+        'not_allowed',
+        email,
+      );
+    }
     if (email && stored) save({ ...stored, email });
   }
   return token;
@@ -186,4 +213,15 @@ export async function tryRenewSilently(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/**
+ * À l'ouverture : si un compte est connu et que la liste d'adresses autorisées ne le contient pas
+ * (liste modifiée, session d'un autre compte), la session est fermée. Retourne `false` dans ce cas.
+ */
+export function enforceAllowlist(): boolean {
+  const email = stored?.email;
+  if (!email || isEmailAllowed(email)) return true;
+  signOut();
+  return false;
 }

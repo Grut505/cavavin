@@ -5,6 +5,7 @@ import { ENTITY_KINDS } from '../../domain/types';
 import { Router } from '../router';
 import { formatLastSync, statusMessage, describeStatus } from '../components/sync-status';
 import { pageHeader } from '../components/page-header';
+import { lockSettingsCard } from '../components/lock-settings';
 import { h } from '../dom';
 import { icon } from '../icons';
 import { fr } from '../strings.fr';
@@ -69,6 +70,7 @@ export async function settingsView(ctx: AppContext): Promise<HTMLElement> {
       noticesLink,
       syncBtn,
     ),
+    lockSettingsCard(),
     h(
       'section',
       { class: 'card', 'aria-label': fr.settings.contents },

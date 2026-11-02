@@ -33,6 +33,8 @@ jobs:
           # « Repository variables » dans Settings > Secrets and variables > Actions > Variables.
           VITE_GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}
           VITE_SHEET_ID: ${{ vars.VITE_SHEET_ID }}
+          # Facultatif : adresses Google autorisées, séparées par des virgules (défense en profondeur).
+          VITE_ALLOWED_EMAILS: ${{ vars.VITE_ALLOWED_EMAILS }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
