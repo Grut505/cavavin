@@ -155,3 +155,15 @@
   font-size: 0.6rem;
   color: var(--text-muted);
 }
+
+.tbd__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: 2px var(--space-3) 0;
+}
+.tbd__foot .tbd__note {
+  margin: 0;
+  flex: 1;
+}

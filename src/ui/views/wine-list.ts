@@ -231,6 +231,11 @@ export function wineListView(ctx: AppContext): HTMLElement {
     personList = persons.map((p) => ({ id: p.id, name: p.name }));
     counts = bottleCounts(stocks);
     rows = buildRows({ wines, stocks, locations, furniture });
+    // Un filtre « Offert par » qui ne correspond plus à aucune fiche (cadeaux tous sortis…) ne doit pas rester coincé.
+    if (filters.giftFrom !== null && !wines.some((w) => !w.deleted && w.gift && w.gift_from === filters.giftFrom)) {
+      filters = { ...filters, giftFrom: null };
+      savePref('list.filters', filters);
+    }
     if (!root.querySelector('.toolbar')) {
       root.replaceChildren(root.firstElementChild!, searchInput, toolbar, summary, resetBtn, list);
     }

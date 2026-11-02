@@ -96,6 +96,48 @@ Lors du référencement d'une bouteille, le projet Claude propose une liste de *
 
 ---
 
+### User Story 5 - Compléter les mets des fiches existantes (Priority: P3)
+
+Pour les bouteilles référencées avant les mets, l'utilisateur ouvre « Compléter les mets » (Réglages, ou lien depuis « Quoi boire ce soir ») : l'application prépare un prompt listant les fiches sans mets (par lots de 30), à donner au projet Claude ; l'utilisateur colle la réponse et les mets sont ajoutés aux fiches.
+
+**Why this priority**: sans cela, les anciennes fiches ne ressortent jamais dans « Quoi boire ce soir ».
+
+**Independent Test**: avec des fiches sans mets, le prompt contient leurs identifiants ; coller une réponse valide remplit uniquement les fiches vides.
+
+**Acceptance Scenarios**:
+
+1. **Given** des fiches sans mets, **When** l'utilisateur ouvre l'écran, **Then** il voit leur nombre, copie un prompt de 30 fiches maximum (en stock d'abord) et est informé du nombre restant pour le lot suivant.
+2. **Given** la réponse de Claude collée, **When** l'utilisateur l'applique, **Then** seules les fiches connues et sans mets sont complétées, les mets non végétariens sont retirés, et un résumé signale ce qui a été ignoré (id inconnu, fiche déjà complétée).
+3. **Given** toutes les fiches complétées, **When** l'écran s'affiche, **Then** il indique qu'il n'y a rien à compléter.
+
+---
+
+### User Story 6 - Sortir une bouteille depuis l'Accueil (Priority: P3)
+
+Depuis « À boire » ou les résultats de « Quoi boire ce soir », un bouton « Je la bois » ouvre directement la sortie de stock (motif « bue », 1 bouteille, date du jour) ; à la validation, l'Accueil se recalcule.
+
+**Independent Test**: toucher « Je la bois » sur une fiche à boire, valider : le stock diminue d'une bouteille et une sortie « bue » est enregistrée.
+
+**Acceptance Scenarios**:
+
+1. **Given** une fiche en stock listée sur l'Accueil, **When** l'utilisateur touche « Je la bois » puis valide, **Then** une sortie est enregistrée, le stock baisse et la liste se met à jour.
+2. **Given** une fiche à plusieurs emplacements, **When** la sortie s'ouvre, **Then** il choisit l'emplacement concerné.
+
+---
+
+### User Story 7 - Savoir quoi racheter (Priority: P3)
+
+Un bloc « À racheter » liste les bouteilles que l'utilisateur a aimées (note 4 ou 5) et qui sont épuisées ou à leur dernier exemplaire, avec fournisseur et prix d'achat s'ils sont connus.
+
+**Independent Test**: avec des fiches notées et des stocks variés, seules les fiches notées ≥ 4 à stock 0 ou 1 apparaissent, épuisées d'abord.
+
+**Acceptance Scenarios**:
+
+1. **Given** une fiche notée 5 sans stock et une notée 4 avec une bouteille, **When** l'Accueil s'affiche, **Then** les deux sont listées (« Plus en stock », « Dernière bouteille ») avec note, fournisseur et prix.
+2. **Given** aucune fiche concernée, **When** l'Accueil s'affiche, **Then** le bloc n'apparaît pas.
+
+---
+
 ### Edge Cases
 
 - Fiche sans fenêtre de garde exploitable (valeurs absentes ou incohérentes, début postérieur à la fin) : groupe « Non évaluée », jamais masquée.
@@ -124,12 +166,16 @@ Lors du référencement d'une bouteille, le projet Claude propose une liste de *
 - **FR-011**: Le système MUST proposer, sur l'Accueil, une zone « Quoi boire ce soir ? » où l'utilisateur saisit un plat ou un ingrédient et obtient les bouteilles **en stock** dont les mets correspondent, recherchées localement.
 - **FR-012**: La recherche MUST être permissive : insensible à la casse, aux accents et aux ligatures (« bœuf » = « boeuf »), tolérante aux fautes de frappe (lettre oubliée, en trop, inversée ou fausse), aux pluriels et aux débuts de mot, et ignorer les mots courants (« un », « de », « pour »…), les nombres et les mentions de convives. Une bouteille est proposée dès qu'au moins la moitié des mots significatifs est retrouvée.
 - **FR-012a**: Les résultats MUST être classés par qualité de correspondance (complète d'abord), puis par maturité (à boire maintenant et « à finir » avant les autres, trop tôt en dernier), et afficher le met correspondant, la maturité et la fenêtre de garde.
-- **FR-012c**: Tout est géré en **mode végétarien** : les mets sont végétariens (ni viande, ni charcuterie, ni poisson, ni fruits de mer ; œufs, laitages et fromages acceptés). Un met non végétarien reçu dans une proposition est écarté avec un avertissement ; saisi à la main dans la fiche, il est refusé avec un message clair ; une recherche d'un plat non végétarien l'explique au lieu d'un simple « aucun résultat ».
 - **FR-012b**: L'application n'appelle aucun service d'IA, ne contient aucune clé d'API ; l'intelligence vient uniquement des mets enregistrés à l'ajout de la bouteille.
+- **FR-012c**: Tout est géré en **mode végétarien** : les mets sont végétariens (ni viande, ni charcuterie, ni poisson, ni fruits de mer ; œufs, laitages et fromages acceptés). Un met non végétarien reçu dans une proposition est écarté avec un avertissement ; saisi à la main dans la fiche, il est refusé avec un message clair ; une recherche d'un plat non végétarien l'explique au lieu d'un simple « aucun résultat ».
 - **FR-013**: Le système MUST proposer une fiche par personne, accessible depuis Réglages > Personnes, listant les bouteilles qu'elle a offertes : « En stock » (titre, quantité, emplacement) et « Déjà sorties » (titre, date et motif de sortie).
 - **FR-014**: Le système MUST ajouter à la Liste un filtre « Offert par » (une personne), combinable avec les filtres existants, apparaissant comme filtre actif effaçable, et restreint aux bouteilles en stock.
-- **FR-015**: Le système MUST calculer tout cela localement, hors-ligne, à partir des données déjà synchronisées, sans nouvelle colonne ni nouvel onglet dans la feuille ; un changement de données se reflète à l'affichage suivant.
+- **FR-015**: Le système MUST calculer tout cela localement, hors-ligne, à partir des données déjà synchronisées, à l'exception de la colonne des mets (FR-009), sans nouvel onglet dans la feuille ; un changement de données se reflète à l'affichage suivant.
 - **FR-016**: Tous les nouveaux écrans MUST disposer d'états vides explicites, de libellés accessibles (contraste AA, graphiques doublés d'un texte ou d'un tableau lisible par lecteur d'écran), du mode sombre, et ne jamais défiler horizontalement sur iPhone.
+- **FR-017**: Le système MUST proposer « Compléter les mets » : prompt par lots de 30 fiches sans mets (en stock d'abord, identifiants inclus, cuisine végétarienne), puis lecture de la réponse collée qui ne complète que les fiches connues et sans mets, retire les mets non végétariens et résume ce qui a été ignoré. Aucun appel d'IA par l'application.
+- **FR-018**: Le système MUST proposer, sur chaque fiche listée dans « À boire » et dans les résultats de « Quoi boire ce soir », un bouton « Je la bois » ouvrant la sortie de stock préremplie (motif « bue », quantité 1, date du jour), puis recalculant l'Accueil.
+- **FR-019**: Le système MUST afficher un bloc « À racheter » des fiches notées 4 ou 5 dont le stock est de 0 (« Plus en stock ») ou 1 (« Dernière bouteille »), épuisées d'abord, avec note, fournisseur et prix d'achat si connus, et le masquer s'il est vide.
+- **FR-020**: Un filtre « Offert par » de la Liste qui ne correspond plus à aucune fiche cadeau MUST être retiré automatiquement à l'ouverture de la Liste.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -150,6 +196,7 @@ Lors du référencement d'une bouteille, le projet Claude propose une liste de *
 - **SC-005**: Pour un plat saisi avec une ou deux fautes de frappe, les bonnes bouteilles sont proposées en moins de 10 secondes, sans réseau.
 - **SC-006**: Avec 1000 fiches, l'Accueil s'affiche en moins de 1 seconde perçue et fonctionne intégralement sans réseau.
 - **SC-007**: Un test sur iPhone confirme que les cinq onglets restent lisibles et tapables à une main, sans défilement horizontal.
+- **SC-008**: Sortir une bouteille depuis l'Accueil prend moins de 10 secondes (un tap pour ouvrir, un tap pour valider).
 
 ## Assumptions
 
@@ -160,4 +207,5 @@ Lors du référencement d'une bouteille, le projet Claude propose une liste de *
 - L'historique des sorties existant (date, motif, fiche) est suffisant pour la consommation ; les sorties antérieures à l'existence de l'historique n'y figurent pas.
 - Les mets sont des estimations de Claude, pas une vérité : l'utilisateur les corrige. Les fiches créées avant cette fonctionnalité n'ont pas de mets tant qu'on ne les complète pas ; aucune extraction rétroactive n'est faite par l'application.
 - Ajout d'une colonne `pairings` à la feuille (constitution IV : documentée dans `contracts/sheet-schema.md`, migration automatique rétro-compatible, schéma v4).
-- Hors périmètre : rappels de rachat, accords mets-vins calculés ou inventés par l'application (elle ne fait que chercher dans les mets enregistrés), graphiques interactifs avancés, export des statistiques, import automatique de mets sur les fiches existantes.
+- Les « rachats » sont dérivés de la note (4 ou 5) et du stock (0 ou 1) : aucun rappel programmé, aucune notification, aucun marquage manuel « à racheter » (aucune donnée ajoutée).
+- Hors périmètre : accords mets-vins calculés ou inventés par l'application (elle ne fait que chercher dans les mets enregistrés), graphiques interactifs avancés, export des statistiques, import automatique de mets sur les fiches existantes.

@@ -88,6 +88,12 @@ export async function settingsView(ctx: AppContext): Promise<HTMLElement> {
       h('div', { class: 'grow' }, h('strong', {}, 'Personnes'), h('div', { class: 'muted' }, 'La liste des personnes qui vous offrent des bouteilles (champ « Cadeau »).')),
     ),
     h(
+      'a',
+      { class: 'card card--link', href: '#/mets' },
+      icon('list'),
+      h('div', { class: 'grow' }, h('strong', {}, 'Compléter les mets'), h('div', { class: 'muted' }, 'Ajouter les mets conseillés (végétariens) aux fiches qui n’en ont pas, avec Claude.')),
+    ),
+    h(
       'button',
       {
         class: 'btn',

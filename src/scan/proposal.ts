@@ -84,7 +84,7 @@ function scanBalanced(text: string): unknown | undefined {
   return undefined;
 }
 
-function extractJson(text: string): unknown | undefined {
+export function extractJson(text: string): unknown | undefined {
   const whole = tryParse(text.trim());
   if (whole !== undefined) return whole;
   for (const m of text.matchAll(/```(?:json)?\s*([\s\S]*?)```/gi)) {

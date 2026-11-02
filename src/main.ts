@@ -7,6 +7,7 @@ import { Router, type Route } from './ui/router';
 import { fr } from './ui/strings.fr';
 import { accessDeniedView, purgeLocalData } from './ui/views/access-denied';
 import { homeView } from './ui/views/home';
+import { pairingsBackfillView } from './ui/views/pairings-backfill';
 import { personView } from './ui/views/person';
 import { addHubView } from './ui/views/add-hub';
 import { addWineView, editWineView } from './ui/views/add-wine';
@@ -44,6 +45,7 @@ async function boot(): Promise<void> {
     { path: '/propositions', parent: '/ajouter', render: proposalsView },
     { path: '/reglages', nav: { label: fr.nav.settings, icon: 'settings' }, render: settingsView },
     { path: '/personnes', parent: '/reglages', render: personsView },
+    { path: '/mets', parent: '/reglages', render: pairingsBackfillView },
     { path: '/personne/:id', parent: '/reglages', render: personView },
     { path: '/avis', parent: '/reglages', render: syncNoticesView },
     { path: '/connexion', render: signInView },

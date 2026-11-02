@@ -8,4 +8,8 @@
 - [X] T006 [US2] Fiche personne `src/ui/views/person.ts`, lien depuis Réglages > Personnes
 - [X] T007 Navigation 5 onglets, icône, route d'ouverture `/accueil` (`main.ts`, `app.ts`, `sign-in.ts`)
 - [X] T008 [US4] Champ `pairings` : types, schéma v4 + migration (`tests/contract/schema-v4.test.ts`), formulaire, fiche détaillée, proposition/rapprochement, prompts `claude-project/` et `src/scan/prompt.ts`, contrats
+- [X] T010 [US5] « Compléter les mets » : `pairing-backfill.ts`, vue `pairings-backfill.ts` (`/mets`), liens Réglages et Accueil, tests `tests/unit/extras.test.ts`
+- [X] T011 [US6] « Je la bois » depuis l'Accueil : `quick-outflow.ts`
+- [X] T012 [US7] « À racheter » : `rebuy.ts` + bloc Accueil
+- [X] T013 Filtre « Offert par » périmé retiré automatiquement (`wine-list.ts`)
 - [ ] T009 Vérification sur iPhone : 5 onglets lisibles à une main, Accueil < 1 s avec 1000 fiches, copie du prompt dans Safari (SC-005 à SC-007)
