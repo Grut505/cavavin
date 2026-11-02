@@ -21,6 +21,7 @@ import { searchRows } from '../../domain/search';
 import { renderWineCard } from '../components/wine-card';
 import { h } from '../dom';
 import { icon } from '../icons';
+import { MATURITY_ORDER, type Maturity } from '../../domain/maturity';
 import { wineHref } from '../nav-origin';
 import { loadPref, savePref } from '../prefs';
 
@@ -44,6 +45,8 @@ function normalizeFilters(raw: unknown): Filters | null {
     colors: strings(r.colors).filter((c): c is Filters['colors'][number] => (WINE_COLORS as readonly string[]).includes(c)),
     countries: strings(r.countries),
     regions: strings(r.regions),
+    appellations: strings(r.appellations),
+    maturity: strings(r.maturity).filter((m): m is Maturity => (MATURITY_ORDER as readonly string[]).includes(m)),
     vintageMin: intOrNull(r.vintageMin),
     vintageMax: intOrNull(r.vintageMax),
     qtyMin: intOrNull(r.qtyMin),

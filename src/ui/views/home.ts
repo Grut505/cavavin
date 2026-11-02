@@ -16,7 +16,8 @@ import {
 import { pairingVocabulary, searchByDish } from '../../domain/pairing';
 import { rebuyList } from '../../domain/rebuy';
 import { isVegetarian } from '../../domain/pairing-list';
-import { buildRows, type WineRow } from '../../domain/query';
+import { buildRows, emptyFilters, type Filters, type WineRow } from '../../domain/query';
+import { maturityFilter, sliceFilter } from '../../domain/stats-filter';
 import {
   cellarValue,
   consumption,
@@ -33,6 +34,7 @@ import { OUTFLOW_REASONS, WINE_COLORS, type Outflow, type Wine, type WineColor }
 import { wineTitle } from '../../domain/wine';
 import { wineHref } from '../nav-origin';
 import { loadPref, savePref } from '../prefs';
+import { Router } from '../router';
 import { pageHeader } from '../components/page-header';
 import { quickOutflow } from '../components/quick-outflow';
 import { colorLabel, renderWineCard } from '../components/wine-card';
@@ -313,20 +315,36 @@ function rebuySection(rows: WineRow[], thumbs: Map<string, string>): HTMLElement
 
 // --- Statistiques ---
 
-function bars(slices: Slice[], total: number, label: (s: Slice) => string = (s) => s.label): HTMLElement {
+/** Ouvre la Liste préfiltrée (les filtres précédents sont remplacés). */
+function openList(filters: Partial<Filters>): void {
+  savePref('list.filters', { ...emptyFilters(), ...filters });
+  Router.go('/liste');
+}
+
+/**
+ * Barres horizontales. Avec `pick`, chaque ligne qui correspond à un filtre devient un bouton qui ouvre la Liste
+ * préfiltrée ; les autres (millésime non renseigné…) restent de simples lignes.
+ */
+function bars(slices: Slice[], total: number, label: (s: Slice) => string = (s) => s.label, pick?: (s: Slice) => Partial<Filters> | null): HTMLElement {
   const max = Math.max(1, ...slices.map((s) => s.bottles));
   return h(
     'ul',
     { class: 'bars' },
-    slices.map((s) =>
-      h(
-        'li',
-        { class: 'bars__row' },
+    slices.map((s) => {
+      const filter = pick?.(s) ?? null;
+      const inner = [
         h('span', { class: 'bars__label' }, label(s)),
         h('span', { class: 'bars__track', 'aria-hidden': 'true' }, h('span', { class: 'bars__fill', style: `width:${Math.max(3, Math.round((s.bottles / max) * 100))}%` })),
-        h('span', { class: 'bars__value', 'aria-label': `${bottles(s.bottles)}, ${Math.round((s.bottles / Math.max(1, total)) * 100)} %` }, String(s.bottles)),
-      ),
-    ),
+        h('span', { class: 'bars__value', 'aria-label': `${bottles(s.bottles)}, ${Math.round((s.bottles / Math.max(1, total)) * 100)} %` }, String(s.bottles), filter ? h('span', { class: 'bars__chev', 'aria-hidden': 'true' }, '›') : null),
+      ];
+      return h(
+        'li',
+        { class: 'bars__item' },
+        filter
+          ? h('button', { class: 'bars__row bars__btn', type: 'button', 'data-stat': label(s), 'aria-label': `${label(s)} : ${bottles(s.bottles)}. Voir dans la Liste`, onClick: () => openList(filter) }, ...inner)
+          : h('div', { class: 'bars__row' }, ...inner),
+      );
+    }),
   );
 }
 
@@ -341,10 +359,12 @@ const AXES: { axis: Axis; title: string; top: number }[] = [
 function statsSection(rows: WineRow[], outflows: Outflow[], year: number, now: Date): HTMLElement {
   const ov = overview(rows);
   const section = h('section', { class: 'home__section', 'aria-labelledby': 'h-stats' }, h('h2', { id: 'h-stats' }, 'Statistiques'));
+  const hint = h('p', { class: 'muted', style: 'font-size:0.85rem' }, 'Touchez une ligne pour voir les bouteilles correspondantes dans la Liste.');
   if (ov.bottles === 0 && outflows.length === 0) {
     section.append(h('div', { class: 'card empty muted' }, 'Les statistiques apparaîtront dès que la cave contiendra des bouteilles.'));
     return section;
   }
+  section.append(hint);
   const value = cellarValue(rows);
   const tile = (label: string, v: string, sub?: string): HTMLElement =>
     h('div', { class: 'tile' }, h('dt', { class: 'muted' }, label), h('dd', {}, v, sub ? h('small', { class: 'muted' }, sub) : null));
@@ -363,13 +383,14 @@ function statsSection(rows: WineRow[], outflows: Outflow[], year: number, now: D
   // Maturité
   const mat = maturityGroups(rows, year);
   const matSlices: Slice[] = mat.filter((g) => g.bottles > 0).map((g) => ({ label: MATURITY_LABELS[g.category as Maturity], bottles: g.bottles, wines: g.entries.length }));
-  if (matSlices.length > 0) section.append(h('div', { class: 'card' }, h('h3', {}, 'Maturité'), bars(matSlices, ov.bottles)));
+  const matByLabel = new Map(mat.map((g) => [MATURITY_LABELS[g.category], g.category] as const));
+  if (matSlices.length > 0) section.append(h('div', { class: 'card' }, h('h3', {}, 'Maturité'), bars(matSlices, ov.bottles, undefined, (s) => maturityFilter(matByLabel.get(s.label)!))));
 
   // Répartitions
   for (const { axis, title, top } of AXES) {
     const slices = topSlices(distribution(rows, axis), top);
     if (slices.length === 0) continue;
-    section.append(h('div', { class: 'card' }, h('h3', {}, title), bars(slices, ov.bottles, axis === 'color' ? (s) => colorLabel(s.label) || s.label : undefined)));
+    section.append(h('div', { class: 'card' }, h('h3', {}, title), bars(slices, ov.bottles, axis === 'color' ? (s) => colorLabel(s.label) || s.label : undefined, (s) => sliceFilter(axis, s))));
   }
 
   // Consommation

@@ -202,3 +202,30 @@
 .tbd__more:empty {
   display: none;
 }
+
+/* Lignes de statistiques cliquables → Liste préfiltrée */
+.bars__item {
+  margin: 0;
+}
+.bars__btn {
+  width: calc(100% + var(--space-4));
+  min-height: var(--tap);
+  padding: 0 var(--space-2);
+  margin: 0 calc(-1 * var(--space-2));
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.bars__btn:hover,
+.bars__btn:focus-visible {
+  background: var(--accent-soft);
+}
+.bars__chev {
+  margin-left: var(--space-2);
+  color: var(--text-muted);
+  font-weight: 400;
+}

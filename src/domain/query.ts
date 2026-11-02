@@ -1,4 +1,5 @@
 // Liste des fiches : lignes dérivées (quantités, emplacements), tri et filtres (FR-006, FR-007, FR-008).
+import { classify, type Maturity } from './maturity';
 import { normalizeText } from './normalize';
 import { WINE_COLORS, type Furniture, type Location, type Stock, type Wine, type WineColor } from './types';
 
@@ -36,6 +37,10 @@ export interface Filters {
   colors: WineColor[];
   countries: string[];
   regions: string[];
+  /** Appellations (comme pays et régions, `''` = non renseigné). */
+  appellations: string[];
+  /** Catégories de maturité (selon la fenêtre de garde et l'année en cours). */
+  maturity: Maturity[];
   /** Plage de millésimes (les non millésimés en sont exclus dès qu'une borne est posée). */
   vintageMin: number | null;
   vintageMax: number | null;
@@ -54,6 +59,8 @@ export function emptyFilters(): Filters {
     colors: [],
     countries: [],
     regions: [],
+    appellations: [],
+    maturity: [],
     vintageMin: null,
     vintageMax: null,
     qtyMin: null,
@@ -70,6 +77,8 @@ export function activeFilterCount(f: Filters): number {
     (f.colors.length > 0 ? 1 : 0) +
     (f.countries.length > 0 ? 1 : 0) +
     (f.regions.length > 0 ? 1 : 0) +
+    (f.appellations.length > 0 ? 1 : 0) +
+    (f.maturity.length > 0 ? 1 : 0) +
     (f.vintageMin !== null || f.vintageMax !== null ? 1 : 0) +
     (f.qtyMin !== null || f.qtyMax !== null ? 1 : 0) +
     (f.locationIds.length > 0 ? 1 : 0) +
@@ -133,12 +142,14 @@ export const totalBottles = (rows: WineRow[]): number => rows.reduce((n, r) => n
 
 const norm = (v: string | null): string => normalizeText(v);
 
-export function matches(row: WineRow, f: Filters): boolean {
+export function matches(row: WineRow, f: Filters, year: number = new Date().getFullYear()): boolean {
   const { wine } = row;
   if (!f.includeHistory && row.quantity <= 0) return false;
   if (f.colors.length > 0 && !(wine.color && f.colors.includes(wine.color))) return false;
   if (f.countries.length > 0 && !f.countries.some((c) => norm(c) === norm(wine.country))) return false;
   if (f.regions.length > 0 && !f.regions.some((r) => norm(r) === norm(wine.region))) return false;
+  if (f.appellations.length > 0 && !f.appellations.some((a) => norm(a) === norm(wine.appellation))) return false;
+  if (f.maturity.length > 0 && !f.maturity.includes(classify(wine, year).category)) return false;
   if (f.vintageMin !== null || f.vintageMax !== null) {
     if (wine.vintage === null) return false;
     if (f.vintageMin !== null && wine.vintage < f.vintageMin) return false;
@@ -191,8 +202,8 @@ function tieBreak(a: WineRow, b: WineRow): number {
   );
 }
 
-export function queryRows(rows: WineRow[], filters: Filters, sort: SortSpec): WineRow[] {
-  return rows.filter((r) => matches(r, filters)).sort((a, b) => compare(a, b, sort) || tieBreak(a, b));
+export function queryRows(rows: WineRow[], filters: Filters, sort: SortSpec, year: number = new Date().getFullYear()): WineRow[] {
+  return rows.filter((r) => matches(r, filters, year)).sort((a, b) => compare(a, b, sort) || tieBreak(a, b));
 }
 
 // --- facettes (valeurs disponibles pour construire les filtres) ---
@@ -201,6 +212,7 @@ export interface Facets {
   colors: WineColor[];
   countries: string[];
   regions: string[];
+  appellations: string[];
   vintageMin: number | null;
   vintageMax: number | null;
 }
@@ -209,6 +221,7 @@ export function facetsOf(rows: WineRow[]): Facets {
   const colors = new Set<WineColor>();
   const countries = new Map<string, string>();
   const regions = new Map<string, string>();
+  const appellations = new Map<string, string>();
   let vMin: number | null = null;
   let vMax: number | null = null;
   for (const { wine, quantity } of rows) {
@@ -216,6 +229,7 @@ export function facetsOf(rows: WineRow[]): Facets {
     if (wine.color) colors.add(wine.color);
     if (wine.country && !countries.has(norm(wine.country))) countries.set(norm(wine.country), wine.country);
     if (wine.region && !regions.has(norm(wine.region))) regions.set(norm(wine.region), wine.region);
+    if (wine.appellation && !appellations.has(norm(wine.appellation))) appellations.set(norm(wine.appellation), wine.appellation);
     if (wine.vintage !== null) {
       vMin = vMin === null ? wine.vintage : Math.min(vMin, wine.vintage);
       vMax = vMax === null ? wine.vintage : Math.max(vMax, wine.vintage);
@@ -226,6 +240,7 @@ export function facetsOf(rows: WineRow[]): Facets {
     colors: WINE_COLORS.filter((c) => colors.has(c)),
     countries: sortText(countries),
     regions: sortText(regions),
+    appellations: sortText(appellations),
     vintageMin: vMin,
     vintageMax: vMax,
   };

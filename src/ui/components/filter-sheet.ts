@@ -9,6 +9,7 @@ import {
   type WineRow,
 } from '../../domain/query';
 import { sortByOrder } from '../../domain/locations';
+import { MATURITY_LABELS, MATURITY_ORDER, classify } from '../../domain/maturity';
 import type { Furniture, Location, WineColor } from '../../domain/types';
 import { h } from '../dom';
 import { colorLabel } from './wine-card';
@@ -107,6 +108,11 @@ export function openFilterSheet(input: FilterSheetInput): Promise<Filters | null
         const colors = [...new Set<WineColor>([...facets.colors, ...draft.colors])];
         const countries = [...new Set([...facets.countries, ...draft.countries])];
         const regions = [...new Set([...facets.regions, ...draft.regions])];
+        const appellations = [...new Set([...facets.appellations, ...draft.appellations])];
+        const year = new Date().getFullYear();
+        const maturityCounts = new Map<string, number>();
+        for (const r of input.rows) if (r.quantity > 0) maturityCounts.set(classify(r.wine, year).category, (maturityCounts.get(classify(r.wine, year).category) ?? 0) + r.quantity);
+        const nameOf = (v: string): string => (v === '' ? 'Non renseigné' : v);
 
         const live = input.locations.filter((l) => !l.deleted);
         const shelvesOf = (fid: string): Location[] =>
@@ -123,11 +129,24 @@ export function openFilterSheet(input: FilterSheetInput): Promise<Filters | null
           colors.length > 0
             ? group('Couleur', h('div', { class: 'chips' }, colors.map((c) => chip(colorLabel(c), draft.colors.includes(c), () => (draft.colors = toggle(draft.colors, c))))))
             : null,
+          group(
+            'Maturité',
+            h(
+              'div',
+              { class: 'chips' },
+              MATURITY_ORDER.filter((m) => (maturityCounts.get(m) ?? 0) > 0 || draft.maturity.includes(m)).map((m) =>
+                chip(MATURITY_LABELS[m], draft.maturity.includes(m), () => (draft.maturity = toggle(draft.maturity, m)), String(maturityCounts.get(m) ?? 0)),
+              ),
+            ),
+          ),
           countries.length > 0
-            ? group('Pays', h('div', { class: 'chips' }, countries.map((c) => chip(c, draft.countries.includes(c), () => (draft.countries = toggle(draft.countries, c))))))
+            ? group('Pays', h('div', { class: 'chips' }, countries.map((c) => chip(nameOf(c), draft.countries.includes(c), () => (draft.countries = toggle(draft.countries, c))))))
             : null,
           regions.length > 0
-            ? group('Région', h('div', { class: 'chips' }, regions.map((r) => chip(r, draft.regions.includes(r), () => (draft.regions = toggle(draft.regions, r))))))
+            ? group('Région', h('div', { class: 'chips' }, regions.map((r) => chip(nameOf(r), draft.regions.includes(r), () => (draft.regions = toggle(draft.regions, r))))))
+            : null,
+          appellations.length > 0
+            ? group('Appellation', h('div', { class: 'chips' }, appellations.map((a) => chip(nameOf(a), draft.appellations.includes(a), () => (draft.appellations = toggle(draft.appellations, a))))))
             : null,
           group(
             'Millésime',

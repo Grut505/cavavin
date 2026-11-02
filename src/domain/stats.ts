@@ -10,6 +10,8 @@ export interface Slice {
   label: string;
   bottles: number;
   wines: number;
+  /** Pour « Autres » : libellés regroupés (pour retrouver ces fiches dans la Liste). */
+  keys?: string[];
 }
 
 export interface Overview {
@@ -56,7 +58,7 @@ export function topSlices(slices: Slice[], n: number): Slice[] {
   const other = rest.filter((s) => s.label !== NOT_SET);
   const unset = rest.find((s) => s.label === NOT_SET);
   const out = [...head];
-  if (other.length > 0) out.push({ label: 'Autres', bottles: other.reduce((a, s) => a + s.bottles, 0), wines: other.reduce((a, s) => a + s.wines, 0) });
+  if (other.length > 0) out.push({ label: 'Autres', bottles: other.reduce((a, s) => a + s.bottles, 0), wines: other.reduce((a, s) => a + s.wines, 0), keys: other.map((s) => s.label) });
   if (unset) out.push(unset);
   return out;
 }
