@@ -59,7 +59,7 @@ describe('mises à jour de l’application', () => {
     f.hooks.onNeedRefresh!();
     expect(u.updateState().needRefresh).toBe(true);
     expect(f.activate).not.toHaveBeenCalled();
-    await u.applyUpdate();
+    await u.applyUpdate({ fallbackMs: 5, reload: () => undefined, sw: new EventTarget() as unknown as ServiceWorkerContainer });
     expect(f.activate).toHaveBeenCalledWith(true);
   });
 
@@ -75,6 +75,37 @@ describe('mises à jour de l’application', () => {
     await waitFor(() => expect(f.update).toHaveBeenCalledTimes(3));
     expect(await u.checkForUpdate()).toBe('uptodate');
     expect(u.updateState().checkedAt).not.toBeNull();
+  });
+
+  it('applyUpdate : recharge dès que le nouveau Service Worker prend le contrôle', async () => {
+    const u = await fresh();
+    const f = fakeRegister();
+    u.startUpdates(f.register);
+    const waiting = { postMessage: vi.fn() };
+    f.hooks.onRegisteredSW!('sw.js', { update: f.update, waiting } as unknown as ServiceWorkerRegistration);
+    const sw = new EventTarget() as unknown as ServiceWorkerContainer;
+    const reload = vi.fn();
+    const done = u.applyUpdate({ fallbackMs: 20, reload, sw });
+    await waitFor(() => expect(waiting.postMessage).toHaveBeenCalledWith({ type: 'SKIP_WAITING' }));
+    sw.dispatchEvent(new Event('controllerchange'));
+    await done;
+    expect(reload).toHaveBeenCalledTimes(1); // une seule fois, sans forcer en plus
+  });
+
+  it('applyUpdate : si rien ne se passe (iPhone), bascule sur le rafraîchissement forcé', async () => {
+    const u = await fresh();
+    const f = fakeRegister(); // l'activation douce ne recharge jamais
+    u.startUpdates(f.register);
+    const unregister = vi.fn(async () => true);
+    const del = vi.fn(async () => true);
+    Object.defineProperty(navigator, 'serviceWorker', { value: { getRegistrations: async () => [{ unregister }] }, configurable: true });
+    Object.defineProperty(globalThis, 'caches', { value: { keys: async () => ['c'], delete: del }, configurable: true });
+    const reload = vi.fn();
+    await u.applyUpdate({ fallbackMs: 10, reload, sw: new EventTarget() as unknown as ServiceWorkerContainer });
+    expect(f.activate).toHaveBeenCalledWith(true);
+    expect(unregister).toHaveBeenCalledTimes(1);
+    expect(del).toHaveBeenCalledTimes(1);
+    expect(reload).toHaveBeenCalledTimes(1);
   });
 
   it('« indisponible » sans Service Worker', async () => {

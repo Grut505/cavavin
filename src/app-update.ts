@@ -80,9 +80,35 @@ export async function checkForUpdate(): Promise<CheckResult> {
   return state.needRefresh || registration.waiting ? 'available' : 'uptodate';
 }
 
-/** Active la version téléchargée et recharge l'application. Les données locales ne sont pas touchées. */
-export async function applyUpdate(): Promise<void> {
-  if (activate) await activate(true);
+/** Délai avant le plan B : si l'activation douce n'a pas rechargé l'application, on force. */
+export const APPLY_FALLBACK_MS = 2500;
+
+/**
+ * Active la version téléchargée et recharge l'application. Les données locales ne sont pas touchées.
+ * Sur iPhone (app installée), l'activation douce du Service Worker n'aboutit pas toujours : on la tente de
+ * trois façons (plugin, message direct, changement de contrôleur), puis, si la page est toujours là après
+ * un court délai, on bascule sur le rafraîchissement forcé, qui recharge à coup sûr depuis le réseau.
+ */
+export async function applyUpdate(
+  opts: { fallbackMs?: number; reload?: () => void; sw?: ServiceWorkerContainer } = {},
+): Promise<void> {
+  const reload = opts.reload ?? (() => window.location.reload());
+  const sw = opts.sw ?? (typeof navigator !== 'undefined' ? navigator.serviceWorker : undefined);
+  let reloaded = false;
+  const reloadOnce = (): void => {
+    if (reloaded) return;
+    reloaded = true;
+    reload();
+  };
+  sw?.addEventListener?.('controllerchange', reloadOnce);
+  try {
+    await activate?.(true);
+  } catch {
+    /* on continue avec les autres moyens */
+  }
+  registration?.waiting?.postMessage({ type: 'SKIP_WAITING' });
+  await new Promise((resolve) => setTimeout(resolve, opts.fallbackMs ?? APPLY_FALLBACK_MS));
+  if (!reloaded) await forceRefresh(reloadOnce);
 }
 
 /**
