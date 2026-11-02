@@ -111,6 +111,16 @@ export function maturityGroups(rows: WineRow[], year: number, opts: GroupOptions
   });
 }
 
+/** Bouteilles à boire en priorité : en retard, ou à finir (fin de garde cette année ou la suivante). */
+export function urgentBottles(rows: WineRow[], year: number): number {
+  let n = 0;
+  for (const g of maturityGroups(rows, year)) {
+    if (g.category === 'late') n += g.bottles;
+    else if (g.category === 'now') n += g.entries.filter((e) => e.info.finishing).reduce((s, e) => s + e.row.quantity, 0);
+  }
+  return n;
+}
+
 /** Bouteilles en stock par couleur, de la plus à la moins nombreuse (pour proposer le filtre). */
 export function colorCounts(rows: WineRow[], year: number): { color: NonNullable<Wine['color']>; bottles: number }[] {
   const map = new Map<NonNullable<Wine['color']>, number>();

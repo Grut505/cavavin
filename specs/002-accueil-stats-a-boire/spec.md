@@ -181,6 +181,7 @@ Un bloc « À racheter » liste les bouteilles que l'utilisateur a aimées (note
 - **FR-023**: Après une sortie « bue », le système MUST proposer un avis (note de 1 à 5, commentaire), facultatif (« Plus tard »), enregistré sur la fiche (note) et la sortie (commentaire) ; la note alimente « À racheter ».
 - **FR-024**: Après toute sortie de stock, le système MUST proposer pendant quelques secondes d'annuler : les bouteilles reviennent à leur emplacement d'origine (un stock épuisé redevient actif) et les sorties disparaissent de l'historique.
 - **FR-025**: Le système MUST proposer une liste de courses : bouton « Ajouter à ma liste » sur les lignes de « À racheter » et sur la fiche, écran « Liste de courses » (fournisseur, prix, stock), « Acheté » (ajoute les bouteilles puis retire de la liste), « Retirer » et « Partager » (partage du téléphone, sinon copie). Donnée : colonne `to_buy` de `Vins` (schéma v5).
+- **FR-026**: L'onglet Accueil MUST porter une pastille indiquant le nombre de bouteilles à boire en priorité (en retard, ou à finir), recalculée à chaque modification, synchronisation et retour au premier plan, lisible par lecteur d'écran (« Accueil, 3 bouteilles à boire en priorité ») ; aucune notification n'est envoyée (pas de serveur).
 
 ### Key Entities *(include if feature involves data)*
 

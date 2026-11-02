@@ -32,6 +32,8 @@ function match(route: Route, path: string): Params | null {
 
 export class Router {
   private root!: HTMLElement;
+  /** Pastilles de la barre d'onglets, par chemin (ex. bouteilles à boire en priorité sur l'Accueil). */
+  private readonly badges = new Map<string, { count: number; label: string }>();
   private ticket = 0;
 
   constructor(
@@ -48,6 +50,26 @@ export class Router {
     this.root = root;
     window.addEventListener('hashchange', () => void this.render());
     void this.render();
+  }
+
+  /** Affiche (ou retire, si `count` vaut 0) une pastille sur un onglet ; `label` complète le nom lu par les lecteurs d'écran. */
+  setBadge(path: string, count: number, label: string): void {
+    if (count > 0) this.badges.set(path, { count, label });
+    else this.badges.delete(path);
+    const tab = this.root?.querySelector<HTMLElement>(`nav a[href="#${path}"]`);
+    if (tab) this.paintBadge(tab, path);
+  }
+
+  private paintBadge(tab: HTMLElement, path: string): void {
+    tab.querySelector('.nav__badge')?.remove();
+    const base = tab.getAttribute('data-label') ?? tab.textContent ?? '';
+    const badge = this.badges.get(path);
+    if (!badge) {
+      tab.removeAttribute('aria-label');
+      return;
+    }
+    tab.append(h('span', { class: 'nav__badge', 'aria-hidden': 'true' }, badge.count > 9 ? '9+' : String(badge.count)));
+    tab.setAttribute('aria-label', `${base}, ${badge.label}`);
   }
 
   static go(path: string): void {
@@ -96,7 +118,7 @@ export class Router {
   }
 
   private buildNav(current: string): HTMLElement {
-    return h(
+    const nav = h(
       'nav',
       { class: 'nav', 'aria-label': 'Navigation principale' },
       this.routes
@@ -104,11 +126,13 @@ export class Router {
         .map((r) =>
           h(
             'a',
-            { href: `#${r.path}`, ...(r.path === current ? { 'aria-current': 'page' } : {}) },
+            { href: `#${r.path}`, 'data-label': r.nav!.label, ...(r.path === current ? { 'aria-current': 'page' } : {}) },
             icon(r.nav!.icon),
             r.nav!.label,
           ),
         ),
     );
+    for (const a of nav.querySelectorAll<HTMLElement>('a')) this.paintBadge(a, a.getAttribute('href')!.slice(1));
+    return nav;
   }
 }

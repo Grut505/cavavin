@@ -181,6 +181,7 @@ textarea {
 }
 
 .nav a {
+  position: relative;
   flex: 1;
   min-height: var(--tap);
   display: flex;
@@ -250,4 +251,21 @@ textarea {
 /* L'attribut hidden doit toujours l'emporter sur les `display` des composants (boutons, bandeaux…). */
 [hidden] {
   display: none !important;
+}
+
+/* Pastille d'un onglet (ex. bouteilles à boire en priorité) */
+.nav__badge {
+  position: absolute;
+  top: 4px;
+  left: calc(50% + 6px);
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--danger);
+  color: var(--accent-contrast); /* blanc en clair, foncé en sombre : contraste AA dans les deux modes */
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
 }

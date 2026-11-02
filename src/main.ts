@@ -3,6 +3,8 @@ import { registerSW } from 'virtual:pwa-register';
 import { startUpdates } from './app-update';
 import { updateBanner } from './ui/components/update-banner';
 import { createContext, initialHash, isSheetReady } from './app';
+import { urgentBottles } from './domain/maturity';
+import { buildRows } from './domain/query';
 import { enforceAllowlist, requestToken, tryRenewSilently } from './auth/google-auth';
 import { disableLock } from './auth/app-lock';
 import { installLock } from './ui/components/lock-screen';
@@ -109,7 +111,22 @@ async function boot(): Promise<void> {
     },
   });
 
-  new Router(ctx, routes, ready ? '/accueil' : '/connexion', ['/connexion', '/refuse'], decorate).mount(root);
+  const router = new Router(ctx, routes, ready ? '/accueil' : '/connexion', ['/connexion', '/refuse'], decorate);
+  router.mount(root);
+
+  // Pastille sur l'onglet Accueil : bouteilles à boire en priorité (en retard ou à finir). Recalculée à chaque
+  // écriture, après chaque synchronisation et au retour au premier plan (l'année peut avoir changé).
+  const refreshBadge = async (): Promise<void> => {
+    const [wines, stocks, locations, furniture] = await Promise.all([ctx.repo.list('wine'), ctx.repo.list('stock'), ctx.repo.list('location'), ctx.repo.list('furniture')]);
+    const n = urgentBottles(buildRows({ wines, stocks, locations, furniture }), new Date().getFullYear());
+    router.setBadge('/accueil', n, `${n} bouteille${n > 1 ? 's' : ''} à boire en priorité`);
+  };
+  ctx.repo.onWrite(() => void refreshBadge());
+  ctx.scheduler.subscribe(() => void refreshBadge());
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') void refreshBadge();
+  });
+  void refreshBadge();
 }
 
 void boot();
