@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { giftsOf } from '../../src/domain/gifts';
-import { classify, maturityGroups, windowText } from '../../src/domain/maturity';
+import { classify, colorCounts, maturityGroups, windowText } from '../../src/domain/maturity';
 import { activeFilterCount, buildRows, emptyFilters, queryRows, type WineRow } from '../../src/domain/query';
 import { cellarValue, consumption, distribution, NOT_SET, overview, topSlices } from '../../src/domain/stats';
 import type { Outflow, Wine } from '../../src/domain/types';
@@ -40,6 +40,22 @@ describe('maturité', () => {
     expect(groups.reduce((s, g) => s + g.entries.length, 0)).toBe(4);
     expect(groups[1]!.entries[0]!.info.finishing).toBe(true); // « à finir » avant les autres
     expect(groups[0]!.bottles).toBe(3);
+  });
+
+  it('filtre par couleur et trie selon le critère choisi', () => {
+    const rows = [
+      row(wine({ domain: 'Zed', vintage: 2015, color: 'rouge', drink_from: 2020, drink_until: 2040 })),
+      row(wine({ domain: 'Alpha', vintage: null, color: 'blanc', drink_from: 2020, drink_until: 2028 })),
+      row(wine({ domain: 'Mike', vintage: 2010, color: 'rouge', drink_from: 2020, drink_until: 2027 }), 3),
+    ];
+    const names = (sort?: 'urgency' | 'domain' | 'vintage' | 'location', color?: 'rouge' | 'blanc'): string[] =>
+      maturityGroups(rows, Y, { sort, color })[1]!.entries.map((e) => e.row.wine.domain);
+    expect(names('urgency')).toEqual(['Mike', 'Alpha', 'Zed']); // « à finir » (2027) puis fin de garde
+    expect(names('domain')).toEqual(['Alpha', 'Mike', 'Zed']);
+    expect(names('vintage')).toEqual(['Mike', 'Zed', 'Alpha']); // non millésimé en dernier
+    expect(names('domain', 'rouge')).toEqual(['Mike', 'Zed']);
+    expect(maturityGroups(rows, Y, { color: 'blanc' })[1]!.bottles).toBe(1);
+    expect(colorCounts(rows, Y)).toEqual([{ color: 'rouge', bottles: 4 }, { color: 'blanc', bottles: 1 }]);
   });
 
   it('formate la fenêtre', () => {

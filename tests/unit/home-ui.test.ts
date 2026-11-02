@@ -99,10 +99,110 @@ describe('Accueil : pagination d’« À boire »', () => {
     const group = el.querySelector('.tbd--now')!;
     expect(group.querySelectorAll('.tbd__item')).toHaveLength(10);
     const more = [...group.querySelectorAll('button')].find((b) => b.textContent?.startsWith('Afficher'))!;
-    expect(more.textContent).toBe('Afficher 2 fiches restantes');
+    expect(more.textContent).toBe('Afficher 2 de plus (2 restantes)');
     click(more);
     expect(group.querySelectorAll('.tbd__item')).toHaveLength(12);
     expect(group.textContent).not.toContain('Afficher');
+  });
+});
+
+describe('Accueil : « À boire maintenant » avec 50 fiches', () => {
+  async function fifty() {
+    const { d, ctx, shelf } = await setup();
+    const year = new Date().getFullYear();
+    for (let i = 0; i < 50; i++) {
+      const w = await d.repo.create(
+        'wine',
+        wineData({
+          domain: `Domaine ${String(50 - i).padStart(2, '0')}`,
+          cuvee: `V${i}`,
+          color: i % 5 === 0 ? 'blanc' : 'rouge', // 10 blancs, 40 rouges
+          vintage: 2000 + i,
+          drink_from: year - 3,
+          drink_until: i < 6 ? year + 1 : year + 5 + (i % 7), // 6 « à finir », 44 « à point »
+        }),
+      );
+      await d.repo.create('stock', { wine_id: w.id, location_id: shelf.id, quantity: 1, position_hint: null });
+    }
+    const el = await homeView(ctx);
+    document.body.append(el);
+    return { el, group: () => el.querySelector('.tbd--now')! };
+  }
+  const items = (g: Element): string[] => [...g.querySelectorAll('.tbd__item .wine-card__domain')].map((e) => e.textContent ?? '');
+
+  beforeEach(() => localStorage.clear());
+
+  it('met « à finir » en tête avec un sous-titre, pagine par 10 et propose « Tout afficher »', async () => {
+    const { group } = await fifty();
+    const g = group();
+    expect(g.querySelector('.tbd__summary')!.textContent).toContain('50 fiches');
+    expect(items(g)).toHaveLength(10);
+    const subs = [...g.querySelectorAll('.tbd__sub')].map((e) => e.textContent);
+    expect(subs).toEqual(['À finir (6)', 'À point (44)']);
+    // les 6 « à finir » sont avant le sous-titre « À point »
+    const order = [...g.querySelectorAll('.tbd__list > li')].map((li) => (li.classList.contains('tbd__sub') ? 'S' : 'I')).join('');
+    expect(order.startsWith('SIIIIIISIIII')).toBe(true);
+
+    const more = [...g.querySelectorAll('button')].find((b) => b.textContent?.startsWith('Afficher 10 de plus'))!;
+    expect(more.textContent).toBe('Afficher 10 de plus (40 restantes)');
+    click(more);
+    expect(items(g)).toHaveLength(20);
+    click([...g.querySelectorAll('button')].find((b) => b.textContent === 'Tout afficher'));
+    expect(items(g)).toHaveLength(50);
+    expect([...g.querySelectorAll('button')].some((b) => b.textContent?.startsWith('Afficher') || b.textContent === 'Tout afficher')).toBe(false);
+  });
+
+  it('filtre par couleur et change le tri, en le mémorisant', async () => {
+    const { el, group } = await fifty();
+    const chip = (label: string): Element | undefined => [...el.querySelectorAll('.tbd__controls .btn')].find((b) => b.textContent?.startsWith(label));
+    expect(chip('Toutes')!.textContent).toBe('Toutes (50)');
+    click(chip('Blanc'));
+    expect(group().querySelector('.tbd__summary')!.textContent).toContain('10 fiches');
+    expect(chip('Blanc')!.getAttribute('aria-pressed')).toBe('true');
+
+    const select = el.querySelector('#drink-sort') as HTMLSelectElement;
+    select.value = 'domain';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    expect(items(group())).toEqual([...items(group())].sort((a, b) => a.localeCompare(b)));
+    expect(group().querySelector('.tbd__sub')).toBeNull(); // pas de sous-titres hors tri par urgence
+    expect(el.textContent).toContain('ordre alphabétique de domaine');
+    expect(JSON.parse(localStorage.getItem('cavavin.home.drink')!)).toEqual({ color: 'blanc', sort: 'domain' });
+  });
+
+  it('pagine aussi les résultats de « Quoi boire ce soir »', async () => {
+    const { d, ctx, shelf } = await setup();
+    const year = new Date().getFullYear();
+    for (let i = 0; i < 25; i++) {
+      const w = await d.repo.create('wine', wineData({ cuvee: `V${i}`, pairings: 'risotto aux champignons', drink_from: year - 1, drink_until: year + 5 }));
+      await d.repo.create('stock', { wine_id: w.id, location_id: shelf.id, quantity: 1, position_hint: null });
+    }
+    const el = await homeView(ctx);
+    document.body.append(el);
+    const input = el.querySelector('#dish') as HTMLInputElement;
+    input.value = 'risotto';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    await vi.waitFor(() => expect(el.querySelectorAll('.dish__results .wine-card')).toHaveLength(10));
+    expect(el.textContent).toContain('25 fiches correspondent');
+    click([...el.querySelectorAll('.dish__results button')].find((b) => b.textContent?.startsWith('Afficher 10 de plus (15 restantes)')));
+    expect(el.querySelectorAll('.dish__results .wine-card')).toHaveLength(20);
+    click([...el.querySelectorAll('.dish__results button')].find((b) => b.textContent?.startsWith('Afficher 5 de plus (5 restantes)')));
+    expect(el.querySelectorAll('.dish__results .wine-card')).toHaveLength(25);
+    expect([...el.querySelectorAll('.dish__results button')].some((b) => b.textContent?.startsWith('Afficher'))).toBe(false);
+  });
+
+  it('reprend les réglages mémorisés à la réouverture', async () => {
+    localStorage.setItem('cavavin.home.drink', JSON.stringify({ color: 'blanc', sort: 'vintage' }));
+    const { el, group } = await fifty();
+    expect(group().querySelector('.tbd__summary')!.textContent).toContain('10 fiches');
+    expect((el.querySelector('#drink-sort') as HTMLSelectElement).value).toBe('vintage');
+  });
+
+  it('n’affiche ni filtre ni tri quand il y a peu de fiches', async () => {
+    const { d, ctx, shelf } = await setup();
+    const w = await d.repo.create('wine', wineData({ drink_from: 2020, drink_until: 2099 }));
+    await d.repo.create('stock', { wine_id: w.id, location_id: shelf.id, quantity: 1, position_hint: null });
+    const el = await homeView(ctx);
+    expect(el.querySelector('.tbd__controls')).toBeNull();
   });
 });
 

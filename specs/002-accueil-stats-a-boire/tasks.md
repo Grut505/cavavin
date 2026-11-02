@@ -12,4 +12,5 @@
 - [X] T011 [US6] « Je la bois » depuis l'Accueil : `quick-outflow.ts`
 - [X] T012 [US7] « À racheter » : `rebuy.ts` + bloc Accueil
 - [X] T013 Filtre « Offert par » périmé retiré automatiquement (`wine-list.ts`)
+- [X] T014 [US1] Liste « À boire » à grande échelle (50+ fiches) : pagination, sous-titres « À finir/À point », filtre couleur, tri expliqué et mémorisé ; pagination des résultats « Quoi boire ce soir » (FR-021)
 - [ ] T009 Vérification sur iPhone : 5 onglets lisibles à une main, Accueil < 1 s avec 1000 fiches, copie du prompt dans Safari (SC-005 à SC-007)

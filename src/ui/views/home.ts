@@ -1,6 +1,18 @@
 // Accueil : « À boire » en premier, puis « Quoi boire ce soir ? » et les statistiques globales (spec 002).
 import type { AppContext } from '../../app';
-import { MATURITY_HINTS, MATURITY_LABELS, maturityGroups, windowText, type Maturity, type MaturityEntry } from '../../domain/maturity';
+import {
+  DRINK_SORT_HINTS,
+  DRINK_SORT_LABELS,
+  MATURITY_HINTS,
+  MATURITY_LABELS,
+  colorCounts,
+  maturityGroups,
+  windowText,
+  type DrinkSort,
+  type Maturity,
+  type MaturityEntry,
+  type MaturityGroup,
+} from '../../domain/maturity';
 import { pairingVocabulary, searchByDish } from '../../domain/pairing';
 import { rebuyList } from '../../domain/rebuy';
 import { isVegetarian } from '../../domain/pairing-list';
@@ -17,8 +29,9 @@ import {
   type Slice,
 } from '../../domain/stats';
 import { OUTFLOW_REASON_LABELS } from '../../domain/stock';
-import { OUTFLOW_REASONS, type Outflow, type Wine } from '../../domain/types';
+import { OUTFLOW_REASONS, WINE_COLORS, type Outflow, type Wine, type WineColor } from '../../domain/types';
 import { wineTitle } from '../../domain/wine';
+import { loadPref, savePref } from '../prefs';
 import { pageHeader } from '../components/page-header';
 import { quickOutflow } from '../components/quick-outflow';
 import { colorLabel, renderWineCard } from '../components/wine-card';
@@ -57,10 +70,28 @@ function entryRow(e: MaturityEntry, thumbs: Map<string, string>, year: number, o
   );
 }
 
+/** Réglages de la liste « À boire », mémorisés sur l'appareil. */
+interface DrinkPrefs {
+  color: WineColor | null;
+  sort: DrinkSort;
+}
+
+const normalizeDrinkPrefs = (raw: unknown): DrinkPrefs | null => {
+  if (!raw || typeof raw !== 'object') return null;
+  const r = raw as Record<string, unknown>;
+  const sort = (Object.keys(DRINK_SORT_LABELS) as DrinkSort[]).find((k) => k === r.sort) ?? 'urgency';
+  const color = (WINE_COLORS as readonly string[]).includes(String(r.color)) ? (r.color as WineColor) : null;
+  return { color, sort };
+};
+
+/** En dessous de ce nombre de fiches, ni filtre ni tri : la liste tient d'un coup d'œil. */
+const CONTROLS_MIN = 8;
+
 function toDrinkSection(rows: WineRow[], thumbs: Map<string, string>, year: number, onDrink: Drink): HTMLElement {
-  const groups = maturityGroups(rows, year).filter((g) => g.entries.length > 0);
+  const all = maturityGroups(rows, year);
+  const totalWines = all.reduce((n, g) => n + g.entries.length, 0);
   const section = h('section', { class: 'home__section', 'aria-labelledby': 'h-tbd' }, h('h2', { id: 'h-tbd' }, 'À boire'));
-  if (groups.length === 0) {
+  if (totalWines === 0) {
     section.append(
       h(
         'div',
@@ -71,35 +102,91 @@ function toDrinkSection(rows: WineRow[], thumbs: Map<string, string>, year: numb
     );
     return section;
   }
-  for (const g of groups) {
+
+  const colors = colorCounts(rows, year);
+  let prefs = loadPref<DrinkPrefs>('home.drink', { color: null, sort: 'urgency' }, normalizeDrinkPrefs);
+  if (prefs.color !== null && !colors.some((c) => c.color === prefs.color)) prefs = { ...prefs, color: null };
+  const showControls = totalWines >= CONTROLS_MIN;
+  if (!showControls) prefs = { color: null, sort: 'urgency' };
+
+  const controls = h('div', { class: 'card stack tbd__controls' });
+  const body = h('div', { class: 'stack' });
+
+  const renderGroup = (g: MaturityGroup): HTMLElement => {
     const list = h('ul', { class: 'tbd__list' });
+    const footer = h('div', { class: 'tbd__more' });
+    // Sous-titres « À finir » / « À point » seulement quand le tri par urgence mélange les deux.
+    const finishingCount = g.entries.filter((e) => e.info.finishing).length;
+    const split = prefs.sort === 'urgency' && g.category === 'now' && finishingCount > 0 && finishingCount < g.entries.length;
     let shown = 0;
-    const more = h('button', { class: 'btn btn--small', type: 'button' });
-    const showMore = (): void => {
-      for (const e of g.entries.slice(shown, shown + PAGE)) list.append(entryRow(e, thumbs, year, onDrink));
-      shown = Math.min(g.entries.length, shown + PAGE);
+
+    const paint = (): void => {
+      const items: HTMLElement[] = [];
+      g.entries.slice(0, shown).forEach((e, i) => {
+        if (split && i === 0) items.push(h('li', { class: 'tbd__sub tbd__sub--urgent', role: 'presentation' }, `À finir (${finishingCount})`));
+        if (split && i === finishingCount) items.push(h('li', { class: 'tbd__sub', role: 'presentation' }, `À point (${g.entries.length - finishingCount})`));
+        items.push(entryRow(e, thumbs, year, onDrink));
+      });
+      list.replaceChildren(...items);
       const left = g.entries.length - shown;
-      if (left === 0) more.remove();
-      else more.textContent = `Afficher ${plural(left, 'fiche restante', 'fiches restantes')}`;
+      footer.replaceChildren(
+        ...(left > 0
+          ? [
+              h('button', { class: 'btn btn--small', type: 'button', onClick: () => { shown = Math.min(g.entries.length, shown + PAGE); paint(); } }, `Afficher ${Math.min(PAGE, left)} de plus (${plural(left, 'restante', 'restantes')})`),
+              left > PAGE ? h('button', { class: 'btn btn--small', type: 'button', onClick: () => { shown = g.entries.length; paint(); } }, 'Tout afficher') : null,
+            ].filter((b): b is HTMLButtonElement => b !== null)
+          : []),
+      );
     };
-    more.addEventListener('click', showMore);
-    showMore();
-    section.append(
+    shown = Math.min(PAGE, g.entries.length);
+    paint();
+
+    return h(
+      'details',
+      { class: `tbd tbd--${g.category}`, ...(g.category === 'late' || g.category === 'now' ? { open: true } : {}) },
       h(
-        'details',
-        { class: `tbd tbd--${g.category}`, ...(g.category === 'late' || g.category === 'now' ? { open: true } : {}) },
-        h(
-          'summary',
-          { class: 'tbd__summary' },
-          h('span', { class: 'tbd__title' }, MATURITY_LABELS[g.category]),
-          h('span', { class: 'badge', 'aria-label': bottles(g.bottles) }, String(g.bottles)),
-          h('span', { class: 'tbd__hint muted' }, MATURITY_HINTS[g.category]),
-        ),
-        list,
-        shown < g.entries.length ? more : null,
+        'summary',
+        { class: 'tbd__summary' },
+        h('span', { class: 'tbd__title' }, MATURITY_LABELS[g.category]),
+        h('span', { class: 'badge', 'aria-label': bottles(g.bottles) }, String(g.bottles)),
+        h('span', { class: 'tbd__hint muted' }, `${plural(g.entries.length, 'fiche', 'fiches')} · ${MATURITY_HINTS[g.category]}`),
       ),
+      list,
+      footer,
     );
-  }
+  };
+
+  const draw = (): void => {
+    const groups = maturityGroups(rows, year, { color: prefs.color ?? undefined, sort: prefs.sort }).filter((g) => g.entries.length > 0);
+    body.replaceChildren(
+      ...(groups.length === 0
+        ? [h('div', { class: 'card empty muted' }, `Aucune fiche ${prefs.color ? `« ${colorLabel(prefs.color).toLowerCase()} » ` : ''}à afficher.`)]
+        : groups.map(renderGroup)),
+    );
+    if (!showControls) return;
+
+    const setPrefs = (next: DrinkPrefs): void => {
+      prefs = next;
+      savePref('home.drink', prefs);
+      draw();
+    };
+    const chip = (label: string, color: WineColor | null): HTMLElement =>
+      h('button', { class: `btn btn--small${prefs.color === color ? ' btn--primary' : ''}`, type: 'button', 'aria-pressed': String(prefs.color === color), onClick: () => setPrefs({ ...prefs, color }) }, label);
+    const sortSelect = h(
+      'select',
+      { class: 'field__input', id: 'drink-sort', onChange: (e: Event) => setPrefs({ ...prefs, sort: (e.target as HTMLSelectElement).value as DrinkSort }) },
+      (Object.keys(DRINK_SORT_LABELS) as DrinkSort[]).map((k) => h('option', { value: k, ...(k === prefs.sort ? { selected: true } : {}) }, DRINK_SORT_LABELS[k])),
+    );
+    sortSelect.value = prefs.sort;
+    controls.replaceChildren(
+      h('div', { class: 'chips', role: 'group', 'aria-label': 'Filtrer par couleur' }, chip(`Toutes (${bottlesTotal})`, null), ...colors.map((c) => chip(`${colorLabel(c.color)} (${c.bottles})`, c.color))),
+      h('label', { class: 'field', for: 'drink-sort' }, h('span', { class: 'field__label' }, 'Trier par'), sortSelect),
+      h('p', { class: 'muted', style: 'font-size:0.8rem' }, DRINK_SORT_HINTS[prefs.sort]),
+    );
+  };
+  const bottlesTotal = all.reduce((n, g) => n + g.bottles, 0);
+  draw();
+  section.append(...(showControls ? [controls] : []), body);
   return section;
 }
 
@@ -144,18 +231,24 @@ function dishSection(rows: WineRow[], thumbs: Map<string, string>, year: number,
       return;
     }
     status.textContent = `${plural(res.matches.length, 'fiche correspond', 'fiches correspondent')}, les plus à point d’abord.${res.withoutPairings > 0 ? ` ${plural(res.withoutPairings, 'fiche n’a', 'fiches n’ont')} aucun mets renseigné.` : ''}`;
-    for (const m of res.matches.slice(0, 12)) {
-      const w = m.row.wine;
-      const note = [MATURITY_LABELS[m.info.category] + (m.info.finishing ? ' (à finir)' : ''), m.window ? `garde ${m.window}` : '', `Accord : ${m.matched.join(', ')}`].filter(Boolean).join(' · ');
-      results.append(
-        h(
-          'li',
-          { class: 'tbd__item' },
-          renderWineCard(m.row, { href: `#/vin/${w.id}`, thumb: thumbs.get(w.id) }),
-          noteRow(note, m.info.finishing || m.info.category === 'late', w, onDrink),
-        ),
+    const paint = (shown: number): void => {
+      results.replaceChildren(
+        ...res.matches.slice(0, shown).map((m) => {
+          const w = m.row.wine;
+          const note = [MATURITY_LABELS[m.info.category] + (m.info.finishing ? ' (à finir)' : ''), m.window ? `garde ${m.window}` : '', `Accord : ${m.matched.join(', ')}`].filter(Boolean).join(' · ');
+          return h(
+            'li',
+            { class: 'tbd__item' },
+            renderWineCard(m.row, { href: `#/vin/${w.id}`, thumb: thumbs.get(w.id) }),
+            noteRow(note, m.info.finishing || m.info.category === 'late', w, onDrink),
+          );
+        }),
+        ...(res.matches.length > shown
+          ? [h('li', { class: 'tbd__more' }, h('button', { class: 'btn btn--small', type: 'button', onClick: () => paint(shown + PAGE) }, `Afficher ${Math.min(PAGE, res.matches.length - shown)} de plus (${plural(res.matches.length - shown, 'restante', 'restantes')})`))]
+          : []),
       );
-    }
+    };
+    paint(PAGE);
   }
   let timer: ReturnType<typeof setTimeout> | undefined;
   input.addEventListener('input', () => {
