@@ -1,0 +1,36 @@
+{
+  "name": "cavavin",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Gestion de cave à vin — PWA offline-first adossée à Google Sheets",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "test:logic": "vitest run --exclude '**/node_modules/**' --exclude '**/{add-ui,wine-list-ui,cave-ui,header,prompt,ui-smoke}.test.ts'"
+  },
+  "dependencies": {
+    "idb": "^8.0.4"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/google.accounts": "^0.0.18",
+    "@types/node": "^26.6.6",
+    "eslint": "^10.14.0",
+    "fake-indexeddb": "^6.2.7",
+    "happy-dom": "^21.0.4",
+    "jsdom": "^29.1.1",
+    "prettier": "^3.9.10",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.1",
+    "vite": "^8.3.5",
+    "vite-plugin-pwa": "^2.0.0",
+    "vitest": "^5.0.5"
+  }
+}

@@ -1,0 +1,15 @@
+.claude/
+.env
+.env.*
+node_modules/
+!.env.example
+dist/
+coverage/
+dev-dist/
+*.log
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+.vscode/
+.idea/
