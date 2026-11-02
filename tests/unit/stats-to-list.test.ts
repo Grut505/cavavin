@@ -38,7 +38,9 @@ describe('ligne de statistique → filtre de la Liste', () => {
     const autres = top.find((s) => s.label === 'Autres')!;
     expect(sliceFilter('appellation', autres)).toEqual({ appellations: ['C', 'D'] });
     expect(sliceFilter('vintage', { label: NOT_SET, bottles: 1, wines: 1 })).toEqual({ vintageNone: true });
-    expect(sliceFilter('vintage', autres)).toBeNull(); // plusieurs millésimes : le filtre est une plage
+    const years = topSlices([2015, 2016, 2017, 2018].map((y, i) => ({ label: String(y), bottles: 4 - i, wines: 1 })), 2).find((s) => s.label === 'Autres')!;
+    expect(sliceFilter('vintage', years)).toEqual({ vintages: [2017, 2018] }); // exactement les années regroupées
+    expect(sliceFilter('vintage', autres)).toBeNull(); // « Autres » dont les libellés ne sont pas des années
   });
 });
 
@@ -73,6 +75,9 @@ describe('filtres appellation et maturité', () => {
     expect(q({ vintageMin: 2018 })).toEqual(['V2020']); // une plage seule exclut toujours les NV
     expect(q({ vintageMin: 2018, vintageNone: true })).toEqual(['NV', 'V2020']);
     expect(q({ vintageMin: 2010, vintageMax: 2016, vintageNone: true })).toEqual(['NV', 'V2015']);
+    expect(q({ vintages: [2020] })).toEqual(['V2020']);
+    expect(q({ vintages: [2015], vintageNone: true })).toEqual(['NV', 'V2015']);
+    expect(activeFilterCount({ ...emptyFilters(), vintages: [2015] })).toBe(1);
     expect(activeFilterCount({ ...emptyFilters(), vintageNone: true })).toBe(1);
     expect(activeFilterCount({ ...emptyFilters(), vintageMin: 2000, vintageNone: true })).toBe(1); // un seul critère « millésime »
   });
@@ -158,6 +163,34 @@ describe('Accueil : toucher une ligne ouvre la Liste préfiltrée', () => {
     const list = wineListView(contextOf(d) as AppContext);
     document.body.append(list);
     await waitFor(() => expect(list.querySelectorAll('.wine-card').length).toBe(1));
+  });
+});
+
+describe('Accueil : « Autres » des millésimes', () => {
+  it('ouvre la Liste sur exactement les années regroupées', async () => {
+    const d = await makeDevice(await makeSheet(), 'dev-autres');
+    await d.repo.createFurniture('M', 1);
+    const shelf = (await d.repo.list('location'))[0]!;
+    const years = Array.from({ length: 10 }, (_, i) => 2010 + i); // 10 années à 1 bouteille : 8 en tête, 2 dans « Autres »
+    for (const y of years) {
+      const w = await d.repo.create('wine', wineData({ cuvee: `V${y}`, vintage: y }));
+      await d.repo.create('stock', { wine_id: w.id, location_id: shelf.id, quantity: 1, position_hint: null });
+    }
+    const ctx = contextOf(d) as AppContext;
+    const home = await homeView(ctx);
+    const card = [...home.querySelectorAll('.card')].find((c) => c.querySelector('h3')?.textContent === 'Par millésime')!;
+    const others = card.querySelector('.bars__btn[data-stat="Autres"]')!;
+    expect(others).not.toBeNull();
+    click(others);
+    expect(window.location.hash).toBe('#/liste');
+    const saved = savedFilters() as { vintages: number[] };
+    expect(saved.vintages).toHaveLength(2);
+
+    const list = wineListView(ctx);
+    document.body.append(list);
+    await waitFor(() => expect(list.querySelectorAll('.wine-card').length).toBe(2));
+    expect(list.textContent).toContain('1 filtre');
+    for (const y of saved.vintages) expect(list.textContent).toContain(String(y));
   });
 });
 

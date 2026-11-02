@@ -157,6 +157,9 @@ export function openFilterSheet(input: FilterSheetInput): Promise<Filters | null
               numberField('À', draft.vintageMax, facets.vintageMax ? String(facets.vintageMax) : 'année', (n) => (draft.vintageMax = n)),
             ),
             chip('Non millésimés (NV)', draft.vintageNone, () => (draft.vintageNone = !draft.vintageNone)),
+            draft.vintages.length > 0
+              ? h('div', { class: 'chips', role: 'group', 'aria-label': 'Années choisies' }, draft.vintages.map((y) => chip(String(y), true, () => { draft.vintages = draft.vintages.filter((v) => v !== y); render(); })))
+              : null,
             h('p', { class: 'muted', style: 'font-size:0.8rem' }, 'Une plage seule exclut les non millésimés ; cochez « Non millésimés » pour les ajouter à la plage, ou les voir seuls.'),
           ),
           group(

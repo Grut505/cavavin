@@ -49,6 +49,7 @@ function normalizeFilters(raw: unknown): Filters | null {
     maturity: strings(r.maturity).filter((m): m is Maturity => (MATURITY_ORDER as readonly string[]).includes(m)),
     vintageMin: intOrNull(r.vintageMin),
     vintageMax: intOrNull(r.vintageMax),
+    vintages: Array.isArray(r.vintages) ? r.vintages.filter((y): y is number => typeof y === 'number' && Number.isInteger(y)) : [],
     vintageNone: r.vintageNone === true,
     qtyMin: intOrNull(r.qtyMin),
     qtyMax: intOrNull(r.qtyMax),
