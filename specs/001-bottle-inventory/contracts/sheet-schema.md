@@ -8,7 +8,7 @@ Colonnes communes à tous les onglets de données : `id`, `rev`, `updated_at`, `
 
 | Onglet | Colonnes propres |
 |---|---|
-| `Vins` | domain, cuvee, vintage, appellation, region, country, color, format, drink_from, drink_until, purchase_price, purchase_date, supplier, rating, notes, thumb_ref, legacy_ref, needs_review, created_at, dryness, tannin, gift, gift_from, pairings |
+| `Vins` | domain, cuvee, vintage, appellation, region, country, color, format, drink_from, drink_until, purchase_price, purchase_date, supplier, rating, notes, thumb_ref, legacy_ref, needs_review, created_at, dryness, tannin, gift, gift_from, pairings, to_buy |
 | `Meubles` | name, order |
 | `Emplacements` | kind, furniture_id, name, order |
 | `Stocks` | wine_id, location_id, quantity, position_hint |
@@ -23,6 +23,7 @@ Colonnes communes à tous les onglets de données : `id`, `rev`, `updated_at`, `
 
 ## Versionnage et migrations
 
+- **v5** (2026-11) : ajout de la colonne booléenne `to_buy` à `Vins` (fiche sur la liste de courses, `FALSE` par défaut). Migration automatique à la prochaine synchronisation (colonne ajoutée à droite) ; les fiches existantes restent hors liste.
 - **v4** (2026-11) : ajout de la colonne `pairings` à `Vins` et à `Propositions` (mets conseillés, texte : éléments séparés par des points-virgules, `null` si inconnu). Migration automatique à la prochaine synchronisation (colonne ajoutée à droite) ; les fiches existantes gardent la cellule vide et peuvent être complétées à la main ou par un rescan.
 - **v3** (2026-11) : ajout de l'onglet `Personnes` et des colonnes `gift`, `gift_from` à `Vins`. Migration automatique à la prochaine synchronisation (onglet créé, colonnes ajoutées à droite) pour toute feuille déjà initialisée ; une feuille jamais initialisée n'est jamais modifiée sans action de l'utilisateur.
 - **v2** (2026-11) : ajout des colonnes `dryness` et `tannin` à `Vins`, `tannin` et `dryness` à `Propositions`. Les feuilles créées en v1 sont migrées **automatiquement à la prochaine synchronisation** (colonnes ajoutées à droite, version mise à jour) avant toute écriture, pour qu'aucune valeur ne soit perdue.

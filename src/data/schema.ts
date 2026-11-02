@@ -1,7 +1,7 @@
 // Schéma des onglets de la feuille — voir contracts/sheet-schema.md
 import type { EntityKind } from '../domain/types';
 
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 export type FieldType = 'text' | 'int' | 'num' | 'bool';
 
@@ -66,6 +66,8 @@ const wineFields: FieldDef[] = [
   t('gift_from', true),
   // v4
   t('pairings', true),
+  // v5
+  b('to_buy'),
 ];
 
 const photoFields: FieldDef[] = [

@@ -156,6 +156,11 @@ export async function wineDetailView(ctx: AppContext, params: { id?: string }): 
           icon('plus'),
           'Ajouter des bouteilles',
         ),
+        h(
+          'button',
+          { class: 'btn btn--small', type: 'button', 'aria-pressed': String(wine.to_buy === true), onClick: () => void ctx.repo.setToBuy(wine.id, wine.to_buy !== true).then(() => draw()) },
+          wine.to_buy === true ? 'Dans ma liste de courses ✓' : 'Ajouter à la liste de courses',
+        ),
       ),
       h(
         'section',

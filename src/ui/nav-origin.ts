@@ -29,6 +29,7 @@ const LABELS: [RegExp, string][] = [
   [/^\/personne\//, 'Retour à la personne'],
   [/^\/historique/, 'Retour à l’historique'],
   [/^\/avis/, 'Retour aux avis'],
+  [/^\/courses/, 'Retour à la liste de courses'],
   [/^\/liste/, 'Retour à la liste'],
 ];
 

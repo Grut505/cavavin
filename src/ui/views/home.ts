@@ -15,6 +15,7 @@ import {
 } from '../../domain/maturity';
 import { pairingVocabulary, searchByDish } from '../../domain/pairing';
 import { rebuyList } from '../../domain/rebuy';
+import { shoppingList } from '../../domain/shopping';
 import { isVegetarian } from '../../domain/pairing-list';
 import { buildRows, emptyFilters, type Filters, type WineRow } from '../../domain/query';
 import { maturityFilter, sliceFilter } from '../../domain/stats-filter';
@@ -287,9 +288,11 @@ function dishSection(rows: WineRow[], thumbs: Map<string, string>, year: number,
 
 // --- À racheter ---
 
-function rebuySection(rows: WineRow[], thumbs: Map<string, string>): HTMLElement | null {
+function rebuySection(rows: WineRow[], thumbs: Map<string, string>, ctx: AppContext): HTMLElement | null {
   const entries = rebuyList(rows);
-  if (entries.length === 0) return null;
+  const onList = shoppingList(rows).length;
+  if (entries.length === 0 && onList === 0) return null;
+  const refresh = (): void => void window.dispatchEvent(new HashChangeEvent('hashchange'));
   const list = h('ul', { class: 'tbd__list' });
   for (const { row, reason } of entries.slice(0, PAGE)) {
     const w = row.wine;
@@ -301,7 +304,24 @@ function rebuySection(rows: WineRow[], thumbs: Map<string, string>): HTMLElement
     ]
       .filter(Boolean)
       .join(' · ');
-    list.append(h('li', { class: 'tbd__item' }, renderWineCard(row, { href: wineHref(w.id, '/accueil'), thumb: thumbs.get(w.id) }), h('p', { class: 'tbd__note' }, note)));
+    const listed = w.to_buy === true;
+    list.append(
+      h(
+        'li',
+        { class: 'tbd__item' },
+        renderWineCard(row, { href: wineHref(w.id, '/accueil'), thumb: thumbs.get(w.id) }),
+        h(
+          'div',
+          { class: 'tbd__foot' },
+          h('p', { class: 'tbd__note' }, note),
+          h(
+            'button',
+            { class: 'btn btn--small', type: 'button', 'aria-pressed': String(listed), onClick: () => void ctx.repo.setToBuy(w.id, !listed).then(refresh) },
+            listed ? 'Dans ma liste ✓' : 'Ajouter à ma liste',
+          ),
+        ),
+      ),
+    );
   }
   return h(
     'section',
@@ -310,6 +330,7 @@ function rebuySection(rows: WineRow[], thumbs: Map<string, string>): HTMLElement
     h('p', { class: 'muted' }, 'Vos bouteilles notées 4 ou 5, épuisées ou à leur dernier exemplaire.'),
     list,
     entries.length > PAGE ? h('p', { class: 'muted' }, `+ ${plural(entries.length - PAGE, 'autre fiche', 'autres fiches')} dans la Liste (filtre « Historique »).`) : null,
+    h('a', { class: 'btn btn--small', href: '#/courses' }, `Ma liste de courses (${onList})`),
   );
 }
 
@@ -449,7 +470,7 @@ export async function homeView(ctx: AppContext): Promise<HTMLElement> {
     pageHeader({ title: 'Accueil', subtitle: total === 0 ? null : bottles(total) }),
     toDrinkSection(rows, thumbs, year, onDrink),
     dishSection(rows, thumbs, year, onDrink),
-    rebuySection(rows, thumbs),
+    rebuySection(rows, thumbs, ctx),
     statsSection(rows, outflows, year, now),
   );
 }

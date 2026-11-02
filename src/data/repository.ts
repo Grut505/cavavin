@@ -343,6 +343,7 @@ export class Repository {
       thumb_ref: null,
       legacy_ref: null,
       needs_review: false,
+      to_buy: false,
       created_at: this.now().toISOString(),
     });
     for (const st of stocks) await this.addStock(wine.id, st);
@@ -424,6 +425,11 @@ export class Repository {
   /** Retire une personne de la liste. Les fiches qui la citent gardent la référence et le nom reste affiché. */
   async removePerson(id: string): Promise<void> {
     await this.remove('person', id);
+  }
+
+  /** Ajoute ou retire une fiche de la liste de courses. */
+  async setToBuy(wineId: string, toBuy: boolean): Promise<void> {
+    await this.patch('wine', wineId, { to_buy: toBuy });
   }
 
   /** Nombre de fiches offertes par cette personne. */

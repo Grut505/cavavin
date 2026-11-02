@@ -71,6 +71,7 @@ export function wineData(over: Partial<Wine> = {}): Omit<Wine, 'id' | 'rev' | 'u
     gift: false,
     gift_from: null,
     pairings: null,
+    to_buy: false,
     ...over,
   };
 }

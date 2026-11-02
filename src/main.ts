@@ -14,6 +14,7 @@ import { fr } from './ui/strings.fr';
 import { accessDeniedView, purgeLocalData } from './ui/views/access-denied';
 import { homeView } from './ui/views/home';
 import { pairingsBackfillView } from './ui/views/pairings-backfill';
+import { shoppingView } from './ui/views/shopping';
 import { personView } from './ui/views/person';
 import { addHubView } from './ui/views/add-hub';
 import { addWineView, editWineView } from './ui/views/add-wine';
@@ -49,6 +50,7 @@ async function boot(): Promise<void> {
 
   const routes: Route[] = [
     { path: '/accueil', nav: { label: fr.nav.home, icon: 'home' }, render: homeView },
+    { path: '/courses', parent: '/accueil', render: shoppingView },
     { path: '/cave', nav: { label: fr.nav.cave, icon: 'cave' }, render: caveView },
     { path: '/cave/config', parent: '/cave', render: caveConfigView },
     { path: '/etagere/:id', parent: '/cave', render: shelfDetailView },

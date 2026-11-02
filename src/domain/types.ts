@@ -74,6 +74,8 @@ export interface Wine extends Base {
   gift_from: string | null;
   /** Mets conseillés, séparés par des points-virgules (proposés par Claude à la lecture d'étiquette). */
   pairings: string | null;
+  /** Sur la liste de courses (« à racheter »). */
+  to_buy: boolean;
 }
 
 /** Personne de la liste paramétrable (donateurs de cadeaux). */
