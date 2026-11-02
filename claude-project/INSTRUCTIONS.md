@@ -43,7 +43,7 @@ dans l'application Cavavin. Tu ne ranges rien toi-même et tu ne décides pas de
   "drink_until": null,
   "tannin": 3,
   "dryness": null,
-  "pairings": ["agneau rôti", "magret de canard", "fromages à pâte dure"],
+  "pairings": ["risotto aux champignons", "gratin dauphinois", "fromages à pâte dure"],
   "notes": null
 }
 ```
@@ -64,10 +64,12 @@ dans l'application Cavavin. Tu ne ranges rien toi-même et tu ne décides pas de
   et du millésime ; si tu n'es pas raisonnablement sûr, mets `null` pour les deux. Uniquement des
   années, jamais de commentaire.
 - `pairings` : tableau de **4 à 8 mets** qui s'accordent bien avec ce vin, d'après ta connaissance du vin,
-  de l'appellation, de la couleur et du style. Noms courts en français, sans phrase ni justification
-  (« magret de canard », « fromages à pâte dure », « poisson grillé »), en variant plats, ingrédients et
+  de l'appellation, de la couleur et du style. **Cuisine strictement végétarienne** : jamais de viande,
+  volaille, gibier, charcuterie, poisson, crustacé ni fruit de mer (œufs, laitages et fromages sont
+  acceptés). Noms courts en français, sans phrase ni justification (« risotto aux champignons »,
+  « gratin dauphinois », « curry de légumes », « fromages à pâte dure »), en variant plats, ingrédients et
   fromages. `null` si tu n'es pas raisonnablement sûr. L'application s'en sert pour répondre à « quoi boire
-  ce soir » : plus les mets sont usuels et précis, mieux la recherche fonctionne.
+  ce soir » et écarte automatiquement tout met non végétarien.
 - `target_wine_id` : l'identifiant d'une fiche existante **si je te le fournis** pour la mettre à jour ;
   sinon `null` (l'application détecte seule les doublons).
 
@@ -82,7 +84,7 @@ seulement ces colonnes (lues par nom d'en-tête) :
 
 `created_at` (date-heure ISO), `status` = `nouvelle`, `source` = `claude`, `target_wine_id`, `domain`,
 `cuvee`, `vintage`, `appellation`, `region`, `country`, `color`, `format`, `quantity`, `purchase_price`,
-`purchase_date`, `supplier`, `drink_from`, `drink_until`, `notes`, `tannin`, `dryness`, `pairings` (mets séparés par des points-virgules : `magret de canard; agneau rôti`).
+`purchase_date`, `supplier`, `drink_from`, `drink_until`, `notes`, `tannin`, `dryness`, `pairings` (mets séparés par des points-virgules : `risotto aux champignons; gratin dauphinois`).
 
 - **N'écris jamais dans un autre onglet** et ne modifie ni ne supprime aucune ligne existante.
 - Laisse vides les colonnes `id`, `rev`, `updated_at`, `deleted` : l'application les complète.
@@ -110,5 +112,5 @@ ne proposera que les champs vides ou différents et ne remplacera rien sans mon 
 { "v": 1, "target_wine_id": null, "domain": "Domaine Gramenon", "cuvee": "La Mémé",
   "vintage": 2020, "appellation": "Côtes-du-Rhône", "region": "Vallée du Rhône", "country": "France",
   "color": "rouge", "format": "75cl", "quantity": 3, "purchase_price": null, "purchase_date": null,
-  "supplier": null, "drink_from": 2022, "drink_until": 2028, "tannin": 3, "dryness": null, "pairings": ["agneau rôti", "charcuterie", "fromages à pâte dure"], "notes": null }
+  "supplier": null, "drink_from": 2022, "drink_until": 2028, "tannin": 3, "dryness": null, "pairings": ["curry de légumes", "gratin dauphinois", "fromages à pâte dure"], "notes": null }
 ```

@@ -275,7 +275,7 @@ async function wineFormView(ctx: AppContext, opts: { proposal?: Proposal; wine?:
       ),
       text('supplier', 'Fournisseur'),
       select('rating', 'Note', [['', '—'], ...[1, 2, 3, 4, 5].map((n): [string, string] => [String(n), `${n} / 5`])]),
-      field('pairings', 'Mets conseillés', h('textarea', { rows: '2', placeholder: 'magret de canard, agneau rôti, fromages à pâte dure…' }), 'Proposés par Claude à la lecture d’étiquette ; séparez-les par des virgules. « Quoi boire ce soir » se base sur cette liste.'),
+      field('pairings', 'Mets conseillés', h('textarea', { rows: '2', placeholder: 'risotto aux champignons, gratin dauphinois, fromages à pâte dure…' }), 'Mets végétariens proposés par Claude à la lecture d’étiquette ; séparez-les par des virgules. « Quoi boire ce soir » se base sur cette liste.'),
       field('notes', 'Notes', h('textarea', { rows: '3' })),
     ),
   );

@@ -76,7 +76,7 @@ Sous « À boire », l'Accueil présente des statistiques : répartition du stoc
 
 ### User Story 4 - Quoi boire ce soir, d'après les mets (Priority: P3)
 
-Lors du référencement d'une bouteille, le projet Claude propose une liste de **mets conseillés** (par exemple « magret de canard », « fromages à pâte dure »), qui est enregistrée dans la fiche et modifiable. Sur l'Accueil, l'utilisateur saisit un plat ou un ingrédient et l'application sort les bouteilles en stock dont les mets correspondent, les plus à point d'abord. La recherche pardonne les fautes de frappe et les variations d'écriture.
+Lors du référencement d'une bouteille, le projet Claude propose une liste de **mets conseillés** (végétariens, par exemple « risotto aux champignons », « fromages à pâte dure »), qui est enregistrée dans la fiche et modifiable. Sur l'Accueil, l'utilisateur saisit un plat ou un ingrédient et l'application sort les bouteilles en stock dont les mets correspondent, les plus à point d'abord. La recherche pardonne les fautes de frappe et les variations d'écriture.
 
 **Why this priority**: répond à la question « qu'est-ce que j'ouvre avec ce plat ? » sans aucun appel externe au moment de la recherche : l'intelligence est apportée une fois pour toutes à l'ajout de la bouteille.
 
@@ -85,13 +85,14 @@ Lors du référencement d'une bouteille, le projet Claude propose une liste de *
 **Acceptance Scenarios**:
 
 1. **Given** une étiquette lue par le projet Claude, **When** la proposition est importée, **Then** la fiche pré-remplit les mets conseillés (4 à 8 en général), que l'utilisateur peut corriger avant d'enregistrer.
-2. **Given** des fiches avec mets, **When** l'utilisateur saisit « magrett de canars pour 4 personnes », **Then** les bouteilles dont les mets contiennent « magret de canard » sont listées malgré les fautes, sans que le nombre de convives ni les mots courants gênent.
+2. **Given** des fiches avec mets, **When** l'utilisateur saisit « un risoto aux champignon pour 4 personnes », **Then** les bouteilles dont les mets contiennent « risotto aux champignons » sont listées malgré les fautes, sans que le nombre de convives ni les mots courants gênent.
 3. **Given** des résultats, **When** ils s'affichent, **Then** les bouteilles à boire maintenant (« à finir » d'abord) passent avant les trop jeunes, chaque résultat indique le met correspondant, sa maturité et sa fenêtre de garde, et un tap ouvre la fiche.
-4. **Given** un plat composé de plusieurs mots dont une partie seulement correspond (« canard laqué »), **When** au moins la moitié des mots significatifs est retrouvée, **Then** la bouteille est proposée, moins bien classée qu'une correspondance complète.
-5. **Given** aucune correspondance, **When** la recherche aboutit à zéro résultat, **Then** l'écran le dit clairement et indique combien de fiches en stock n'ont aucun mets renseigné.
-6. **Given** des fiches existantes sans mets, **When** l'utilisateur ouvre l'écran, **Then** elles restent utilisables partout ailleurs ; elles n'apparaissent simplement pas dans cette recherche tant que leurs mets ne sont pas renseignés (à la main ou par un nouveau passage dans le projet Claude).
-7. **Given** des mets déjà présents dans la cave, **When** l'écran s'affiche, **Then** les plus fréquents sont proposés comme raccourcis de recherche.
-8. **Given** l'absence de réseau, **When** l'utilisateur cherche un plat, **Then** la recherche fonctionne intégralement.
+4. **Given** un plat composé de plusieurs mots dont une partie seulement correspond (« risotto truffe »), **When** au moins la moitié des mots significatifs est retrouvée, **Then** la bouteille est proposée, moins bien classée qu'une correspondance complète.
+5. **Given** un plat avec viande ou poisson (« magret de canard »), **When** la recherche ne trouve rien, **Then** l'écran explique que les mets de la cave sont végétariens et invite à essayer un plat végétarien ou un raccourci.
+6. **Given** aucune correspondance, **When** la recherche aboutit à zéro résultat, **Then** l'écran le dit clairement et indique combien de fiches en stock n'ont aucun mets renseigné.
+7. **Given** des fiches existantes sans mets, **When** l'utilisateur ouvre l'écran, **Then** elles restent utilisables partout ailleurs ; elles n'apparaissent simplement pas dans cette recherche tant que leurs mets ne sont pas renseignés (à la main ou par un nouveau passage dans le projet Claude).
+8. **Given** des mets déjà présents dans la cave, **When** l'écran s'affiche, **Then** les plus fréquents sont proposés comme raccourcis de recherche.
+9. **Given** l'absence de réseau, **When** l'utilisateur cherche un plat, **Then** la recherche fonctionne intégralement.
 
 ---
 
@@ -119,10 +120,11 @@ Lors du référencement d'une bouteille, le projet Claude propose une liste de *
 - **FR-007**: Le système MUST afficher la consommation à partir de l'historique des sorties : bouteilles sorties par mois sur les 12 derniers mois et total par motif (bue, offerte, cassée, autre).
 - **FR-008**: Le système MUST afficher la répartition de la cave par catégorie de maturité (FR-002).
 - **FR-009**: Le système MUST enregistrer dans chaque fiche une liste de **mets conseillés** (texte libre, éléments séparés ; 12 au maximum, doublons ignorés), facultative, modifiable dans le formulaire de la fiche et affichée sur la fiche détaillée.
-- **FR-010**: Le projet Claude MUST proposer, à chaque lecture d'étiquette, 4 à 8 mets courts en français (plats, ingrédients, fromages) en estimation d'après le vin, l'appellation, la couleur et le style, ou rien s'il n'est pas raisonnablement sûr ; la proposition les transmet dans un champ dédié, repris à la validation de la fiche et à la mise à jour d'une fiche existante (champ vide ou différent proposé, jamais écrasé sans accord).
+- **FR-010**: Le projet Claude MUST proposer, à chaque lecture d'étiquette, 4 à 8 mets courts en français (plats, ingrédients, fromages), **strictement végétariens** en estimation d'après le vin, l'appellation, la couleur et le style, ou rien s'il n'est pas raisonnablement sûr ; la proposition les transmet dans un champ dédié, repris à la validation de la fiche et à la mise à jour d'une fiche existante (champ vide ou différent proposé, jamais écrasé sans accord).
 - **FR-011**: Le système MUST proposer, sur l'Accueil, une zone « Quoi boire ce soir ? » où l'utilisateur saisit un plat ou un ingrédient et obtient les bouteilles **en stock** dont les mets correspondent, recherchées localement.
 - **FR-012**: La recherche MUST être permissive : insensible à la casse, aux accents et aux ligatures (« bœuf » = « boeuf »), tolérante aux fautes de frappe (lettre oubliée, en trop, inversée ou fausse), aux pluriels et aux débuts de mot, et ignorer les mots courants (« un », « de », « pour »…), les nombres et les mentions de convives. Une bouteille est proposée dès qu'au moins la moitié des mots significatifs est retrouvée.
 - **FR-012a**: Les résultats MUST être classés par qualité de correspondance (complète d'abord), puis par maturité (à boire maintenant et « à finir » avant les autres, trop tôt en dernier), et afficher le met correspondant, la maturité et la fenêtre de garde.
+- **FR-012c**: Tout est géré en **mode végétarien** : les mets sont végétariens (ni viande, ni charcuterie, ni poisson, ni fruits de mer ; œufs, laitages et fromages acceptés). Un met non végétarien reçu dans une proposition est écarté avec un avertissement ; saisi à la main dans la fiche, il est refusé avec un message clair ; une recherche d'un plat non végétarien l'explique au lieu d'un simple « aucun résultat ».
 - **FR-012b**: L'application n'appelle aucun service d'IA, ne contient aucune clé d'API ; l'intelligence vient uniquement des mets enregistrés à l'ajout de la bouteille.
 - **FR-013**: Le système MUST proposer une fiche par personne, accessible depuis Réglages > Personnes, listant les bouteilles qu'elle a offertes : « En stock » (titre, quantité, emplacement) et « Déjà sorties » (titre, date et motif de sortie).
 - **FR-014**: Le système MUST ajouter à la Liste un filtre « Offert par » (une personne), combinable avec les filtres existants, apparaissant comme filtre actif effaçable, et restreint aux bouteilles en stock.

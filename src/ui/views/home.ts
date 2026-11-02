@@ -2,6 +2,7 @@
 import type { AppContext } from '../../app';
 import { MATURITY_HINTS, MATURITY_LABELS, maturityGroups, windowText, type Maturity, type MaturityEntry } from '../../domain/maturity';
 import { pairingVocabulary, searchByDish } from '../../domain/pairing';
+import { isVegetarian } from '../../domain/pairing-list';
 import { buildRows, type WineRow } from '../../domain/query';
 import {
   cellarValue,
@@ -95,7 +96,7 @@ function dishSection(rows: WineRow[], thumbs: Map<string, string>, year: number)
     class: 'field__input',
     type: 'search',
     id: 'dish',
-    placeholder: 'Ex. magret de canard, risotto aux champignons…',
+    placeholder: 'Ex. risotto aux champignons, curry de légumes…',
     autocomplete: 'off',
     autocapitalize: 'off',
     spellcheck: 'false',
@@ -124,7 +125,7 @@ function dishSection(rows: WineRow[], thumbs: Map<string, string>, year: number)
       return;
     }
     if (res.matches.length === 0) {
-      status.textContent = `Aucune bouteille ne correspond à « ${q.trim()} ».${res.withoutPairings > 0 ? ` ${plural(res.withoutPairings, 'fiche n’a', 'fiches n’ont')} aucun mets renseigné.` : ''}`;
+      status.textContent = `${isVegetarian(q) ? '' : 'Les mets de la cave sont végétariens (ni viande, ni poisson) : essayez un plat végétarien ou un raccourci. '}Aucune bouteille ne correspond à « ${q.trim()} ».${res.withoutPairings > 0 ? ` ${plural(res.withoutPairings, 'fiche n’a', 'fiches n’ont')} aucun mets renseigné.` : ''}`;
       return;
     }
     status.textContent = `${plural(res.matches.length, 'fiche correspond', 'fiches correspondent')}, les plus à point d’abord.${res.withoutPairings > 0 ? ` ${plural(res.withoutPairings, 'fiche n’a', 'fiches n’ont')} aucun mets renseigné.` : ''}`;
@@ -156,7 +157,7 @@ function dishSection(rows: WineRow[], thumbs: Map<string, string>, year: number)
         search();
       },
     },
-    h('label', { class: 'field', for: 'dish' }, h('span', { class: 'field__label' }, 'Plat ou ingrédient'), input),
+    h('label', { class: 'field', for: 'dish' }, h('span', { class: 'field__label' }, 'Plat ou ingrédient (cuisine végétarienne)'), input),
     vocab.length > 0 ? chips : null,
     status,
   );

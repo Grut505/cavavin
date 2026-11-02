@@ -15,12 +15,12 @@ describe('migration vers la v4 (mets conseillés)', () => {
     sheets.addManualRow('Vins', { id: 'w-old', rev: 1, updated_at: '2026-01-01T00:00:00Z', deleted: false, domain: 'Avant', cuvee: 'X', format: '75cl', created_at: '2026-01-01T00:00:00Z' });
 
     const d = await makeDevice(sheets, 'dev-v3');
-    await d.repo.addWine(wineFields({ domain: 'Nouveau', pairings: 'magret de canard; agneau rôti' }), []);
+    await d.repo.addWine(wineFields({ domain: 'Nouveau', pairings: 'risotto aux champignons; gratin dauphinois' }), []);
     await d.repo.sync();
 
     expect(sheets.tabs.get('Vins')![0]).toContain('pairings');
     expect(sheets.tabs.get('Propositions')![0]).toContain('pairings');
-    expect(sheets.records('Vins').find((v) => v.domain === 'Nouveau')).toMatchObject({ pairings: 'magret de canard; agneau rôti' });
+    expect(sheets.records('Vins').find((v) => v.domain === 'Nouveau')).toMatchObject({ pairings: 'risotto aux champignons; gratin dauphinois' });
     expect(sheets.records('Vins').find((v) => v.domain === 'Avant')).toMatchObject({ id: 'w-old' });
     expect(sheets.records('_Meta')).toEqual([{ key: 'schema_version', value: SCHEMA_VERSION }]);
     expect((await d.repo.list('wine')).find((w) => w.id === 'w-old')?.pairings).toBeNull();

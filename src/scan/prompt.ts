@@ -14,7 +14,7 @@ RÈGLES
 7. tannin (rouges uniquement) : note entière de 1 (très souple) à 5 (très tannique), d'après ta connaissance de ce vin et de son appellation. null pour toute autre couleur, ou si tu ne peux pas l'estimer raisonnablement.
 8. dryness (blanc, rosé, effervescent, liquoreux) : sec, demi-sec, moelleux ou doux. Lis-le sur l'étiquette (effervescent : brut et extra-brut = sec) ; sinon déduis-le de l'appellation seulement si c'est certain ; sinon null. Toujours null pour un rouge.
 9. drink_from et drink_until : années de début et de fin de la meilleure période de dégustation. Reprends celles de l'étiquette ou de mon message ; sinon estime-les d'après ta connaissance du vin, de l'appellation et du millésime. Si tu n'es pas raisonnablement sûr, mets null pour les deux. Uniquement des années, jamais de commentaire.
-10. pairings : liste de 4 à 8 mets qui s'accordent bien avec ce vin, d'après ta connaissance du vin, de son appellation, de sa couleur et de son style. Chaque met est un nom court en français (ex. « magret de canard », « fromages à pâte dure », « poisson grillé », « tajine d'agneau »), sans phrase ni justification ; varie plats, ingrédients et fromages. Tableau JSON de chaînes ; null si tu n'es pas raisonnablement sûr.
+10. pairings : liste de 4 à 8 mets qui s'accordent bien avec ce vin, d'après ta connaissance du vin, de son appellation, de sa couleur et de son style. Cuisine STRICTEMENT VÉGÉTARIENNE : jamais de viande, volaille, gibier, charcuterie, poisson, crustacé ni fruit de mer (œufs, laitages et fromages sont acceptés). Chaque met est un nom court en français (ex. « risotto aux champignons », « gratin dauphinois », « curry de légumes », « fromages à pâte dure », « tarte aux poireaux »), sans phrase ni justification ; varie plats, ingrédients et fromages. Tableau JSON de chaînes ; null si tu n'es pas raisonnablement sûr.
 11. Plusieurs vins différents : un objet par vin, dans un tableau JSON. Même vin en plusieurs exemplaires : un seul objet avec quantity.
 12. Seule exception à la réponse JSON : si l'étiquette est illisible, ne réponds pas avec du JSON ; dis-le en une phrase et pose une seule question.
 
@@ -37,7 +37,7 @@ Ta réponse entière est un unique bloc de code json contenant un objet (ou un t
   "dryness": null,
   "drink_from": 2024,
   "drink_until": 2030,
-  "pairings": ["magret de canard", "agneau rôti", "fromages à pâte dure", "charcuterie"],
+  "pairings": ["risotto aux champignons", "gratin dauphinois", "curry de légumes", "fromages à pâte dure"],
   "purchase_price": null,
   "purchase_date": null,
   "supplier": null,

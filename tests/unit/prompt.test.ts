@@ -27,7 +27,7 @@ describe('prompt de lecture d’étiquette', () => {
       dryness: null,
       drink_from: 2024,
       drink_until: 2030,
-      pairings: 'magret de canard; agneau rôti; fromages à pâte dure; charcuterie',
+      pairings: 'risotto aux champignons; gratin dauphinois; curry de légumes; fromages à pâte dure',
     });
   });
 
@@ -60,6 +60,7 @@ describe('prompt de lecture d’étiquette', () => {
   it('demande 4 à 8 mets conseillés sous forme de tableau de chaînes', () => {
     expect(LABEL_PROMPT).toMatch(/pairings : liste de 4 à 8 mets/);
     expect(LABEL_PROMPT).toMatch(/pairings est un tableau de chaînes ou null/);
+    expect(LABEL_PROMPT).toMatch(/STRICTEMENT VÉGÉTARIENNE : jamais de viande, volaille, gibier, charcuterie, poisson, crustacé ni fruit de mer/);
   });
 
   it('demande le tanin des rouges, le sucre des autres et la fenêtre de garde', () => {

@@ -52,22 +52,26 @@ describe('Accueil', () => {
   it('« Quoi boire ce soir » cherche dans les mets des fiches, avec fautes de frappe', async () => {
     const { d, ctx, shelf } = await setup();
     const year = new Date().getFullYear();
-    const duck = await d.repo.create('wine', wineData({ cuvee: 'Canard', pairings: 'magret de canard; agneau rôti', drink_from: year - 1, drink_until: year + 5 }));
-    const fish = await d.repo.create('wine', wineData({ cuvee: 'Poisson', color: 'blanc', pairings: 'poisson grillé', drink_from: year - 1, drink_until: year + 5 }));
+    const duck = await d.repo.create('wine', wineData({ cuvee: 'Canard', pairings: 'risotto aux champignons; gratin dauphinois', drink_from: year - 1, drink_until: year + 5 }));
+    const fish = await d.repo.create('wine', wineData({ cuvee: 'Poireaux', color: 'blanc', pairings: 'tarte aux poireaux', drink_from: year - 1, drink_until: year + 5 }));
     const bare = await d.repo.create('wine', wineData({ cuvee: 'Sans mets' }));
     for (const w of [duck, fish, bare]) await d.repo.create('stock', { wine_id: w.id, location_id: shelf.id, quantity: 1, position_hint: null });
 
     const el = await homeView(ctx);
     document.body.append(el);
     expect(el.textContent).toContain('Tapez un plat ou un ingrédient');
-    expect([...el.querySelectorAll('.chips .btn')].map((b) => b.textContent)).toContain('magret de canard');
+    expect([...el.querySelectorAll('.chips .btn')].map((b) => b.textContent)).toContain('risotto aux champignons');
 
     const input = el.querySelector('#dish') as HTMLInputElement;
-    input.value = 'un magrett de canars pour 4 personnes';
+    input.value = 'un risoto aux champignon pour 4 personnes';
     input.dispatchEvent(new Event('input', { bubbles: true }));
     await vi.waitFor(() => expect(el.querySelectorAll('.dish__results .wine-card')).toHaveLength(1));
     expect(el.querySelector('.dish__results')!.textContent).toContain('Canard');
-    expect(el.querySelector('.dish__results')!.textContent).toContain('Accord : magret de canard');
+    expect(el.querySelector('.dish__results')!.textContent).toContain('Accord : risotto aux champignons');
+
+    input.value = 'magret de canard';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    await vi.waitFor(() => expect(el.textContent).toContain('Les mets de la cave sont végétariens'));
 
     input.value = 'sushi';
     input.dispatchEvent(new Event('input', { bubbles: true }));

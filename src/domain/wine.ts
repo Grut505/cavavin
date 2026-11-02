@@ -8,7 +8,7 @@ import {
   type Wine,
   type WineColor,
 } from './types';
-import { joinPairings, parsePairings } from './pairing-list';
+import { joinPairings, parsePairings, splitVegetarian } from './pairing-list';
 
 /** Champs de la fiche modifiables par l'utilisateur (hors champs techniques). */
 export type WineFields = Pick<
@@ -197,6 +197,11 @@ export function validateWine(draft: WineDraft, now: Date = new Date()): Validati
     else bad('dryness', 'Niveau de sucre inconnu.');
   }
 
+  const pairings = splitVegetarian(parsePairings(draft.pairings));
+  if (pairings.dropped.length > 0) {
+    bad('pairings', `La cave est en mode végétarien : retirez ${pairings.dropped.map((d) => `« ${d} »`).join(', ')}.`);
+  }
+
   let color: WineColor | null = null;
   if (draft.color.trim() === '') bad('color', 'La couleur est obligatoire.');
   else if ((WINE_COLORS as readonly string[]).includes(draft.color)) color = draft.color as WineColor;
@@ -230,7 +235,7 @@ export function validateWine(draft: WineDraft, now: Date = new Date()): Validati
       dryness,
       gift: draft.gift === 'true',
       gift_from: draft.gift === 'true' ? text(draft.gift_from) : null,
-      pairings: joinPairings(parsePairings(draft.pairings)),
+      pairings: joinPairings(pairings.kept),
     },
   };
 }

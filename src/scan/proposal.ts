@@ -1,6 +1,6 @@
 // Propositions de fiche issues du projet Claude — voir contracts/label-proposal.md.
 import { normalizeText } from '../domain/normalize';
-import { joinPairings, parsePairings } from '../domain/pairing-list';
+import { joinPairings, parsePairings, splitVegetarian } from '../domain/pairing-list';
 import { BOTTLE_FORMATS, WINE_COLORS } from '../domain/types';
 import { MIN_YEAR, formatDateFr, parseDate, type WineDraft, emptyDraft } from '../domain/wine';
 
@@ -204,7 +204,11 @@ function parseOne(raw: Record<string, unknown>, label: string, warnings: string[
   const pairings = (): string | null => {
     const v = raw.pairings;
     if (v === undefined || v === null || v === '') return null;
-    if (typeof v === 'string' || (Array.isArray(v) && v.every((x) => typeof x === 'string'))) return joinPairings(parsePairings(v as string | string[]));
+    if (typeof v === 'string' || (Array.isArray(v) && v.every((x) => typeof x === 'string'))) {
+      const { kept, dropped } = splitVegetarian(parsePairings(v as string | string[]));
+      if (dropped.length > 0) warnings.push(`${label}mets non végétariens retirés : ${dropped.join(', ')}.`);
+      return joinPairings(kept);
+    }
     warn('pairings');
     return null;
   };
@@ -292,6 +296,6 @@ export function proposalToDraft(p: Pick<ProposalData, Exclude<Field, 'quantity' 
     notes: s(p.notes),
     tannin: s(p.tannin),
     dryness: s(p.dryness),
-    pairings: s(p.pairings).split(';').map((x) => x.trim()).filter(Boolean).join(', '),
+    pairings: splitVegetarian(parsePairings(p.pairings)).kept.join(', '),
   };
 }
