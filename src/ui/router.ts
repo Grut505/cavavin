@@ -29,6 +29,7 @@ function match(route: Route, path: string): Params | null {
 
 export class Router {
   private root!: HTMLElement;
+  private ticket = 0;
 
   constructor(
     private readonly ctx: AppContext,
@@ -62,7 +63,19 @@ export class Router {
 
   private async render(): Promise<void> {
     const { route, params, path } = this.resolve();
-    const view = await route.render(this.ctx, params);
+    const ticket = ++this.ticket;
+    let view: HTMLElement;
+    try {
+      view = await route.render(this.ctx, params);
+    } catch (e) {
+      console.error(e);
+      view = h(
+        'main',
+        { class: 'view view--centered' },
+        h('div', { class: 'card empty', role: 'alert' }, h('h2', {}, 'Cet écran n’a pas pu s’afficher'), h('p', { class: 'muted' }, 'Vos données sont intactes.'), h('button', { class: 'btn btn--primary', type: 'button', onClick: () => void this.render() }, 'Réessayer')),
+      );
+    }
+    if (ticket !== this.ticket) return; // une navigation plus récente a pris le relais
     this.decorate?.(view);
     const nav = this.bare.includes(path) ? [] : [this.buildNav(route.parent ?? route.path)];
     this.root.replaceChildren(view, ...nav);

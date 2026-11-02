@@ -99,11 +99,11 @@ Projet unique statique : `src/`, `tests/`, `apps-script/` à la racine du dépô
 - [X] T029 [P] [US1] Tests de validation de fiche (millésime, fenêtre de garde, prix, note, formats) dans tests/unit/wine-validation.test.ts
 - [X] T030 [P] [US1] Tests de détection de doublons (clé normalisée, non millésimé) dans tests/unit/duplicates.test.ts
 - [X] T031 [P] [US1] Tests de rapprochement d'une proposition (propose seulement champs vides/différents, n'écrase jamais) et d'analyse du JSON collé (objet, tableau, texte autour, bloc ```json, champ invalide ignoré avec avertissement) dans tests/unit/reconcile.test.ts et tests/unit/proposal-parse.test.ts
-- [ ] T032 [P] [US1] Tests d'import de l'onglet d'origine (champs manquants, `needs_review`, ré-exécution sans doublon, aucune écriture dans l'onglet d'origine) dans tests/contract/legacy-import.test.ts
+- [~] T032 (ABANDONNÉE : pas d'import, la cave est ressaisie) [P] [US1] Tests d'import de l'onglet d'origine (champs manquants, `needs_review`, ré-exécution sans doublon, aucune écriture dans l'onglet d'origine) dans tests/contract/legacy-import.test.ts
 
 ### Implementation
 
-- [ ] T033 [US1] **À FAIRE EN PREMIER DE LA PHASE 4 — bloquant import, nécessite l'export fourni par l'utilisateur (E1)** : relever les en-têtes réels de l'onglet d'origine (export CSV fourni par l'utilisateur) et compléter la table de correspondance dans specs/001-bottle-inventory/contracts/sheet-schema.md, avec un échantillon anonymisé dans tests/fixtures/legacy-sample.csv
+- [~] T033 (ABANDONNÉE : pas d'import, la cave est ressaisie) [US1] **À FAIRE EN PREMIER DE LA PHASE 4 — bloquant import, nécessite l'export fourni par l'utilisateur (E1)** : relever les en-têtes réels de l'onglet d'origine (export CSV fourni par l'utilisateur) et compléter la table de correspondance dans specs/001-bottle-inventory/contracts/sheet-schema.md, avec un échantillon anonymisé dans tests/fixtures/legacy-sample.csv
 - [X] T034 [P] [US1] Implémenter validation et construction de fiche (champs facultatifs FR-002a, euros/jj-mm-aaaa FR-002b) dans src/domain/wine.ts
 - [X] T035 [P] [US1] Implémenter la détection de doublons dans src/domain/duplicates.ts
 - [X] T036 [P] [US1] Génération de la miniature depuis une photo (~240 px, JPEG q0,6) dans src/scan/image.ts
@@ -112,7 +112,7 @@ Projet unique statique : `src/`, `tests/`, `apps-script/` à la racine du dépô
 - [X] T039 [P] [US1] Rédiger le projet Claude : claude-project/INSTRUCTIONS.md (lire l'étiquette, produire une proposition au format contracts/label-proposal.md, ne jamais inventer un champ, proposer les mises à jour de fiches existantes via `target_wine_id`, ajouter uniquement des lignes à l'onglet `Propositions` si le connecteur le permet) et claude-project/README.md (création du projet dans le compte Claude, canaux 1 et 2)
 - [ ] T081 [US1] Évaluer SC-002 : protocole manuel dans tests/eval/README.md et grille de résultats dans tests/eval/labels.md — passer environ 20 étiquettes réelles dans le projet Claude (T039), comparer à la vérité terrain (domaine + millésime corrects, cible ≥ 70 %), et corriger les consignes si besoin
 - [X] T040 [US1] Stockage des miniatures (onglet `Photos` segmenté, cache IndexedDB, chargement paresseux) dans src/data/photos.ts
-- [ ] T041 [US1] Implémenter l'import de l'onglet d'origine (FR-004b, `legacy_ref`, emplacements `legacy` à rattacher) dans src/data/legacy-import.ts, et le brancher sur le flux « Initialiser ma cave » de src/ui/views/sign-in.ts (import exécuté une fois après la création des onglets, avec résumé : N fiches importées, M à compléter)
+- [~] T041 (ABANDONNÉE : pas d'import, la cave est ressaisie) [US1] Implémenter l'import de l'onglet d'origine (FR-004b, `legacy_ref`, emplacements `legacy` à rattacher) dans src/data/legacy-import.ts, et le brancher sur le flux « Initialiser ma cave » de src/ui/views/sign-in.ts (import exécuté une fois après la création des onglets, avec résumé : N fiches importées, M à compléter)
 - [X] T042 [US1] Opérations dépôt : addWine, addStock, completeWine (sans changer la quantité) dans src/data/repository.ts
 - [X] T043 [US1] Écran d'ajout : prise de photo, formulaire pré-rempli modifiable, champs facultatifs repliés, sélecteur d'emplacement via le schéma de cave, quantité par emplacement, indication de position facultative sur l'étagère (gauche/droite, dessus/dessous — FR-003c, jamais obligatoire), saisie manuelle, caméra refusée dans src/ui/views/add-wine.ts
 - [X] T044 [US1] Dialogue de doublon « ajouter une bouteille » / « compléter la fiche existante » dans src/ui/components/duplicate-dialog.ts
@@ -127,7 +127,7 @@ Projet unique statique : `src/`, `tests/`, `apps-script/` à la racine du dépô
 - [X] T091 [US4] « Ajouter des bouteilles » à une fiche existante depuis la fiche détaillée (src/ui/components/add-stock-dialog.ts) ; schéma de la cave limité aux meubles de la fiche, emplacements en évidence ; liens depuis la liste et les étagères vers la fiche
 - [X] T092 [US5] Avis regroupés par fiche et par type pour une même synchronisation (« N opérations concernées »), acquittement individuel ou en bloc, pastille d'état et lien « avis » dans l'en-tête de chaque écran, état de synchronisation en direct dans Réglages
 - [X] T083 [US1] Écran « Propositions à ranger » (liste des propositions du projet Claude, bouton « Coller depuis Claude », choix de l'emplacement et de la quantité, valider/écarter, miniature facultative via l'appareil photo) dans src/ui/views/proposals.ts
-- [ ] T045 [US1] Écran de rattachement des emplacements importés (`legacy` → étagère/lieu) et file « à compléter » dans src/ui/views/legacy-review.ts
+- [~] T045 (ABANDONNÉE : pas d'import, la cave est ressaisie) [US1] Écran de rattachement des emplacements importés (`legacy` → étagère/lieu) et file « à compléter » dans src/ui/views/legacy-review.ts
 
 **Checkpoint** : on peut référencer et importer ; le cœur du produit existe.
 
@@ -208,8 +208,8 @@ Projet unique statique : `src/`, `tests/`, `apps-script/` à la racine du dépô
 
 ## Phase 10: Polish & transversal
 
-- [ ] T074 [P] Audit accessibilité (contraste AA, focus visible, libellés ARIA, tailles tactiles) sur tous les écrans dans src/ui/
-- [ ] T075 [P] Finitions design : mode sombre, états vide/chargement/erreur, transitions discrètes dans src/ui/styles/
+- [X] T074 [P] Audit accessibilité (contraste AA, focus visible, libellés ARIA, tailles tactiles) sur tous les écrans dans src/ui/
+- [X] T075 [P] Finitions design : mode sombre, états vide/chargement/erreur, transitions discrètes dans src/ui/styles/
 - [X] T076 [P] Rédiger README.md (installation, variables d'environnement, déploiement GitHub Pages, mise en place du projet Claude (claude-project/README.md), ajout de colonnes à la feuille)
 - [ ] T077 Test de charge sur 500–1000 fiches (sync incrémentale, rendu de la liste) et mesure du premier affichage < 2 s en 4G simulée (Lighthouse/DevTools, mode installé) avec correctifs, résultats consignés dans specs/001-bottle-inventory/quickstart.md §8
 - [ ] T078 Exécuter le parcours complet de specs/001-bottle-inventory/quickstart.md sur iPhone 16 et consigner le résultat du renouvellement de jeton (research.md §3)
