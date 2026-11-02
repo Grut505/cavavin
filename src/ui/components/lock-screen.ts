@@ -1,5 +1,6 @@
 // Écran de verrouillage : recouvre l'application à l'ouverture et après un séjour en arrière-plan.
 import { LOCK_IDLE_MS, isLockEnabled, unlock, type PasskeyApi } from '../../auth/app-lock';
+import { versionLabel } from '../../version';
 import { h } from '../dom';
 
 export interface LockDeps {
@@ -57,6 +58,7 @@ export function installLock(deps: LockDeps): LockHandle {
       button,
       message,
       forgot,
+      h('p', { class: 'muted', style: 'font-size:0.75rem' }, versionLabel()),
     );
     doc.body.append(overlay);
     button.focus();

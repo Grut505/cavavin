@@ -21,8 +21,9 @@ describe('démarrage hors-ligne : configuration du Service Worker', () => {
     expect(text).not.toMatch(/googleapis|google\.com|sheets/i);
   });
 
-  it('se met à jour toute seule', () => {
-    expect(pwaOptions.registerType).toBe('autoUpdate');
+  it('laisse l’application piloter les mises à jour (bandeau et application automatique)', () => {
+    expect(pwaOptions.registerType).toBe('prompt');
+    expect(pwaOptions.injectRegister).toBe(false);
   });
 
   it('est installable sur l’écran d’accueil : manifeste, mode application, icônes existantes', () => {

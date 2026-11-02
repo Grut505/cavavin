@@ -5,6 +5,7 @@ import { AuthError, knownEmail, requestToken, signOut } from '../../auth/google-
 import { SchemaTooNewError, TabNameConflictError, initSheet, isInitialized } from '../../data/init-sheet';
 import { SheetsError } from '../../data/sheets-api';
 import { Router } from '../router';
+import { versionLabel } from '../../version';
 import { h } from '../dom';
 import { fr } from '../strings.fr';
 
@@ -125,6 +126,7 @@ export function signInView(ctx: AppContext): HTMLElement {
         body.push(h('button', { class: 'btn', onClick: () => void signIn() }, fr.signIn.reconnect));
         break;
     }
+    body.push(h('p', { class: 'muted', style: 'font-size:0.75rem' }, versionLabel()));
     root.replaceChildren(...body.filter((b): b is HTMLElement => b !== null));
   }
 

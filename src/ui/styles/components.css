@@ -605,3 +605,22 @@ a.card--link {
   background: var(--bg);
   text-align: center;
 }
+
+/* Bandeau « Nouvelle version » : au-dessus de la barre de navigation */
+.update-banner {
+  position: fixed;
+  left: var(--space-3);
+  right: var(--space-3);
+  bottom: calc(var(--nav-h) + var(--safe-bottom) + var(--space-3));
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  font-size: 0.9rem;
+}

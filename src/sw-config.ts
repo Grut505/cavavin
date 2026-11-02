@@ -3,8 +3,11 @@
 import type { VitePWAOptions } from 'vite-plugin-pwa';
 
 export const pwaOptions: Partial<VitePWAOptions> = {
-  // Mise à jour silencieuse : la nouvelle version s'active au prochain lancement.
-  registerType: 'autoUpdate',
+  // La nouvelle version est téléchargée en arrière-plan puis attend : l'application (src/app-update.ts)
+  // l'active automatiquement juste après l'ouverture, ou propose « Mettre à jour » dans un bandeau.
+  registerType: 'prompt',
+  // L'enregistrement du Service Worker est fait par l'application elle-même (suivi des mises à jour).
+  injectRegister: false,
   includeAssets: ['icons/apple-touch-icon.png', 'icons/icon.svg'],
   manifest: {
     name: 'Cavavin',

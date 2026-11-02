@@ -1,4 +1,7 @@
 import './ui/styles/base.css';
+import { registerSW } from 'virtual:pwa-register';
+import { startUpdates } from './app-update';
+import { updateBanner } from './ui/components/update-banner';
 import { createContext, initialHash, isSheetReady } from './app';
 import { enforceAllowlist, requestToken, tryRenewSilently } from './auth/google-auth';
 import { disableLock } from './auth/app-lock';
@@ -39,6 +42,10 @@ async function boot(): Promise<void> {
   ctx.scheduler.start();
   // Jeton expiré mais compte connu : renouvellement silencieux (sans bloquer l'ouverture).
   void tryRenewSilently();
+
+  // Mises à jour de l'application installée : application auto juste après l'ouverture, sinon bandeau.
+  startUpdates(registerSW);
+  document.body.append(updateBanner());
 
   const routes: Route[] = [
     { path: '/accueil', nav: { label: fr.nav.home, icon: 'home' }, render: homeView },

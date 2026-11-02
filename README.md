@@ -62,6 +62,12 @@ elles sont ignorées et jamais écrasées. L'onglet d'origine n'est jamais modif
 (ajout de colonnes ou d'onglets, rétro-compatibles) sont migrées automatiquement à la synchronisation ;
 voir [`contracts/sheet-schema.md`](specs/001-bottle-inventory/contracts/sheet-schema.md).
 
+## Version et mises à jour
+
+- La version est affichée dans **Réglages → Version** (et sur l'écran de connexion et de verrouillage) : `v0.2.0 · 4ddf001 · 02/11/2026 18:42` = numéro (`package.json`, à incrémenter à chaque livraison notable), commit déployé et date de construction.
+- L'application installée (PWA) cherche une nouvelle version à l'ouverture, au retour au premier plan, au retour du réseau et toutes les 30 minutes. Trouvée dans les 15 premières secondes après l'ouverture, elle est **appliquée automatiquement** ; sinon un bandeau « Nouvelle version disponible — Mettre à jour » apparaît.
+- Réglages → Version : « Rechercher une mise à jour », et « Forcer le rafraîchissement » si la version reste bloquée (vide les fichiers de l'application ; les données et la connexion ne sont pas touchées).
+
 ## Accès privé
 
 - **Les données** sont protégées par le partage de la feuille Google (jamais « toute personne disposant du lien »). Un compte non partagé obtient « Accès refusé ».
