@@ -6,7 +6,7 @@ import { WINE_COLORS, type WineColor } from './types';
 
 /**
  * Filtres à appliquer à la Liste pour retrouver les bouteilles d'une ligne de statistique, ou `null` si la ligne
- * ne correspond pas à un filtre (millésime non renseigné ou regroupé sous « Autres »).
+ * ne correspond pas à un filtre (millésimes regroupés sous « Autres » : le filtre de millésime est une plage).
  */
 export function sliceFilter(axis: Axis, slice: Slice): Partial<Filters> | null {
   // « Non renseigné » → valeur vide ; « Autres » → toutes les valeurs regroupées.
@@ -21,6 +21,7 @@ export function sliceFilter(axis: Axis, slice: Slice): Partial<Filters> | null {
     case 'appellation':
       return { appellations: labels() };
     case 'vintage': {
+      if (slice.label === NOT_SET) return { vintageNone: true };
       const year = Number(slice.label);
       return Number.isInteger(year) ? { vintageMin: year, vintageMax: year } : null;
     }

@@ -44,6 +44,8 @@ export interface Filters {
   /** Plage de millésimes (les non millésimés en sont exclus dès qu'une borne est posée). */
   vintageMin: number | null;
   vintageMax: number | null;
+  /** Inclut les non millésimés (NV) : seuls s'il n'y a pas de plage, en plus de la plage sinon. */
+  vintageNone: boolean;
   /** Quantité totale en stock. */
   qtyMin: number | null;
   qtyMax: number | null;
@@ -63,6 +65,7 @@ export function emptyFilters(): Filters {
     maturity: [],
     vintageMin: null,
     vintageMax: null,
+    vintageNone: false,
     qtyMin: null,
     qtyMax: null,
     locationIds: [],
@@ -79,7 +82,7 @@ export function activeFilterCount(f: Filters): number {
     (f.regions.length > 0 ? 1 : 0) +
     (f.appellations.length > 0 ? 1 : 0) +
     (f.maturity.length > 0 ? 1 : 0) +
-    (f.vintageMin !== null || f.vintageMax !== null ? 1 : 0) +
+    (f.vintageMin !== null || f.vintageMax !== null || f.vintageNone ? 1 : 0) +
     (f.qtyMin !== null || f.qtyMax !== null ? 1 : 0) +
     (f.locationIds.length > 0 ? 1 : 0) +
     (f.giftFrom !== null ? 1 : 0) +
@@ -150,10 +153,11 @@ export function matches(row: WineRow, f: Filters, year: number = new Date().getF
   if (f.regions.length > 0 && !f.regions.some((r) => norm(r) === norm(wine.region))) return false;
   if (f.appellations.length > 0 && !f.appellations.some((a) => norm(a) === norm(wine.appellation))) return false;
   if (f.maturity.length > 0 && !f.maturity.includes(classify(wine, year).category)) return false;
-  if (f.vintageMin !== null || f.vintageMax !== null) {
-    if (wine.vintage === null) return false;
-    if (f.vintageMin !== null && wine.vintage < f.vintageMin) return false;
-    if (f.vintageMax !== null && wine.vintage > f.vintageMax) return false;
+  const hasRange = f.vintageMin !== null || f.vintageMax !== null;
+  if (hasRange || f.vintageNone) {
+    const v = wine.vintage;
+    const inRange = v !== null && hasRange && (f.vintageMin === null || v >= f.vintageMin) && (f.vintageMax === null || v <= f.vintageMax);
+    if (!(inRange || (v === null && f.vintageNone))) return false;
   }
   if (f.qtyMin !== null && row.quantity < f.qtyMin) return false;
   if (f.qtyMax !== null && row.quantity > f.qtyMax) return false;

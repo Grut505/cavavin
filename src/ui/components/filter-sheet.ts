@@ -156,7 +156,8 @@ export function openFilterSheet(input: FilterSheetInput): Promise<Filters | null
               numberField('De', draft.vintageMin, facets.vintageMin ? String(facets.vintageMin) : 'année', (n) => (draft.vintageMin = n)),
               numberField('À', draft.vintageMax, facets.vintageMax ? String(facets.vintageMax) : 'année', (n) => (draft.vintageMax = n)),
             ),
-            h('p', { class: 'muted', style: 'font-size:0.8rem' }, 'Les vins non millésimés sont exclus quand une plage est choisie.'),
+            chip('Non millésimés (NV)', draft.vintageNone, () => (draft.vintageNone = !draft.vintageNone)),
+            h('p', { class: 'muted', style: 'font-size:0.8rem' }, 'Une plage seule exclut les non millésimés ; cochez « Non millésimés » pour les ajouter à la plage, ou les voir seuls.'),
           ),
           group(
             'Quantité en stock',
