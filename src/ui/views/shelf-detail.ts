@@ -3,6 +3,7 @@ import type { AppContext } from '../../app';
 import { stocksAt } from '../../domain/locations';
 import { wineTitle } from '../../domain/wine';
 import { bottlesLabel } from '../cave-map/cave-map';
+import { renderShelfView, shelfBottles } from '../cave-map/shelf-view';
 import { pageHeader } from '../components/page-header';
 import { h } from '../dom';
 
@@ -54,6 +55,9 @@ export async function shelfDetailView(ctx: AppContext, params: { id?: string }):
     }),
     rows.length === 0
       ? h('div', { class: 'card empty muted' }, 'Aucune bouteille ici pour l’instant.')
-      : h('ul', { class: 'card list' }, rows),
+      : [
+          loc.kind === 'shelf' ? renderShelfView({ shelfName: loc.name, bottles: shelfBottles(here, wines) }) : null,
+          h('ul', { class: 'card list' }, rows),
+        ],
   );
 }

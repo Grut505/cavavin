@@ -1,9 +1,8 @@
 // Choix graphique de la position d'une bouteille sur une étagère (facultatif, indicatif).
 import { POSITION_HINTS, type PositionHint } from '../../domain/types';
 import { h } from '../dom';
+import { s } from './svg';
 import './cave-map.css';
-
-const NS = 'http://www.w3.org/2000/svg';
 
 interface Zone {
   x: number;
@@ -20,17 +19,6 @@ const ZONES: Record<PositionHint, Zone> = {
   droite: { x: 164, y: 52, w: 148, h: 60, label: 'Droite' },
   dessous: { x: 8, y: 118, w: 304, h: 38, label: 'Dessous' },
 };
-
-function s<K extends keyof SVGElementTagNameMap>(
-  tag: K,
-  attrs: Record<string, string | number> = {},
-  ...children: (SVGElement | string)[]
-): SVGElementTagNameMap[K] {
-  const el = document.createElementNS(NS, tag);
-  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, String(v));
-  for (const c of children) el.append(typeof c === 'string' ? document.createTextNode(c) : c);
-  return el;
-}
 
 export interface ShelfPositionPicker {
   el: HTMLElement;

@@ -16,10 +16,42 @@
   overflow: visible;
 }
 
-.rack__frame {
-  fill: var(--surface);
-  stroke: var(--border);
-  stroke-width: 2;
+.wood-stop-a {
+  stop-color: var(--wood-dark);
+}
+.wood-stop-b {
+  stop-color: var(--wood);
+}
+.rack svg {
+  filter: drop-shadow(0 6px 8px rgb(34 26 28 / 22%));
+}
+.rack__body {
+  stroke: var(--wood-dark);
+  stroke-width: 1.5;
+}
+.rack__cornice {
+  fill: var(--wood-light);
+  stroke: var(--wood-dark);
+  stroke-width: 1.5;
+}
+.rack__cornice-lip {
+  fill: var(--wood-dark);
+  opacity: 0.45;
+}
+.rack__plinth {
+  fill: var(--wood-light);
+  stroke: var(--wood-dark);
+  stroke-width: 1.5;
+}
+.rack__foot {
+  fill: var(--wood-dark);
+}
+.rack__cavity {
+  fill: var(--cavity);
+}
+.rack__cavity-shade {
+  fill: #000;
+  opacity: 0.25;
 }
 
 .shelf {
@@ -33,32 +65,37 @@
   transition: fill 120ms ease;
 }
 .shelf:hover .shelf__hit {
-  fill: var(--accent-soft);
+  fill: rgb(255 255 255 / 9%);
 }
 .shelf:focus-visible .shelf__hit,
 .shelf--selected .shelf__hit {
-  fill: var(--accent-soft);
-  stroke: var(--accent);
+  fill: rgb(255 255 255 / 12%);
+  stroke: var(--wood-light);
 }
 .shelf__board {
-  fill: var(--accent);
-  opacity: 0.55;
+  fill: var(--wood-light);
+}
+.shelf__board-lip {
+  fill: #fff;
+  opacity: 0.25;
 }
 .shelf__bottle {
-  fill: var(--accent);
+  fill: #8c2a3a;
+  stroke: rgb(255 255 255 / 25%);
+  stroke-width: 0.6;
 }
 .shelf__name {
-  fill: var(--text);
+  fill: #f3ebe4;
   font-size: 12px;
   font-weight: 600;
 }
 .shelf__count {
-  fill: var(--text-muted);
+  fill: #cdbfb4;
   font-size: 12px;
   font-weight: 600;
 }
 .shelf__empty {
-  fill: var(--text-muted);
+  fill: #b3a396;
   font-size: 11px;
   font-style: italic;
 }
@@ -97,8 +134,8 @@
   height: auto;
 }
 .pos__frame {
-  fill: var(--surface);
-  stroke: var(--border);
+  fill: var(--wood);
+  stroke: var(--wood-dark);
   stroke-width: 2;
 }
 .pos__zone {
@@ -135,4 +172,92 @@
   fill: var(--text-muted);
   font-size: 12px;
   font-weight: 700;
+}
+
+/* Vue de face d'une étagère (détail) */
+.sv-wrap {
+  margin-bottom: var(--space-4);
+}
+.sv {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 6px 8px rgb(34 26 28 / 22%));
+}
+.sv__frame {
+  fill: var(--wood);
+  stroke: var(--wood-dark);
+  stroke-width: 1.5;
+}
+.sv__cavity {
+  fill: var(--cavity);
+}
+.sv__plank {
+  fill: var(--wood-light);
+  stroke: var(--wood-dark);
+  stroke-width: 1.5;
+}
+.sv__plank-lip {
+  fill: #fff;
+  opacity: 0.25;
+}
+.sv__zone {
+  fill: rgb(255 255 255 / 3%);
+  stroke: rgb(255 255 255 / 14%);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+.sv__loose {
+  fill: var(--surface-2);
+  stroke: var(--border);
+  stroke-width: 1;
+}
+.sv__label {
+  fill: #b3a396;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.sv__label--loose {
+  fill: var(--text-muted);
+}
+.sv__more {
+  fill: #f3ebe4;
+  font-size: 11px;
+  font-weight: 700;
+}
+.sv__bottle {
+  cursor: pointer;
+  outline: none;
+}
+.sv__bottle-hit {
+  fill: transparent;
+}
+.sv__bottle:hover .bottle,
+.sv__bottle:focus-visible .bottle {
+  stroke: #fff;
+  stroke-width: 1.2;
+}
+.bottle {
+  stroke: rgb(255 255 255 / 30%);
+  stroke-width: 0.6;
+}
+.bottle--rouge {
+  fill: #8c2a3a;
+}
+.bottle--blanc {
+  fill: #d9c77a;
+}
+.bottle--rosé {
+  fill: #e59aa6;
+}
+.bottle--effervescent {
+  fill: #e8dca8;
+}
+.bottle--liquoreux {
+  fill: #c98f2a;
+}
+.bottle--autre {
+  fill: #8a8f98;
 }

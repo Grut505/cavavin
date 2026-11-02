@@ -15,6 +15,11 @@
   --warn: #8a5a00;
   --danger: #a1262b;
   --shadow: 0 1px 2px rgb(34 26 28 / 6%), 0 6px 20px rgb(34 26 28 / 6%);
+  --wood: #8a5a3c;
+  --wood-light: #a9754f;
+  --wood-dark: #5e3a25;
+  --cavity: #3a2519;
+  --cavity-light: #54372a;
 
   --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Segoe UI', Roboto, sans-serif;
   --font-display: 'New York', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
@@ -48,6 +53,11 @@
   --warn: #e3b25a;
   --danger: #ef8a8e;
   --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 6px 20px rgb(0 0 0 / 30%);
+  --wood: #6a4630;
+  --wood-light: #82583b;
+  --wood-dark: #402a1b;
+  --cavity: #1a110c;
+  --cavity-light: #2c1d15;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -65,5 +75,10 @@
     --warn: #e3b25a;
     --danger: #ef8a8e;
     --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 6px 20px rgb(0 0 0 / 30%);
+    --wood: #6a4630;
+    --wood-light: #82583b;
+    --wood-dark: #402a1b;
+    --cavity: #1a110c;
+    --cavity-light: #2c1d15;
   }
 }

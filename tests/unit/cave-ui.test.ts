@@ -149,3 +149,20 @@ describe('détail d’un emplacement', () => {
     expect(el.textContent).toContain('introuvable');
   });
 });
+
+describe('vue graphique d’une étagère', () => {
+  it('place chaque bouteille dans sa zone, sans position dans la bande dédiée', async () => {
+    const { ctx, repo } = await ctxWithDevice();
+    await repo.createFurniture('Meuble A', 1);
+    const shelf = (await repo.list('location')).find((l) => l.kind === 'shelf')!;
+    const a = await repo.create('wine', wineData());
+    const b = await repo.create('wine', wineData({ cuvee: 'Autre' }));
+    await repo.create('stock', { wine_id: a.id, location_id: shelf.id, quantity: 3, position_hint: 'gauche' });
+    await repo.create('stock', { wine_id: b.id, location_id: shelf.id, quantity: 2, position_hint: null });
+
+    const el = await shelfDetailView(ctx, { id: shelf.id });
+    expect(el.querySelectorAll('[data-zone="gauche"] .sv__bottle')).toHaveLength(3);
+    expect(el.querySelectorAll('[data-zone="droite"] .sv__bottle')).toHaveLength(0);
+    expect(el.querySelectorAll('[data-zone="none"] .sv__bottle')).toHaveLength(2);
+  });
+});
