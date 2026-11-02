@@ -49,27 +49,60 @@ function stored(): string | null {
 
 export const isLockEnabled = (): boolean => stored() !== null;
 
-export async function isLockSupported(api: PasskeyApi | null = browserPasskeyApi()): Promise<boolean> {
-  return api !== null && (await api.available());
+/** Le navigateur sait faire du WebAuthn : on propose d'essayer (iOS annonce parfois « indisponible » à tort). */
+export function isLockSupported(api: PasskeyApi | null = browserPasskeyApi()): Promise<boolean> {
+  return Promise.resolve(api !== null);
 }
 
-/** Crée la clé de l'appareil (Face ID demandé) et active le verrou. Lève une erreur si refusé. */
+/** Message lisible pour une erreur WebAuthn. */
+function describeLockError(e: unknown): string {
+  const name = (e as { name?: string })?.name;
+  if (name === 'NotAllowedError') return 'Refusé ou annulé. Vérifiez que Face ID est configuré (Réglages iPhone) et réessayez.';
+  if (name === 'NotSupportedError') return 'Cet appareil ne permet pas ce type de verrou.';
+  if (name === 'SecurityError') return 'Le navigateur refuse ce verrou sur cette adresse (HTTPS requis).';
+  if (name === 'InvalidStateError') return 'Une clé existe déjà pour cette application sur cet appareil.';
+  return e instanceof Error && e.message ? e.message : 'Activation impossible.';
+}
+
+/** Crée la clé de l'appareil (Face ID demandé) et active le verrou. Lève une erreur lisible si refusé. */
 export async function enableLock(api: PasskeyApi | null = browserPasskeyApi()): Promise<void> {
-  if (!api || !(await api.available())) throw new Error('Face ID, Touch ID ou le code de l’appareil ne sont pas disponibles ici.');
-  const cred = (await api.create({
-    challenge: random(32),
-    rp: { name: 'Cavavin' },
-    user: { id: random(16), name: 'cavavin', displayName: 'Cavavin' },
-    pubKeyCredParams: [
-      { type: 'public-key', alg: -7 },
-      { type: 'public-key', alg: -257 },
-    ],
-    authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'preferred' },
-    timeout: 60_000,
-    attestation: 'none',
-  })) as PublicKeyCredential | null;
+  if (!api) throw new Error('Ce navigateur ne gère pas Face ID pour les sites web (WebAuthn absent).');
+  let cred: PublicKeyCredential | null;
+  try {
+    cred = (await api.create({
+      challenge: random(32),
+      rp: { name: 'Cavavin' },
+      user: { id: random(16), name: 'cavavin', displayName: 'Cavavin' },
+      pubKeyCredParams: [
+        { type: 'public-key', alg: -7 },
+        { type: 'public-key', alg: -257 },
+      ],
+      authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'preferred' },
+      timeout: 60_000,
+      attestation: 'none',
+    })) as PublicKeyCredential | null;
+  } catch (e) {
+    throw new Error(describeLockError(e), { cause: e });
+  }
   if (!cred) throw new Error('Activation annulée.');
   localStorage.setItem(KEY, JSON.stringify({ credentialId: b64(cred.rawId) }));
+}
+
+/** Ce que le navigateur annonce, pour comprendre pourquoi le verrou n'est pas proposé. */
+export async function lockDiagnostic(api: PasskeyApi | null = browserPasskeyApi()): Promise<string> {
+  const standalone =
+    typeof window !== 'undefined' &&
+    ((window.matchMedia?.('(display-mode: standalone)').matches ?? false) || (navigator as { standalone?: boolean }).standalone === true);
+  const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+  const ios = /OS (\d+)[_.](\d+)/.exec(ua);
+  return [
+    `WebAuthn : ${api ? 'oui' : 'non'}`,
+    `Authentificateur de l’appareil : ${api ? ((await api.available()) ? 'oui' : 'non détecté') : '—'}`,
+    `Mode : ${standalone ? 'app installée' : 'navigateur'}`,
+    ios ? `iOS ${ios[1]}.${ios[2]}` : '',
+  ]
+    .filter(Boolean)
+    .join(' · ');
 }
 
 export function disableLock(): void {

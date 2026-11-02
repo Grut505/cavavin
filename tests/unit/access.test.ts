@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { disableLock, enableLock, isLockEnabled, isLockSupported, unlock, type PasskeyApi } from '../../src/auth/app-lock';
+import { disableLock, enableLock, isLockEnabled, isLockSupported, lockDiagnostic, unlock, type PasskeyApi } from '../../src/auth/app-lock';
 import { installLock } from '../../src/ui/components/lock-screen';
 import { lockSettingsCard } from '../../src/ui/components/lock-settings';
 
@@ -82,10 +82,26 @@ describe('verrou Face ID (WebAuthn)', () => {
     expect(await unlock(f.api)).toBe(false); // pas de clé : jamais déverrouillé par erreur
   });
 
-  it('refuse d’activer sans authentificateur disponible', async () => {
-    await expect(enableLock(fakeApi({ available: false }).api)).rejects.toThrow(/ne sont pas disponibles/);
+  it('sans WebAuthn : activation refusée avec un message clair', async () => {
+    await expect(enableLock(null)).rejects.toThrow(/WebAuthn absent/);
     expect(isLockEnabled()).toBe(false);
     expect(await isLockSupported(null)).toBe(false);
+  });
+
+  it('même si l’appareil se dit indisponible, tente l’activation et traduit les refus', async () => {
+    const f = fakeApi({ available: false });
+    await enableLock(f.api);
+    expect(isLockEnabled()).toBe(true);
+    disableLock();
+    const refused: PasskeyApi = { ...f.api, create: async () => { throw Object.assign(new Error('x'), { name: 'NotAllowedError' }); } };
+    await expect(enableLock(refused)).rejects.toThrow(/Refusé ou annulé/);
+    expect(isLockEnabled()).toBe(false);
+  });
+
+  it('indique ce que le navigateur annonce (pour comprendre une indisponibilité)', async () => {
+    expect(await lockDiagnostic(fakeApi().api)).toContain('WebAuthn : oui · Authentificateur de l’appareil : oui');
+    expect(await lockDiagnostic(fakeApi({ available: false }).api)).toContain('non détecté');
+    expect(await lockDiagnostic(null)).toContain('WebAuthn : non');
   });
 
   it('affiche l’écran de verrouillage à l’ouverture, le garde si Face ID échoue, le retire si réussi', async () => {
@@ -163,9 +179,15 @@ describe('verrou Face ID (WebAuthn)', () => {
     await waitFor(() => expect(card.textContent).toContain('Activer le verrou Face ID'));
     expect(isLockEnabled()).toBe(false);
 
-    const none = lockSettingsCard(fakeApi({ available: false }).api);
+    const undetected = lockSettingsCard(fakeApi({ available: false }).api);
+    document.body.append(undetected);
+    await waitFor(() => expect(undetected.textContent).toContain('Vous pouvez essayer quand même'));
+    expect(undetected.querySelector('button')).not.toBeNull();
+
+    const none = lockSettingsCard(null);
     document.body.append(none);
     await waitFor(() => expect(none.textContent).toContain('Non disponible ici'));
+    expect(none.textContent).toContain('WebAuthn : non');
     expect(none.querySelector('button')).toBeNull();
   });
 });
