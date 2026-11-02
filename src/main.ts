@@ -17,6 +17,7 @@ import { accessDeniedView, purgeLocalData } from './ui/views/access-denied';
 import { homeView } from './ui/views/home';
 import { pairingsBackfillView } from './ui/views/pairings-backfill';
 import { shoppingView } from './ui/views/shopping';
+import { inventoryView } from './ui/views/inventory';
 import { personView } from './ui/views/person';
 import { addHubView } from './ui/views/add-hub';
 import { addWineView, editWineView } from './ui/views/add-wine';
@@ -56,6 +57,7 @@ async function boot(): Promise<void> {
     { path: '/cave', nav: { label: fr.nav.cave, icon: 'cave' }, render: caveView },
     { path: '/cave/config', parent: '/cave', render: caveConfigView },
     { path: '/etagere/:id', parent: '/cave', render: shelfDetailView },
+    { path: '/pointage/:id', parent: '/cave', render: inventoryView },
     { path: '/liste', nav: { label: fr.nav.list, icon: 'list' }, render: wineListView },
     { path: '/vin/:id', parent: '/liste', followsOrigin: true, render: wineDetailView },
     { path: '/vin/:id/modifier', parent: '/liste', followsOrigin: true, render: editWineView },

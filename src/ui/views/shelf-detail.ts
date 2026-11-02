@@ -54,6 +54,7 @@ export async function shelfDetailView(ctx: AppContext, params: { id?: string }):
       back: '#/cave',
       backLabel: 'Retour à la cave',
     }),
+    loc.kind === 'shelf' && rows.length > 0 ? h('a', { class: 'btn btn--small', href: `#/pointage/${loc.id}` }, 'Pointer cette étagère') : null,
     rows.length === 0
       ? h('div', { class: 'card empty muted' }, 'Aucune bouteille ici pour l’instant.')
       : [

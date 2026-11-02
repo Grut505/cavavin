@@ -229,3 +229,13 @@
   color: var(--text-muted);
   font-weight: 400;
 }
+
+/* Pointage d'étagère */
+.inv__row--diff {
+  background: var(--accent-soft);
+}
+.inv__count {
+  width: 5ch;
+  text-align: center;
+  padding: 0 var(--space-1);
+}
