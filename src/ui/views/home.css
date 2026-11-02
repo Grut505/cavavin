@@ -196,3 +196,9 @@
 .tbd__more:empty {
   display: none;
 }
+
+/* Une liste vide (résultats de recherche pas encore affichés…) ne doit prendre aucune place. */
+.tbd__list:empty,
+.tbd__more:empty {
+  display: none;
+}

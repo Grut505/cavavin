@@ -66,6 +66,7 @@ describe('Accueil', () => {
     const el = await homeView(ctx);
     document.body.append(el);
     expect(el.textContent).toContain('Tapez un plat ou un ingrédient');
+    expect(el.querySelector('.dish__results')!.childNodes).toHaveLength(0); // liste vide : masquée par `:empty`, aucun espace fantôme
     expect([...el.querySelectorAll('.chips .btn')].map((b) => b.textContent)).toContain('risotto aux champignons');
 
     const input = el.querySelector('#dish') as HTMLInputElement;
