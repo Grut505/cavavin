@@ -29,7 +29,6 @@ export const fr = {
     offline: 'Impossible de joindre Google. Vérifiez votre connexion.',
     unexpected: 'Une erreur est survenue',
   },
-  soon: 'Cet écran arrive bientôt.',
   settings: {
     title: 'Réglages',
     account: 'Compte',

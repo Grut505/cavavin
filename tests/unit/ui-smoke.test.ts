@@ -2,7 +2,6 @@
 import { describe, expect, it } from 'vitest';
 import { isTokenValid } from '../../src/auth/google-auth';
 import { signInView } from '../../src/ui/views/sign-in';
-import { placeholderView } from '../../src/ui/views/placeholder';
 import type { AppContext } from '../../src/app';
 
 describe('auth', () => {
@@ -19,9 +18,5 @@ describe('vues', () => {
     const el = signInView({} as AppContext);
     expect(el.querySelector('button')?.textContent).toBe('Se connecter avec Google');
     expect(el.querySelector('h1')?.textContent).toBe('Ma cave');
-  });
-
-  it('affiche un écran provisoire pour les vues à venir', () => {
-    expect(placeholderView('Liste').textContent).toContain('arrive bientôt');
   });
 });

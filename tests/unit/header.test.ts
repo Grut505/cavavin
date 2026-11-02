@@ -10,7 +10,6 @@ import { wineDetailView } from '../../src/ui/views/wine-detail';
 import { caveConfigView } from '../../src/ui/views/cave-config';
 import { caveView } from '../../src/ui/views/cave';
 import { personsView } from '../../src/ui/views/personnes';
-import { placeholderView } from '../../src/ui/views/placeholder';
 import { proposalsView } from '../../src/ui/views/proposals';
 import { settingsView } from '../../src/ui/views/settings';
 import { wineListView } from '../../src/ui/views/wine-list';
@@ -60,7 +59,6 @@ describe('en-tête commun', () => {
       ['ajouter', await addHubView(ctx)],
       ['saisie', await addWineView(ctx)],
       ['propositions', await proposalsView(ctx)],
-      ['provisoire', placeholderView('Liste')],
     ];
     for (const [name, el] of views) {
       expect(el.firstElementChild?.classList.contains('app-header'), `en-tête de « ${name} »`).toBe(true);
