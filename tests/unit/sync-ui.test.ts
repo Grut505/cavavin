@@ -217,7 +217,7 @@ describe('avis de synchronisation', () => {
     expect(text).toContain('votre version a remplacé l’autre');
     expect(text).toContain('ramenée à 0');
     expect(view.querySelector('.app-header p')?.textContent).toBe('2 à lire');
-    expect(cards.every((c) => c.querySelector(`a[href="#/vin/${wine.id}"]`))).toBe(true);
+    expect(cards.every((c) => c.querySelector(`a[href="#/vin/${wine.id}?from=%2Favis"]`))).toBe(true);
   });
 
   it('chaque avis peut être acquitté, puis tous d’un coup', async () => {

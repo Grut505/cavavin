@@ -3,6 +3,7 @@
 import type { PositionHint, Stock, Wine } from '../../domain/types';
 import { wineTitle } from '../../domain/wine';
 import { h } from '../dom';
+import { wineHref } from '../nav-origin';
 import { bottleGlyph, s } from './svg';
 import './cave-map.css';
 
@@ -67,7 +68,7 @@ function bottleEl(b: ShelfBottle, x: number, y: number): SVGElement {
   g.append(s('rect', { class: 'sv__bottle-hit', x: x - 1.5, y: y - 1, width: BW + 3, height: BH + 2 }));
   g.append(bottleGlyph(x, y, `bottle bottle--${b.color ?? 'autre'}`, SCALE));
   const go = (): void => {
-    window.location.hash = `#/vin/${b.wineId}`;
+    window.location.hash = wineHref(b.wineId); // mémorise l'étagère : le retour y ramène
   };
   g.addEventListener('click', go);
   g.addEventListener('keydown', (e) => {

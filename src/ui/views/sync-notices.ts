@@ -2,6 +2,7 @@
 import type { AppContext } from '../../app';
 import type { SyncNotice } from '../../domain/types';
 import { pageHeader } from '../components/page-header';
+import { wineHref } from '../nav-origin';
 import { h } from '../dom';
 
 const KIND_LABELS: Record<SyncNotice['kind'], string> = {
@@ -34,7 +35,7 @@ export async function syncNoticesView(ctx: AppContext): Promise<HTMLElement> {
           h(
             'div',
             { class: 'row' },
-            wineId ? h('a', { class: 'btn btn--small', href: `#/vin/${wineId}` }, 'Voir la fiche') : null,
+            wineId ? h('a', { class: 'btn btn--small', href: wineHref(wineId, '/avis') }, 'Voir la fiche') : null,
             h(
               'button',
               {

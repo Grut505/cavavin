@@ -73,6 +73,19 @@ describe('origine de navigation', () => {
     expect(plain.querySelector('.app-header a.icon-btn')!.getAttribute('href')).toBe('#/liste');
   });
 
+  it('toucher une bouteille du schéma graphique de l’étagère garde aussi l’origine', async () => {
+    const d = await makeDevice(await makeSheet(), 'dev-nav-graph');
+    await d.repo.createFurniture('Meuble A', 1);
+    const shelf = (await d.repo.list('location')).find((l) => l.kind === 'shelf')!;
+    const wine = await d.repo.addWine(wineFields(), [{ location_id: shelf.id, quantity: 1, position_hint: 'gauche' }]);
+    window.location.hash = `#/etagere/${shelf.id}`;
+    const view = await shelfDetailView(contextOf(d) as AppContext, { id: shelf.id });
+    document.body.append(view);
+    view.querySelector('.sv__bottle')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(window.location.hash).toBe(`#/vin/${wine.id}?from=${encodeURIComponent(`/etagere/${shelf.id}`)}`);
+    expect(wineBack().href).toBe(`#/etagere/${shelf.id}`);
+  });
+
   it('l’accueil envoie vers la fiche avec son origine', async () => {
     const d = await makeDevice(await makeSheet(), 'dev-home-nav');
     await d.repo.createFurniture('Meuble A', 1);
