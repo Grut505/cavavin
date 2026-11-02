@@ -624,3 +624,47 @@ a.card--link {
   box-shadow: var(--shadow);
   font-size: 0.9rem;
 }
+
+/* Message passager (annulation…) */
+.toast {
+  position: fixed;
+  left: var(--space-3);
+  right: var(--space-3);
+  bottom: calc(var(--nav-h) + var(--safe-bottom) + var(--space-3));
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  background: var(--text);
+  color: var(--bg);
+  box-shadow: var(--shadow);
+  font-size: 0.9rem;
+}
+.toast .btn {
+  background: transparent;
+  color: inherit;
+  border-color: currentColor;
+}
+
+/* Note en étoiles */
+.stars {
+  display: flex;
+  gap: var(--space-2);
+}
+.stars__btn {
+  min-width: var(--tap);
+  min-height: var(--tap);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+.stars__btn--on {
+  color: var(--warn);
+  border-color: var(--warn);
+}

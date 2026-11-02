@@ -5,6 +5,8 @@ import { OUTFLOW_REASONS, type Stock, type Wine } from '../../domain/types';
 import { wineTitle } from '../../domain/wine';
 import { h } from '../dom';
 import { openDialog } from './dialog';
+import { openTastingDialog } from './tasting-dialog';
+import { showToast } from './toast';
 
 export interface StockChoice {
   stock: Stock;
@@ -18,6 +20,8 @@ export function openOutflowDialog(
 ): Promise<boolean> {
   const choices = opts.choices.filter((c) => c.stock.quantity > 0);
   if (choices.length === 0) return Promise.resolve(false);
+  /** Sortie enregistrée par ce dialogue (pour l'avis et l'annulation). */
+  let done: { ids: string[]; reason: string; note: string | null } | null = null;
 
   const { result } = openDialog<boolean>('Sortir une bouteille', (close) => {
     const title = wineTitle(opts.wine);
@@ -68,12 +72,13 @@ export function openOutflowDialog(
       }
       confirm.setAttribute('disabled', '');
       try {
-        await ctx.repo.recordOutflow(where.value, {
+        const ids = await ctx.repo.recordOutflow(where.value, {
           reason: check.value.reason,
           date: check.value.date,
           note: note.value,
           quantity: check.value.quantity,
         });
+        done = { ids, reason: check.value.reason, note: note.value.trim() || null };
         close(true);
       } catch (e) {
         general.replaceChildren(h('p', { class: 'alert alert--error' }, e instanceof Error ? e.message : String(e)));
@@ -96,5 +101,19 @@ export function openOutflowDialog(
       h('div', { class: 'dialog__actions' }, h('button', { class: 'btn', type: 'button', onClick: () => close(false) }, 'Annuler'), confirm),
     ];
   });
-  return result.then((v) => v === true);
+  return result.then(async (v) => {
+    if (v !== true || !done) return v === true;
+    const { ids, reason, note } = done;
+    // Une bouteille bue : on demande l'avis (note, commentaire) ; il alimente « À racheter ».
+    if (reason === 'drunk') await openTastingDialog(ctx, { wine: opts.wine, outflowIds: ids, note });
+    showToast({
+      message: ids.length > 1 ? `${ids.length} bouteilles sorties.` : 'Bouteille sortie.',
+      actionLabel: 'Annuler',
+      onAction: async () => {
+        await ctx.repo.undoOutflows(ids);
+        window.dispatchEvent(new HashChangeEvent('hashchange')); // l'écran se recalcule
+      },
+    });
+    return true;
+  });
 }

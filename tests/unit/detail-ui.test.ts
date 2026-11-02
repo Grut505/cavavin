@@ -51,6 +51,16 @@ const lastDialog = (): Promise<HTMLDialogElement> =>
     return all.at(-1)!;
   });
 const noDialog = (): Promise<void> => waitFor(() => expect(document.querySelector('dialog')).toBeNull());
+/** Après une bouteille bue, l'avis s'ouvre : on le passe (« Plus tard »). */
+const skipTasting = async (): Promise<void> => {
+  const dlg = await waitFor(() => {
+    const d = [...document.querySelectorAll('dialog')].find((x) => x.textContent?.includes('Votre avis'));
+    if (!d) throw new Error('avis pas encore ouvert');
+    return d;
+  });
+  click(byText(dlg, 'button', 'Plus tard'));
+  await noDialog();
+};
 
 async function open(ctx: AppContext, id: string): Promise<HTMLElement> {
   const view = await wineDetailView(ctx, { id });
@@ -167,7 +177,7 @@ describe('sortir une bouteille', () => {
     expect((dlg.querySelector('#out-stock') as HTMLSelectElement).selectedOptions[0]?.textContent).toContain('Meuble A · Étagère 1');
     setValue(dlg.querySelector('#out-note'), 'Avec des amis');
     click(byText(dlg, 'button', 'Sortir'));
-    await noDialog();
+    await skipTasting();
 
     const stock = (await repo.list('stock')).find((s) => s.location_id === a1.id)!;
     expect(stock.quantity).toBe(2);
@@ -227,7 +237,7 @@ describe('sortir une bouteille', () => {
     const view = await open(s.ctx, w.id);
     click(byText(view, 'li[data-stock-id] button', 'Sortir'));
     click(byText(await lastDialog(), 'button', 'Sortir'));
-    await noDialog();
+    await skipTasting();
     await waitFor(() => expect(view.querySelector('.app-header p')?.textContent).toContain('épuisée'));
     expect(view.textContent).toContain('Plus aucune bouteille en stock');
     expect(view.querySelector('li[data-stock-id]')).toBeNull();

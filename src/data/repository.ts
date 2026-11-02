@@ -180,7 +180,7 @@ export class Repository {
     stockId: string,
     delta: number,
     outflow?: Omit<Outflow, keyof Base | 'wine_id' | 'location_id'>,
-  ): Promise<void> {
+  ): Promise<string | undefined> {
     const stock = await this.db.get('stock', stockId);
     if (!stock) throw new Error(`stock ${stockId} introuvable`);
     const ts = this.now().toISOString();
@@ -189,6 +189,7 @@ export class Repository {
     await this.db.put('stock', { ...stock, quantity, deleted: quantity === 0, updated_at: ts });
 
     let outflowRow: Record<string, unknown> | undefined;
+    let outflowId: string | undefined;
     if (outflow) {
       const o: Outflow = {
         ...outflow,
@@ -201,12 +202,14 @@ export class Repository {
       };
       await this.db.put('outflow', o);
       outflowRow = o as unknown as Record<string, unknown>;
+      outflowId = o.id;
     }
     await this.enqueue('qty_delta', 'stock', stockId, stock.rev, {
       delta,
       ...(outflowRow ? { outflow: outflowRow } : {}),
     });
     this.changed();
+    return outflowId;
   }
 
   /**
@@ -270,7 +273,7 @@ export class Repository {
   async recordOutflow(
     stockId: string,
     opts: { reason: OutflowReason; date: string; note: string | null; quantity?: number },
-  ): Promise<void> {
+  ): Promise<string[]> {
     const stock = await this.get('stock', stockId);
     if (!stock) throw new Error(`stock ${stockId} introuvable`);
     const check = validateOutflow({
@@ -282,7 +285,27 @@ export class Repository {
     if (!check.ok) throw new Error(check.issues.map((i) => i.message).join(' '));
     const { quantity, date, reason } = check.value;
     const note = opts.note?.trim() ? opts.note.trim() : null;
-    for (let i = 0; i < quantity; i++) await this.adjustStock(stockId, -1, { reason, date, note });
+    const ids: string[] = [];
+    for (let i = 0; i < quantity; i++) {
+      const id = await this.adjustStock(stockId, -1, { reason, date, note });
+      if (id) ids.push(id);
+    }
+    return ids;
+  }
+
+  /**
+   * Annule des sorties (tap malheureux) : remet une bouteille par sortie à son emplacement d'origine et supprime
+   * les sorties de l'historique. Les stocks désactivés repassent actifs.
+   */
+  async undoOutflows(ids: string[]): Promise<void> {
+    for (const id of ids) {
+      const o = await this.db.get('outflow', id);
+      if (!o || o.deleted) continue;
+      const stock = (await this.db.getAll('stock')).find((s) => s.wine_id === o.wine_id && s.location_id === o.location_id);
+      if (stock) await this.adjustStock(stock.id, 1);
+      else await this.create('stock', { wine_id: o.wine_id, location_id: o.location_id, quantity: 1, position_hint: null });
+      await this.remove('outflow', id);
+    }
   }
 
   /** Vérifie un déplacement (quantité, destination) avant de l'appliquer. */
