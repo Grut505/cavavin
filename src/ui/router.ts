@@ -2,6 +2,7 @@
 import type { AppContext } from '../app';
 import { h } from './dom';
 import { icon, type IconName } from './icons';
+import { originPath } from './nav-origin';
 
 export type Params = Record<string, string>;
 
@@ -11,6 +12,8 @@ export interface Route {
   /** Onglet de navigation à mettre en évidence pour un sous-écran. */
   parent?: string;
   nav?: { label: string; icon: IconName };
+  /** L'onglet allumé est celui de l'écran d'origine (`?from=`), pas celui du parent (ex. une fiche ouverte depuis la cave). */
+  followsOrigin?: boolean;
   render: (ctx: AppContext, params: Params) => Promise<HTMLElement> | HTMLElement;
 }
 
@@ -77,9 +80,19 @@ export class Router {
     }
     if (ticket !== this.ticket) return; // une navigation plus récente a pris le relais
     this.decorate?.(view);
-    const nav = this.bare.includes(path) ? [] : [this.buildNav(route.parent ?? route.path)];
+    const nav = this.bare.includes(path) ? [] : [this.buildNav(this.activeTab(route))];
     this.root.replaceChildren(view, ...nav);
     window.scrollTo(0, 0);
+  }
+
+  /** Chemin de l'onglet à allumer : celui de l'origine si la route le demande, sinon celui du parent. */
+  private activeTab(route: Route): string {
+    if (route.followsOrigin) {
+      const from = originPath();
+      const origin = from ? this.routes.find((r) => match(r, from) !== null) : undefined;
+      if (origin) return origin.parent ?? origin.path;
+    }
+    return route.parent ?? route.path;
   }
 
   private buildNav(current: string): HTMLElement {

@@ -31,6 +31,7 @@ import {
 import { OUTFLOW_REASON_LABELS } from '../../domain/stock';
 import { OUTFLOW_REASONS, WINE_COLORS, type Outflow, type Wine, type WineColor } from '../../domain/types';
 import { wineTitle } from '../../domain/wine';
+import { wineHref } from '../nav-origin';
 import { loadPref, savePref } from '../prefs';
 import { pageHeader } from '../components/page-header';
 import { quickOutflow } from '../components/quick-outflow';
@@ -65,7 +66,7 @@ function entryRow(e: MaturityEntry, thumbs: Map<string, string>, year: number, o
   return h(
     'li',
     { class: 'tbd__item' },
-    renderWineCard(e.row, { href: `#/vin/${w.id}`, thumb: thumbs.get(w.id) }),
+    renderWineCard(e.row, { href: wineHref(w.id, '/accueil'), thumb: thumbs.get(w.id) }),
     noteRow(note, e.info.finishing || e.info.category === 'late', w, onDrink),
   );
 }
@@ -239,7 +240,7 @@ function dishSection(rows: WineRow[], thumbs: Map<string, string>, year: number,
           return h(
             'li',
             { class: 'tbd__item' },
-            renderWineCard(m.row, { href: `#/vin/${w.id}`, thumb: thumbs.get(w.id) }),
+            renderWineCard(m.row, { href: wineHref(w.id, '/accueil'), thumb: thumbs.get(w.id) }),
             noteRow(note, m.info.finishing || m.info.category === 'late', w, onDrink),
           );
         }),
@@ -298,7 +299,7 @@ function rebuySection(rows: WineRow[], thumbs: Map<string, string>): HTMLElement
     ]
       .filter(Boolean)
       .join(' · ');
-    list.append(h('li', { class: 'tbd__item' }, renderWineCard(row, { href: `#/vin/${w.id}`, thumb: thumbs.get(w.id) }), h('p', { class: 'tbd__note' }, note)));
+    list.append(h('li', { class: 'tbd__item' }, renderWineCard(row, { href: wineHref(w.id, '/accueil'), thumb: thumbs.get(w.id) }), h('p', { class: 'tbd__note' }, note)));
   }
   return h(
     'section',

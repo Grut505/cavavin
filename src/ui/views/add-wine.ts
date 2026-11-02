@@ -24,6 +24,7 @@ import { askDuplicate } from '../components/duplicate-dialog';
 import { locationLabel, pickLocation } from '../components/location-picker';
 import { h } from '../dom';
 import { icon } from '../icons';
+import { originQuery } from '../nav-origin';
 import { hashQuery } from '../query';
 import { Router } from '../router';
 
@@ -440,7 +441,7 @@ async function wineFormView(ctx: AppContext, opts: { proposal?: Proposal; wine?:
         }
         await ctx.repo.updateWine(editing.id, fields);
         if (thumb) await ctx.repo.setThumbnail(editing.id, thumb);
-        Router.go(`/vin/${editing.id}`);
+        Router.go(`/vin/${editing.id}${originQuery()}`);
         return;
       }
 
@@ -507,7 +508,7 @@ async function wineFormView(ctx: AppContext, opts: { proposal?: Proposal; wine?:
     { class: 'view' },
     pageHeader({
       title: editing ? 'Modifier la fiche' : 'Ajouter une bouteille',
-      back: editing ? `#/vin/${editing.id}` : '#/ajouter',
+      back: editing ? `#/vin/${editing.id}${originQuery()}` : '#/ajouter',
     }),
     form,
   );

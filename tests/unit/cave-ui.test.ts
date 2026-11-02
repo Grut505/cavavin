@@ -140,7 +140,7 @@ describe('détail d’un emplacement', () => {
     expect(el.textContent).toContain('Domaine des Lys');
     expect(el.textContent).toContain('×2');
     expect(el.textContent).toContain('Position : gauche');
-    expect(el.querySelector(`a[href="#/vin/${wine.id}"]`)).not.toBeNull(); // lien vers la fiche détaillée
+    expect(el.querySelector(`a[href^="#/vin/${wine.id}?from="]`)).not.toBeNull(); // lien vers la fiche, qui mémorise l'étagère d'origine
   });
 
   it('signale un emplacement inexistant', async () => {

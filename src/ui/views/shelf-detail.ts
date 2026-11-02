@@ -5,6 +5,7 @@ import { wineTitle } from '../../domain/wine';
 import { bottlesLabel } from '../cave-map/cave-map';
 import { renderShelfView, shelfBottles } from '../cave-map/shelf-view';
 import { pageHeader } from '../components/page-header';
+import { wineHref } from '../nav-origin';
 import { h } from '../dom';
 
 export async function shelfDetailView(ctx: AppContext, params: { id?: string }): Promise<HTMLElement> {
@@ -35,7 +36,7 @@ export async function shelfDetailView(ctx: AppContext, params: { id?: string }):
       { class: 'list__item' },
       h(
         wine ? 'a' : 'div',
-        { class: 'grow list__link', ...(wine ? { href: `#/vin/${wine.id}` } : {}) },
+        { class: 'grow list__link', ...(wine ? { href: wineHref(wine.id, `/etagere/${loc.id}`) } : {}) },
         h('strong', {}, wine ? wineTitle(wine).primary : 'Fiche introuvable'),
         wine ? h('div', { class: 'muted' }, wineTitle(wine).secondary) : null,
         st.position_hint ? h('div', { class: 'muted' }, `Position : ${st.position_hint}`) : null,

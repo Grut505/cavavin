@@ -21,6 +21,7 @@ import { searchRows } from '../../domain/search';
 import { renderWineCard } from '../components/wine-card';
 import { h } from '../dom';
 import { icon } from '../icons';
+import { wineHref } from '../nav-origin';
 import { loadPref, savePref } from '../prefs';
 
 const DEFAULT_SORT: SortSpec = { key: 'domain', dir: 'asc' };
@@ -210,7 +211,7 @@ export function wineListView(ctx: AppContext): HTMLElement {
     }
     list.replaceChildren(...result.map((r) => renderWineCard(r, {
           thumb: thumbs.get(r.wine.id),
-          href: `#/vin/${r.wine.id}`,
+          href: wineHref(r.wine.id, '/liste'),
           giftFrom: r.wine.gift_from ? people.get(r.wine.gift_from) : null,
         })));
   }

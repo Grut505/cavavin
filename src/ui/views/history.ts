@@ -5,6 +5,7 @@ import { OUTFLOW_REASONS, type OutflowReason } from '../../domain/types';
 import { formatDateFr, wineTitle } from '../../domain/wine';
 import { locationLabel } from '../components/location-picker';
 import { pageHeader } from '../components/page-header';
+import { wineHref } from '../nav-origin';
 import { h } from '../dom';
 
 export async function historyView(ctx: AppContext): Promise<HTMLElement> {
@@ -34,7 +35,7 @@ export async function historyView(ctx: AppContext): Promise<HTMLElement> {
     return h(
       'li',
       { class: 'list__item', 'data-wine-id': o.wine_id },
-      wine && !wine.deleted ? h('a', { class: 'grow list__link', href: `#/vin/${wine.id}` }, ...body) : h('div', { class: 'grow' }, ...body),
+      wine && !wine.deleted ? h('a', { class: 'grow list__link', href: wineHref(wine.id, '/historique') }, ...body) : h('div', { class: 'grow' }, ...body),
     );
   });
 

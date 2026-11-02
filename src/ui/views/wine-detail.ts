@@ -14,6 +14,7 @@ import { pageHeader } from '../components/page-header';
 import { colorLabel } from '../components/wine-card';
 import { h } from '../dom';
 import { icon } from '../icons';
+import { originQuery, wineBack } from '../nav-origin';
 import { Router } from '../router';
 
 const eur = (n: number): string => `${n.toFixed(2).replace('.', ',')} €`;
@@ -124,12 +125,12 @@ export async function wineDetailView(ctx: AppContext, params: { id?: string }): 
       pageHeader({
         title: title.primary,
         subtitle: `${title.secondary} · ${total === 0 ? 'épuisée' : bottlesLabel(total)}`,
-        back: '#/liste',
-        backLabel: 'Retour à la liste',
-        actions: [h('a', { class: 'icon-btn', href: `#/vin/${wine.id}/modifier`, 'aria-label': 'Modifier la fiche' }, icon('edit'))],
+        back: wineBack().href,
+        backLabel: wineBack().label,
+        actions: [h('a', { class: 'icon-btn', href: `#/vin/${wine.id}/modifier${originQuery()}`, 'aria-label': 'Modifier la fiche' }, icon('edit'))],
       }),
       wine.needs_review
-        ? h('p', { class: 'alert' }, 'Fiche à compléter. ', h('a', { href: `#/vin/${wine.id}/modifier` }, 'Modifier la fiche'))
+        ? h('p', { class: 'alert' }, 'Fiche à compléter. ', h('a', { href: `#/vin/${wine.id}/modifier${originQuery()}` }, 'Modifier la fiche'))
         : null,
       h(
         'section',

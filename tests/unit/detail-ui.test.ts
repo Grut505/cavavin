@@ -414,7 +414,7 @@ describe('historique des sorties', () => {
     ]);
     expect(items[0]!.textContent).toContain('Pour Marie');
     expect(items[0]!.textContent).toContain('Meuble A · Étagère 1');
-    expect(items[0]!.querySelector('a')?.getAttribute('href')).toBe(`#/vin/${w.id}`);
+    expect(items[0]!.querySelector('a')?.getAttribute('href')).toBe(`#/vin/${w.id}?from=%2Fhistorique`); // retour à l'historique
     const chips = [...view.querySelectorAll('.chips .chip__label')].map((c) => c.textContent);
     expect(chips).toEqual(['Bue · 1', 'Offerte · 1', 'Cassée / bouchonnée · 1']);
   });

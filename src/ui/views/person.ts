@@ -6,6 +6,7 @@ import { OUTFLOW_REASON_LABELS } from '../../domain/stock';
 import { wineTitle, formatDateFr } from '../../domain/wine';
 import { pageHeader } from '../components/page-header';
 import { renderWineCard } from '../components/wine-card';
+import { wineHref } from '../nav-origin';
 import { h } from '../dom';
 
 export async function personView(ctx: AppContext, params: { id?: string }): Promise<HTMLElement> {
@@ -33,7 +34,7 @@ export async function personView(ctx: AppContext, params: { id?: string }): Prom
   const stockList =
     g.inStock.length === 0
       ? h('p', { class: 'muted' }, 'Aucune bouteille en stock.')
-      : h('div', { class: 'stack' }, g.inStock.map((r) => renderWineCard(r, { href: `#/vin/${r.wine.id}`, thumb: thumbs.get(r.wine.id) })));
+      : h('div', { class: 'stack' }, g.inStock.map((r) => renderWineCard(r, { href: wineHref(r.wine.id, `/personne/${person.id}`), thumb: thumbs.get(r.wine.id) })));
 
   const goneList =
     g.gone.length === 0
@@ -47,7 +48,7 @@ export async function personView(ctx: AppContext, params: { id?: string }): Prom
               { class: 'list__item' },
               h(
                 'a',
-                { class: 'grow list__link', href: `#/vin/${wine.id}` },
+                { class: 'grow list__link', href: wineHref(wine.id, `/personne/${person.id}`) },
                 h('strong', {}, wineTitle(wine).primary),
                 h('div', { class: 'muted' }, wineTitle(wine).secondary),
               ),
