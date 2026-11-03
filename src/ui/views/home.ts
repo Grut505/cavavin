@@ -39,6 +39,7 @@ import { quickOutflow } from '../components/quick-outflow';
 import { legendButton } from '../components/urgency-legend';
 import { colorLabel, renderWineCard } from '../components/wine-card';
 import { h } from '../dom';
+import { icon } from '../icons';
 import './home.css';
 
 const plural = (n: number, one: string, many: string): string => `${n} ${n > 1 ? many : one}`;
@@ -199,8 +200,14 @@ function toDrinkSection(rows: WineRow[], year: number, onDrink: Drink): HTMLElem
       savePref('home.drink', prefs);
       draw();
     };
-    const chip = (label: string, color: WineColor | null): HTMLElement =>
-      h('button', { class: `btn btn--small${prefs.color === color ? ' btn--primary' : ''}`, type: 'button', 'aria-pressed': String(prefs.color === color), onClick: () => setPrefs({ ...prefs, color }) }, label);
+    // Pastilles compactes : bouteille de la couleur du vin + nombre (le libellé reste pour les lecteurs d'écran).
+    const chip = (label: string, color: WineColor | null, n: number): HTMLElement =>
+      h(
+        'button',
+        { class: `btn btn--small chip-color${prefs.color === color ? ' btn--primary' : ''}`, type: 'button', 'aria-pressed': String(prefs.color === color), 'aria-label': `${label} (${n})`, title: label, onClick: () => setPrefs({ ...prefs, color }) },
+        color ? h('span', { class: `chip-color__bottle dot--${color}`, 'aria-hidden': 'true' }, icon('bottle')) : label,
+        h('span', { class: 'chip-color__n' }, String(n)),
+      );
     const sortSelect = h(
       'select',
       { class: 'field__input', id: 'drink-sort', onChange: (e: Event) => setPrefs({ ...prefs, sort: (e.target as HTMLSelectElement).value as DrinkSort }) },
@@ -208,7 +215,7 @@ function toDrinkSection(rows: WineRow[], year: number, onDrink: Drink): HTMLElem
     );
     sortSelect.value = prefs.sort;
     controls.replaceChildren(
-      h('div', { class: 'chips chips--row', role: 'group', 'aria-label': 'Filtrer par couleur' }, chip(`Toutes (${bottlesTotal})`, null), ...colors.map((c) => chip(`${colorLabel(c.color)} (${c.bottles})`, c.color))),
+      h('div', { class: 'chips chips--row', role: 'group', 'aria-label': 'Filtrer par couleur' }, chip('Toutes', null, bottlesTotal), ...colors.map((c) => chip(colorLabel(c.color), c.color, c.bottles))),
       h('label', { class: 'field', for: 'drink-sort' }, h('span', { class: 'field__label' }, 'Trier par'), sortSelect),
       h('p', { class: 'muted', style: 'font-size:0.8rem' }, DRINK_SORT_HINTS[prefs.sort]),
     );

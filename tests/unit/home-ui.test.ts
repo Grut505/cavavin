@@ -135,8 +135,9 @@ describe('écran Stats : 50 fiches', () => {
 
   it('filtre par couleur et change le tri, en le mémorisant', async () => {
     const { el, group } = await fifty();
-    const chip = (label: string): Element | undefined => [...el.querySelectorAll('.tbd__controls .btn')].find((b) => b.textContent?.startsWith(label));
-    expect(chip('Toutes')!.textContent).toBe('Toutes (50)');
+    const chip = (label: string): Element | undefined => [...el.querySelectorAll('.tbd__controls .btn')].find((b) => b.getAttribute('aria-label')?.startsWith(label));
+    expect(chip('Toutes')!.getAttribute('aria-label')).toBe('Toutes (50)');
+    expect(chip('Blanc')!.querySelector('.chip-color__bottle')).not.toBeNull(); // bouteille colorée + nombre, sans libellé
     click(chip('Blanc'));
     expect(group('now').querySelector('.badge')!.textContent).toBe('8'); // 10 blancs dont 2 « à finir » (i = 0 et 5)
     expect(chip('Blanc')!.getAttribute('aria-pressed')).toBe('true');
