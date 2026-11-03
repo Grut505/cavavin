@@ -41,7 +41,7 @@ export function signInView(ctx: AppContext): HTMLElement {
   const finish = async (): Promise<void> => {
     await ctx.repo.sync();
     await markSheetReady(ctx);
-    Router.go('/accueil');
+    Router.go('/cave');
   };
 
   const checkAccessAndContinue = async (): Promise<void> => {

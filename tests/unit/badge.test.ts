@@ -32,7 +32,7 @@ describe('bouteilles à boire en priorité', () => {
 describe('pastille sur un onglet', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
-    window.location.hash = '#/accueil';
+    window.location.hash = '#/cave';
   });
   const page = () => h('main', { class: 'view' }, 'x');
 
@@ -42,33 +42,33 @@ describe('pastille sur un onglet', () => {
     const router = new Router(
       {} as AppContext,
       [
-        { path: '/accueil', nav: { label: 'Accueil', icon: 'home' }, render: page },
         { path: '/cave', nav: { label: 'Cave', icon: 'cave' }, render: page },
+        { path: '/stats', nav: { label: 'Stats', icon: 'stats' }, render: page },
       ],
-      '/accueil',
+      '/cave',
     );
     router.mount(root);
     await waitFor(() => expect(root.querySelector('nav')).not.toBeNull());
     expect(root.querySelector('.nav__badge')).toBeNull();
 
-    router.setBadge('/accueil', 3, '3 bouteilles à boire en priorité');
-    const tab = root.querySelector('nav a[href="#/accueil"]')!;
+    router.setBadge('/cave', 3, '3 bouteilles à boire en priorité');
+    const tab = root.querySelector('nav a[href="#/cave"]')!;
     expect(tab.querySelector('.nav__badge')!.textContent).toBe('3');
-    expect(tab.getAttribute('aria-label')).toBe('Accueil, 3 bouteilles à boire en priorité');
-    expect(root.querySelector('nav a[href="#/cave"] .nav__badge')).toBeNull();
+    expect(tab.getAttribute('aria-label')).toBe('Cave, 3 bouteilles à boire en priorité');
+    expect(root.querySelector('nav a[href="#/stats"] .nav__badge')).toBeNull();
 
-    router.setBadge('/accueil', 12, '12 bouteilles à boire en priorité');
+    router.setBadge('/cave', 12, '12 bouteilles à boire en priorité');
     expect(tab.querySelector('.nav__badge')!.textContent).toBe('9+');
     expect(tab.querySelectorAll('.nav__badge')).toHaveLength(1);
 
-    router.setBadge('/accueil', 0, '');
+    router.setBadge('/cave', 0, '');
     expect(tab.querySelector('.nav__badge')).toBeNull();
     expect(tab.hasAttribute('aria-label')).toBe(false);
 
     // la pastille survit au changement d'écran (la barre est reconstruite)
-    router.setBadge('/accueil', 2, '2 bouteilles à boire en priorité');
-    window.location.hash = '#/cave';
-    await waitFor(() => expect(root.querySelector('nav a[href="#/cave"][aria-current="page"]')).not.toBeNull());
-    expect(root.querySelector('nav a[href="#/accueil"] .nav__badge')!.textContent).toBe('2');
+    router.setBadge('/cave', 2, '2 bouteilles à boire en priorité');
+    window.location.hash = '#/stats';
+    await waitFor(() => expect(root.querySelector('nav a[href="#/stats"][aria-current="page"]')).not.toBeNull());
+    expect(root.querySelector('nav a[href="#/cave"] .nav__badge')!.textContent).toBe('2');
   });
 });

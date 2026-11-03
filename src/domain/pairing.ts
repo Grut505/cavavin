@@ -79,6 +79,40 @@ export interface PairingSearch {
 }
 
 /**
+ * Une fiche correspond-elle au plat (mots déjà extraits par `dishTokens`) ? Il suffit qu'au moins la moitié des mots
+ * significatifs soit retrouvée dans ses mets ; `null` sinon (ou sans mets renseignés).
+ */
+export function dishMatch(row: WineRow, tokens: string[], year: number): PairingMatch | null {
+  if (tokens.length === 0) return null;
+  const items = pairingsOf(row.wine).map((item) => ({ item, words: dishTokens(item) }));
+  if (items.length === 0) return null;
+  const need = Math.max(1, Math.ceil(tokens.length / 2));
+  let score = 0;
+  let found = 0;
+  const matched = new Set<string>();
+  for (const t of tokens) {
+    let best = 0;
+    let bestItem = '';
+    for (const { item, words } of items) {
+      for (const w of words) {
+        const s = wordScore(t, w);
+        if (s > best) {
+          best = s;
+          bestItem = item;
+        }
+      }
+    }
+    if (best > 0) {
+      found++;
+      score += best;
+      matched.add(bestItem);
+    }
+  }
+  if (found < need) return null;
+  return { row, info: classify(row.wine, year), coverage: found / tokens.length, score, matched: [...matched], window: windowText(row.wine) };
+}
+
+/**
  * Cherche, parmi les bouteilles en stock, celles dont les mets correspondent à la demande.
  * Permissif : fautes de frappe, accents, pluriels, mots vides et nombres de convives sont ignorés ;
  * il suffit qu'au moins la moitié des mots significatifs soit retrouvée. Les bouteilles à boire
@@ -90,35 +124,10 @@ export function searchByDish(rows: WineRow[], query: string, year: number): Pair
   const withoutPairings = inStock.filter((r) => pairingsOf(r.wine).length === 0).length;
   if (tokens.length === 0) return { tokens, matches: [], withoutPairings };
 
-  const need = Math.max(1, Math.ceil(tokens.length / 2));
   const matches: PairingMatch[] = [];
   for (const row of inStock) {
-    const items = pairingsOf(row.wine).map((item) => ({ item, words: dishTokens(item) }));
-    if (items.length === 0) continue;
-    let score = 0;
-    let found = 0;
-    const matched = new Set<string>();
-    for (const t of tokens) {
-      let best = 0;
-      let bestItem = '';
-      for (const { item, words } of items) {
-        for (const w of words) {
-          const s = wordScore(t, w);
-          if (s > best) {
-            best = s;
-            bestItem = item;
-          }
-        }
-      }
-      if (best > 0) {
-        found++;
-        score += best;
-        matched.add(bestItem);
-      }
-    }
-    if (found < need) continue;
-    const info = classify(row.wine, year);
-    matches.push({ row, info, coverage: found / tokens.length, score, matched: [...matched], window: windowText(row.wine) });
+    const m = dishMatch(row, tokens, year);
+    if (m) matches.push(m);
   }
 
   const rank = (m: PairingMatch): number => (m.info.category === 'now' && m.info.finishing ? -1 : RANK[m.info.category]);

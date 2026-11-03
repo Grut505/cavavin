@@ -147,7 +147,7 @@ export async function wineDetailView(ctx: AppContext, params: { id?: string }): 
             { class: 'card stack', 'aria-label': 'À table' },
             h('h2', {}, 'À table'),
             h('p', { class: 'muted' }, 'Mets conseillés (végétariens). Touchez-en un pour voir toutes les bouteilles qui vont avec.'),
-            h('div', { class: 'chips' }, pairingsOf(wine).map((m) => h('a', { class: 'btn btn--small', href: `#/accueil?plat=${encodeURIComponent(m)}` }, m))),
+            h('div', { class: 'chips' }, pairingsOf(wine).map((m) => h('a', { class: 'btn btn--small', href: `#/liste?plat=${encodeURIComponent(m)}` }, m))),
           )
         : null,
       h(

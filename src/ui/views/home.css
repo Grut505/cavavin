@@ -239,3 +239,63 @@
   text-align: center;
   padding: 0 var(--space-1);
 }
+
+/* Écran Stats : « À boire » compact */
+.home__title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.tbd__swatch {
+  flex: none;
+  width: 14px;
+  height: 22px;
+  border-radius: 4px;
+}
+.tbd__row-li {
+  list-style: none;
+}
+.tbd__row {
+  border-top: 1px solid var(--border);
+}
+.tbd__row-sum {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--tap);
+  cursor: pointer;
+}
+.tbd__row-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9rem;
+}
+.tbd__row-body {
+  padding: 0 0 var(--space-3);
+}
+.tbd__row-body p {
+  margin: 0 0 var(--space-2);
+  font-size: 0.85rem;
+}
+.tbd__row-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+.tbd--finishing .tbd__summary {
+  border-left-color: var(--u-finishing);
+}
+.tbd--late .tbd__summary {
+  border-left-color: var(--u-late);
+}
+.tbd--now .tbd__summary {
+  border-left-color: var(--u-now);
+}
+.tbd--soon .tbd__summary {
+  border-left-color: var(--u-soon);
+}
+.tbd--early .tbd__summary {
+  border-left-color: var(--u-early);
+}

@@ -2,6 +2,8 @@
 import type { AppContext } from '../../app';
 import { bottleCounts } from '../../domain/locations';
 import { renderCaveMap, bottlesLabel } from '../cave-map/cave-map';
+import { buildRows } from '../../domain/query';
+import { openDishDialog } from '../components/dish-dialog';
 import { urgencyByLocation } from '../../domain/urgency';
 import { legendButton } from '../components/urgency-legend';
 import { pageHeader } from '../components/page-header';
@@ -16,6 +18,7 @@ export async function caveView(ctx: AppContext): Promise<HTMLElement> {
     ctx.repo.list('stock'),
     ctx.repo.list('wine'),
   ]);
+  const rows = buildRows({ wines, stocks, locations, furniture });
   const counts = bottleCounts(stocks);
   const total = [...counts.values()].reduce((a, b) => a + b, 0);
   const hasCave = furniture.length > 0 || locations.length > 0;
@@ -41,10 +44,19 @@ export async function caveView(ctx: AppContext): Promise<HTMLElement> {
     );
   }
 
+  // Deux raccourcis en haut : « À boire » (écran Stats) et « Quoi boire » (fenêtre de saisie d'un plat → Liste filtrée).
+  const shortcuts = h(
+    'div',
+    { class: 'cave-actions' },
+    h('a', { class: 'btn btn--primary', href: '#/stats?go=a-boire' }, 'À boire'),
+    h('button', { class: 'btn btn--primary', type: 'button', onClick: () => openDishDialog(rows) }, 'Quoi boire'),
+  );
+
   return h(
     'main',
     { class: 'view' },
     head,
+    shortcuts,
     renderCaveMap({ furniture, locations, counts, urgencies: urgencyByLocation(stocks, wines, new Date().getFullYear()) }, { onSelect: (loc) => Router.go(`/etagere/${loc.id}`) }),
   );
 }

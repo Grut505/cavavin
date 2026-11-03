@@ -23,7 +23,7 @@ export function originQuery(): string {
 }
 
 const LABELS: [RegExp, string][] = [
-  [/^\/accueil/, 'Retour à l’accueil'],
+  [/^\/(stats|accueil)/, 'Retour aux stats'],
   [/^\/etagere\//, 'Retour à l’étagère'],
   [/^\/cave/, 'Retour à la cave'],
   [/^\/personne\//, 'Retour à la personne'],

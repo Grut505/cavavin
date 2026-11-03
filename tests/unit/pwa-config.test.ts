@@ -47,7 +47,7 @@ describe('démarrage hors-ligne : configuration du Service Worker', () => {
 
 describe('écran d’ouverture', () => {
   it('ouvre la cave directement quand la feuille est déjà prête sur l’appareil (sans réseau ni connexion)', () => {
-    expect(initialHash(true)).toBe('#/accueil');
+    expect(initialHash(true)).toBe('#/cave');
   });
   it('passe par la connexion au tout premier lancement', () => {
     expect(initialHash(false)).toBe('#/connexion');

@@ -1,6 +1,7 @@
 // Liste des fiches : lignes dérivées (quantités, emplacements), tri et filtres (FR-006, FR-007, FR-008).
 import { classify, type Maturity } from './maturity';
 import { normalizeText } from './normalize';
+import { dishMatch, dishTokens, searchByDish } from './pairing';
 import { WINE_COLORS, type Furniture, type Location, type Stock, type Wine, type WineColor } from './types';
 
 export interface RowLocation {
@@ -52,6 +53,8 @@ export interface Filters {
   qtyMin: number | null;
   qtyMax: number | null;
   locationIds: string[];
+  /** Plat ou ingrédient : fiches dont les mets conseillés correspondent (recherche tolérante aux fautes). */
+  dish: string;
   /** Identifiant de la personne qui a offert la bouteille (fiches « cadeau »). */
   giftFrom: string | null;
   /** Inclut les fiches sans bouteille en stock. */
@@ -72,6 +75,7 @@ export function emptyFilters(): Filters {
     qtyMin: null,
     qtyMax: null,
     locationIds: [],
+    dish: '',
     giftFrom: null,
     includeHistory: false,
   };
@@ -89,6 +93,7 @@ export function activeFilterCount(f: Filters): number {
     (f.qtyMin !== null || f.qtyMax !== null ? 1 : 0) +
     (f.locationIds.length > 0 ? 1 : 0) +
     (f.giftFrom !== null ? 1 : 0) +
+    (f.dish.trim() !== '' ? 1 : 0) +
     (f.includeHistory ? 1 : 0)
   );
 }
@@ -167,6 +172,7 @@ export function matches(row: WineRow, f: Filters, year: number = new Date().getF
   if (f.qtyMax !== null && row.quantity > f.qtyMax) return false;
   if (f.locationIds.length > 0 && !row.locations.some((l) => f.locationIds.includes(l.id))) return false;
   if (f.giftFrom !== null && !(wine.gift && wine.gift_from === f.giftFrom)) return false;
+  if (f.dish.trim() !== '' && !dishMatch(row, dishTokens(f.dish), year)) return false;
   return true;
 }
 
@@ -211,7 +217,13 @@ function tieBreak(a: WineRow, b: WineRow): number {
 }
 
 export function queryRows(rows: WineRow[], filters: Filters, sort: SortSpec, year: number = new Date().getFullYear()): WineRow[] {
-  return rows.filter((r) => matches(r, filters, year)).sort((a, b) => compare(a, b, sort) || tieBreak(a, b));
+  const kept = rows.filter((r) => matches(r, filters, year));
+  if (filters.dish.trim() !== '') {
+    // Avec un plat, les meilleures correspondances d'abord (complètes, puis les plus à point), le tri choisi départage.
+    const order = new Map(searchByDish(kept, filters.dish, year).matches.map((m, i) => [m.row.wine.id, i] as const));
+    return kept.sort((a, b) => (order.get(a.wine.id) ?? 1e9) - (order.get(b.wine.id) ?? 1e9) || compare(a, b, sort) || tieBreak(a, b));
+  }
+  return kept.sort((a, b) => compare(a, b, sort) || tieBreak(a, b));
 }
 
 // --- facettes (valeurs disponibles pour construire les filtres) ---

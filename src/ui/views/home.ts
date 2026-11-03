@@ -1,9 +1,8 @@
-// Accueil : « À boire » en premier, puis « Quoi boire ce soir ? » et les statistiques globales (spec 002).
+// Écran Stats : « À boire » (catégories d'urgence repliables), « À racheter » et les statistiques globales (spec 002).
 import type { AppContext } from '../../app';
 import {
   DRINK_SORT_HINTS,
   DRINK_SORT_LABELS,
-  MATURITY_HINTS,
   MATURITY_LABELS,
   colorCounts,
   maturityGroups,
@@ -11,12 +10,9 @@ import {
   type DrinkSort,
   type Maturity,
   type MaturityEntry,
-  type MaturityGroup,
 } from '../../domain/maturity';
-import { pairingVocabulary, searchByDish } from '../../domain/pairing';
 import { rebuyList } from '../../domain/rebuy';
 import { shoppingList } from '../../domain/shopping';
-import { isVegetarian } from '../../domain/pairing-list';
 import { buildRows, emptyFilters, type Filters, type WineRow } from '../../domain/query';
 import { maturityFilter, sliceFilter } from '../../domain/stats-filter';
 import {
@@ -32,6 +28,7 @@ import {
 } from '../../domain/stats';
 import { OUTFLOW_REASON_LABELS } from '../../domain/stock';
 import { OUTFLOW_REASONS, WINE_COLORS, type Outflow, type Wine, type WineColor } from '../../domain/types';
+import { URGENCY_LABELS, URGENCY_ORDER, type Urgency } from '../../domain/urgency';
 import { wineTitle } from '../../domain/wine';
 import { wineHref } from '../nav-origin';
 import { loadPref, savePref } from '../prefs';
@@ -39,6 +36,7 @@ import { hashQuery } from '../query';
 import { Router } from '../router';
 import { pageHeader } from '../components/page-header';
 import { quickOutflow } from '../components/quick-outflow';
+import { legendButton } from '../components/urgency-legend';
 import { colorLabel, renderWineCard } from '../components/wine-card';
 import { h } from '../dom';
 import './home.css';
@@ -49,29 +47,40 @@ const PAGE = 10;
 
 type Drink = (wine: Wine) => void;
 
-/** Ligne d'information sous une carte, avec le bouton « Je la bois ». */
-function noteRow(note: string, urgent: boolean, wine: Wine, onDrink: Drink): HTMLElement {
-  return h(
-    'div',
-    { class: 'tbd__foot' },
-    h('p', { class: `tbd__note${urgent ? ' tbd__note--urgent' : ''}` }, note),
-    h('button', { class: 'btn btn--small', type: 'button', onClick: () => onDrink(wine), 'aria-label': `Je la bois : ${wineTitle(wine).primary}` }, 'Je la bois'),
-  );
-}
-
 // --- À boire ---
 
-function entryRow(e: MaturityEntry, thumbs: Map<string, string>, year: number, onDrink: Drink): HTMLElement {
+/** Ligne compacte « ● Domaine · cuvée · millésime ×2 » : un tap la déplie (garde, emplacement, actions). */
+function compactRow(e: MaturityEntry, year: number, onDrink: Drink): HTMLElement {
   const w = e.row.wine;
+  const t = wineTitle(w);
   const window = windowText(w);
-  const note = [window ? `Garde : ${window}` : '', e.info.finishing ? 'à finir' : '', e.info.category === 'late' && w.drink_until !== null ? `dépassée depuis ${year - w.drink_until} an${year - w.drink_until > 1 ? 's' : ''}` : '']
-    .filter(Boolean)
-    .join(' · ');
+  const where = e.row.locations.map((l) => l.label).join(' + ') || 'Sans emplacement';
+  const late = e.info.category === 'late' && w.drink_until !== null ? `dépassée depuis ${year - w.drink_until} an${year - w.drink_until > 1 ? 's' : ''}` : '';
   return h(
     'li',
-    { class: 'tbd__item' },
-    renderWineCard(e.row, { href: wineHref(w.id, '/accueil'), thumb: thumbs.get(w.id) }),
-    noteRow(note, e.info.finishing || e.info.category === 'late', w, onDrink),
+    { class: 'tbd__row-li' },
+    h(
+      'details',
+      { class: 'tbd__row' },
+      h(
+        'summary',
+        { class: 'tbd__row-sum' },
+        w.color ? h('span', { class: `dot dot--${w.color}`, 'aria-hidden': 'true' }) : null,
+        h('span', { class: 'tbd__row-title' }, h('strong', {}, t.primary), h('span', { class: 'muted' }, ` ${t.secondary}`)),
+        h('span', { class: 'badge', 'aria-label': bottles(e.row.quantity) }, `×${e.row.quantity}`),
+      ),
+      h(
+        'div',
+        { class: 'tbd__row-body' },
+        h('p', { class: 'muted' }, [window ? `Garde ${window}` : '', late, where].filter(Boolean).join(' · ')),
+        h(
+          'div',
+          { class: 'tbd__row-actions' },
+          h('a', { class: 'btn btn--small', href: wineHref(w.id, '/stats') }, 'Fiche'),
+          h('button', { class: 'btn btn--small btn--primary', type: 'button', onClick: () => onDrink(w), 'aria-label': `Je la bois : ${t.primary}` }, 'Je la bois'),
+        ),
+      ),
+    ),
   );
 }
 
@@ -92,10 +101,35 @@ const normalizeDrinkPrefs = (raw: unknown): DrinkPrefs | null => {
 /** En dessous de ce nombre de fiches, ni filtre ni tri : la liste tient d'un coup d'œil. */
 const CONTROLS_MIN = 8;
 
-function toDrinkSection(rows: WineRow[], thumbs: Map<string, string>, year: number, onDrink: Drink): HTMLElement {
-  const all = maturityGroups(rows, year);
-  const totalWines = all.reduce((n, g) => n + g.entries.length, 0);
-  const section = h('section', { class: 'home__section', 'aria-labelledby': 'h-tbd' }, h('h2', { id: 'h-tbd' }, 'À boire'));
+interface UrgencyGroup {
+  urgency: Urgency;
+  entries: MaturityEntry[];
+  bottles: number;
+}
+
+/** Les cinq catégories d'urgence : « À finir » est séparée de « À point » (même tri que la liste). */
+function urgencyGroups(rows: WineRow[], year: number, opts: { color?: WineColor; sort: DrinkSort }): UrgencyGroup[] {
+  const out: UrgencyGroup[] = [];
+  for (const g of maturityGroups(rows, year, opts)) {
+    const parts: [Urgency, MaturityEntry[]][] =
+      g.category === 'now'
+        ? [
+            ['finishing', g.entries.filter((e) => e.info.finishing)],
+            ['now', g.entries.filter((e) => !e.info.finishing)],
+          ]
+        : [[g.category, g.entries]];
+    for (const [urgency, entries] of parts) out.push({ urgency, entries, bottles: entries.reduce((n, e) => n + e.row.quantity, 0) });
+  }
+  return out.sort((a, b) => URGENCY_ORDER.indexOf(a.urgency) - URGENCY_ORDER.indexOf(b.urgency));
+}
+
+function toDrinkSection(rows: WineRow[], year: number, onDrink: Drink): HTMLElement {
+  const totalWines = urgencyGroups(rows, year, { sort: 'urgency' }).reduce((n, g) => n + g.entries.length, 0);
+  const section = h(
+    'section',
+    { class: 'home__section', 'aria-labelledby': 'h-tbd' },
+    h('div', { class: 'home__title' }, h('h2', { id: 'h-tbd' }, 'À boire'), legendButton()),
+  );
   if (totalWines === 0) {
     section.append(
       h(
@@ -117,22 +151,12 @@ function toDrinkSection(rows: WineRow[], thumbs: Map<string, string>, year: numb
   const controls = h('div', { class: 'card stack tbd__controls' });
   const body = h('div', { class: 'stack' });
 
-  const renderGroup = (g: MaturityGroup): HTMLElement => {
+  const renderGroup = (g: UrgencyGroup): HTMLElement => {
     const list = h('ul', { class: 'tbd__list' });
     const footer = h('div', { class: 'tbd__more' });
-    // Sous-titres « À finir » / « À point » seulement quand le tri par urgence mélange les deux.
-    const finishingCount = g.entries.filter((e) => e.info.finishing).length;
-    const split = prefs.sort === 'urgency' && g.category === 'now' && finishingCount > 0 && finishingCount < g.entries.length;
-    let shown = 0;
-
+    let shown = Math.min(PAGE, g.entries.length);
     const paint = (): void => {
-      const items: HTMLElement[] = [];
-      g.entries.slice(0, shown).forEach((e, i) => {
-        if (split && i === 0) items.push(h('li', { class: 'tbd__sub tbd__sub--urgent', role: 'presentation' }, `À finir (${finishingCount})`));
-        if (split && i === finishingCount) items.push(h('li', { class: 'tbd__sub', role: 'presentation' }, `À point (${g.entries.length - finishingCount})`));
-        items.push(entryRow(e, thumbs, year, onDrink));
-      });
-      list.replaceChildren(...items);
+      list.replaceChildren(...g.entries.slice(0, shown).map((e) => compactRow(e, year, onDrink)));
       const left = g.entries.length - shown;
       footer.replaceChildren(
         ...(left > 0
@@ -143,18 +167,18 @@ function toDrinkSection(rows: WineRow[], thumbs: Map<string, string>, year: numb
           : []),
       );
     };
-    shown = Math.min(PAGE, g.entries.length);
     paint();
-
+    // Les plus pressées sont ouvertes ; les autres restent repliées (le nombre de bouteilles suffit).
+    const open = g.urgency === 'late' || g.urgency === 'finishing';
     return h(
       'details',
-      { class: `tbd tbd--${g.category}`, ...(g.category === 'late' || g.category === 'now' ? { open: true } : {}) },
+      { class: `tbd tbd--${g.urgency}`, ...(open ? { open: true } : {}) },
       h(
         'summary',
         { class: 'tbd__summary' },
-        h('span', { class: 'tbd__title' }, MATURITY_LABELS[g.category]),
+        h('span', { class: `tbd__swatch u-fill u-fill--${g.urgency}`, 'aria-hidden': 'true' }),
+        h('span', { class: 'tbd__title' }, URGENCY_LABELS[g.urgency]),
         h('span', { class: 'badge', 'aria-label': bottles(g.bottles) }, String(g.bottles)),
-        h('span', { class: 'tbd__hint muted' }, `${plural(g.entries.length, 'fiche', 'fiches')} · ${MATURITY_HINTS[g.category]}`),
       ),
       list,
       footer,
@@ -162,7 +186,7 @@ function toDrinkSection(rows: WineRow[], thumbs: Map<string, string>, year: numb
   };
 
   const draw = (): void => {
-    const groups = maturityGroups(rows, year, { color: prefs.color ?? undefined, sort: prefs.sort }).filter((g) => g.entries.length > 0);
+    const groups = urgencyGroups(rows, year, { color: prefs.color ?? undefined, sort: prefs.sort }).filter((g) => g.entries.length > 0);
     body.replaceChildren(
       ...(groups.length === 0
         ? [h('div', { class: 'card empty muted' }, `Aucune fiche ${prefs.color ? `« ${colorLabel(prefs.color).toLowerCase()} » ` : ''}à afficher.`)]
@@ -189,105 +213,10 @@ function toDrinkSection(rows: WineRow[], thumbs: Map<string, string>, year: numb
       h('p', { class: 'muted', style: 'font-size:0.8rem' }, DRINK_SORT_HINTS[prefs.sort]),
     );
   };
-  const bottlesTotal = all.reduce((n, g) => n + g.bottles, 0);
+  const bottlesTotal = colors.reduce((n, c) => n + c.bottles, 0);
   draw();
   section.append(...(showControls ? [controls] : []), body);
   return section;
-}
-
-// --- Quoi boire ce soir ? ---
-
-/** Recherche des bouteilles en stock dont les mets conseillés correspondent au plat saisi (tolérante aux fautes). */
-function dishSection(rows: WineRow[], thumbs: Map<string, string>, year: number, onDrink: Drink): HTMLElement {
-  const input = h('input', {
-    class: 'field__input',
-    type: 'search',
-    id: 'dish',
-    placeholder: 'Ex. risotto aux champignons, curry de légumes…',
-    autocomplete: 'off',
-    autocapitalize: 'off',
-    spellcheck: 'false',
-    enterkeyhint: 'search',
-  });
-  const status = h('p', { class: 'muted', role: 'status', 'aria-live': 'polite' });
-  const results = h('ul', { class: 'tbd__list dish__results' });
-  const chips = h('div', { class: 'chips' });
-
-  const vocab = pairingVocabulary(rows, 8);
-  for (const v of vocab) {
-    chips.append(
-      h('button', { class: 'btn btn--small', type: 'button', onClick: () => { input.value = v.label; search(); } }, v.label),
-    );
-  }
-
-  function search(): void {
-    const q = input.value;
-    const res = searchByDish(rows, q, year);
-    results.replaceChildren();
-    if (res.tokens.length === 0) {
-      status.textContent =
-        vocab.length === 0
-          ? 'Aucun mets n’est encore renseigné : ils sont ajoutés par Claude à la lecture d’étiquette, ou à la main sur la fiche.'
-          : 'Tapez un plat ou un ingrédient, ou choisissez un mets de votre cave.';
-      return;
-    }
-    if (res.matches.length === 0) {
-      status.textContent = `${isVegetarian(q) ? '' : 'Les mets de la cave sont végétariens (ni viande, ni poisson) : essayez un plat végétarien ou un raccourci. '}Aucune bouteille ne correspond à « ${q.trim()} ».${res.withoutPairings > 0 ? ` ${plural(res.withoutPairings, 'fiche n’a', 'fiches n’ont')} aucun mets renseigné.` : ''}`;
-      return;
-    }
-    status.textContent = `${plural(res.matches.length, 'fiche correspond', 'fiches correspondent')}, les plus à point d’abord.${res.withoutPairings > 0 ? ` ${plural(res.withoutPairings, 'fiche n’a', 'fiches n’ont')} aucun mets renseigné.` : ''}`;
-    const paint = (shown: number): void => {
-      results.replaceChildren(
-        ...res.matches.slice(0, shown).map((m) => {
-          const w = m.row.wine;
-          const note = [MATURITY_LABELS[m.info.category] + (m.info.finishing ? ' (à finir)' : ''), m.window ? `garde ${m.window}` : '', `Accord : ${m.matched.join(', ')}`].filter(Boolean).join(' · ');
-          return h(
-            'li',
-            { class: 'tbd__item' },
-            renderWineCard(m.row, { href: wineHref(w.id, '/accueil'), thumb: thumbs.get(w.id) }),
-            noteRow(note, m.info.finishing || m.info.category === 'late', w, onDrink),
-          );
-        }),
-        ...(res.matches.length > shown
-          ? [h('li', { class: 'tbd__more' }, h('button', { class: 'btn btn--small', type: 'button', onClick: () => paint(shown + PAGE) }, `Afficher ${Math.min(PAGE, res.matches.length - shown)} de plus (${plural(res.matches.length - shown, 'restante', 'restantes')})`))]
-          : []),
-      );
-    };
-    paint(PAGE);
-  }
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  input.addEventListener('input', () => {
-    clearTimeout(timer);
-    timer = setTimeout(search, 150);
-  });
-
-  const form = h(
-    'form',
-    {
-      class: 'card stack',
-      onSubmit: (e: Event) => {
-        e.preventDefault();
-        search();
-      },
-    },
-    h('label', { class: 'field', for: 'dish' }, h('span', { class: 'field__label' }, 'Plat ou ingrédient (cuisine végétarienne)'), input),
-    vocab.length > 0 ? chips : null,
-    status,
-    searchByDish(rows, '', year).withoutPairings > 0
-      ? h('a', { class: 'btn btn--small', href: '#/mets' }, 'Compléter les mets des fiches sans mets')
-      : null,
-  );
-  // Arrivé depuis un met de la fiche (« À table ») : la recherche est déjà lancée.
-  const preset = hashQuery().get('plat');
-  if (preset) input.value = preset;
-  search();
-  return h(
-    'section',
-    { class: 'home__section', 'aria-labelledby': 'h-occ' },
-    h('h2', { id: 'h-occ' }, 'Quoi boire ce soir ?'),
-    form,
-    results,
-  );
 }
 
 // --- À racheter ---
@@ -313,7 +242,7 @@ function rebuySection(rows: WineRow[], thumbs: Map<string, string>, ctx: AppCont
       h(
         'li',
         { class: 'tbd__item' },
-        renderWineCard(row, { href: wineHref(w.id, '/accueil'), thumb: thumbs.get(w.id) }),
+        renderWineCard(row, { href: wineHref(w.id, '/stats'), thumb: thumbs.get(w.id) }),
         h(
           'div',
           { class: 'tbd__foot' },
@@ -468,12 +397,13 @@ export async function homeView(ctx: AppContext): Promise<HTMLElement> {
       if (done) window.dispatchEvent(new HashChangeEvent('hashchange'));
     });
   };
+  // Arrivé par le bouton « À boire » de la Cave : on se place sur ce bloc.
+  if (hashQuery().get('go') === 'a-boire') setTimeout(() => document.getElementById('h-tbd')?.scrollIntoView({ block: 'start' }), 60);
   return h(
     'main',
     { class: 'view home' },
-    pageHeader({ title: 'Accueil', subtitle: total === 0 ? null : bottles(total) }),
-    toDrinkSection(rows, thumbs, year, onDrink),
-    dishSection(rows, thumbs, year, onDrink),
+    pageHeader({ title: 'Stats', subtitle: total === 0 ? null : bottles(total) }),
+    toDrinkSection(rows, year, onDrink),
     rebuySection(rows, thumbs, ctx),
     statsSection(rows, outflows, year, now),
   );

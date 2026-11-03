@@ -52,9 +52,10 @@ async function boot(): Promise<void> {
   document.body.append(updateBanner());
 
   const routes: Route[] = [
-    { path: '/accueil', nav: { label: fr.nav.home, icon: 'home' }, render: homeView },
-    { path: '/courses', parent: '/accueil', render: shoppingView },
     { path: '/cave', nav: { label: fr.nav.cave, icon: 'cave' }, render: caveView },
+    { path: '/stats', nav: { label: fr.nav.stats, icon: 'stats' }, render: homeView },
+    { path: '/accueil', redirect: '/stats', render: () => document.createElement('main') }, // ancien nom de l'écran, conservé pour les anciens liens
+    { path: '/courses', parent: '/stats', render: shoppingView },
     { path: '/cave/config', parent: '/cave', render: caveConfigView },
     { path: '/etagere/:id', parent: '/cave', render: shelfDetailView },
     { path: '/pointage/:id', parent: '/cave', render: inventoryView },
@@ -113,15 +114,15 @@ async function boot(): Promise<void> {
     },
   });
 
-  const router = new Router(ctx, routes, ready ? '/accueil' : '/connexion', ['/connexion', '/refuse'], decorate);
+  const router = new Router(ctx, routes, ready ? '/cave' : '/connexion', ['/connexion', '/refuse'], decorate);
   router.mount(root);
 
-  // Pastille sur l'onglet Accueil : bouteilles à boire en priorité (en retard ou à finir). Recalculée à chaque
+  // Pastille sur l'onglet Cave : bouteilles à boire en priorité (en retard ou à finir). Recalculée à chaque
   // écriture, après chaque synchronisation et au retour au premier plan (l'année peut avoir changé).
   const refreshBadge = async (): Promise<void> => {
     const [wines, stocks, locations, furniture] = await Promise.all([ctx.repo.list('wine'), ctx.repo.list('stock'), ctx.repo.list('location'), ctx.repo.list('furniture')]);
     const n = urgentBottles(buildRows({ wines, stocks, locations, furniture }), new Date().getFullYear());
-    router.setBadge('/accueil', n, `${n} bouteille${n > 1 ? 's' : ''} à boire en priorité`);
+    router.setBadge('/cave', n, `${n} bouteille${n > 1 ? 's' : ''} à boire en priorité`);
   };
   ctx.repo.onWrite(() => void refreshBadge());
   ctx.scheduler.subscribe(() => void refreshBadge());

@@ -14,6 +14,8 @@ export interface Route {
   nav?: { label: string; icon: IconName };
   /** L'onglet allumé est celui de l'écran d'origine (`?from=`), pas celui du parent (ex. une fiche ouverte depuis la cave). */
   followsOrigin?: boolean;
+  /** Ancien chemin conservé pour les anciens liens : renvoie vers ce chemin (requête conservée). */
+  redirect?: string;
   render: (ctx: AppContext, params: Params) => Promise<HTMLElement> | HTMLElement;
 }
 
@@ -88,6 +90,11 @@ export class Router {
 
   private async render(): Promise<void> {
     const { route, params, path } = this.resolve();
+    if (route.redirect) {
+      const q = window.location.hash.includes('?') ? window.location.hash.slice(window.location.hash.indexOf('?')) : '';
+      window.location.replace(`#${route.redirect}${q}`);
+      return;
+    }
     const ticket = ++this.ticket;
     let view: HTMLElement;
     try {

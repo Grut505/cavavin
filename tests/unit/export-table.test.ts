@@ -5,7 +5,6 @@ import { cellarCsv, csvCell, csvFileName } from '../../src/domain/export';
 import type { WineRow } from '../../src/domain/query';
 import type { Person, Wine } from '../../src/domain/types';
 import { exportCard } from '../../src/ui/components/export-card';
-import { homeView } from '../../src/ui/views/home';
 import { wineDetailView } from '../../src/ui/views/wine-detail';
 import { contextOf, makeDevice, makeSheet, wineData, wineFields } from '../contract/helpers';
 
@@ -84,10 +83,6 @@ describe('mets cliquables', () => {
     const ctx = contextOf(d) as AppContext;
     const detail = await wineDetailView(ctx, { id: w.id });
     const chip = [...detail.querySelectorAll('section[aria-label="À table"] a')].find((a) => a.textContent === 'risotto aux champignons')!;
-    expect(chip.getAttribute('href')).toBe('#/accueil?plat=risotto%20aux%20champignons');
-
-    window.location.hash = chip.getAttribute('href')!;
-    const home = await homeView(ctx);
-    expect((home.querySelector('#dish') as HTMLInputElement).value).toBe('risotto aux champignons');
+    expect(chip.getAttribute('href')).toBe('#/liste?plat=risotto%20aux%20champignons');
   });
 });

@@ -22,6 +22,7 @@ import { renderWineCard } from '../components/wine-card';
 import { h } from '../dom';
 import { icon } from '../icons';
 import { MATURITY_ORDER, type Maturity } from '../../domain/maturity';
+import { hashQuery } from '../query';
 import { wineHref } from '../nav-origin';
 import { loadPref, savePref } from '../prefs';
 
@@ -54,6 +55,7 @@ function normalizeFilters(raw: unknown): Filters | null {
     qtyMin: intOrNull(r.qtyMin),
     qtyMax: intOrNull(r.qtyMax),
     locationIds: strings(r.locationIds),
+    dish: typeof r.dish === 'string' ? r.dish : '',
     giftFrom: typeof r.giftFrom === 'string' ? r.giftFrom : null,
     includeHistory: r.includeHistory === true,
   };
@@ -64,6 +66,13 @@ const plural = (n: number, one: string, many: string): string => `${n} ${n > 1 ?
 export function wineListView(ctx: AppContext): HTMLElement {
   let sort = loadPref<SortSpec>('list.sort', DEFAULT_SORT, normalizeSort);
   let filters = loadPref<Filters>('list.filters', emptyFilters(), normalizeFilters);
+  // Arrivé depuis « Quoi boire » ou un met d'une fiche : la Liste s'ouvre filtrée sur ce plat (une seule fois).
+  const dish = hashQuery().get('plat');
+  if (dish && dish.trim() !== '') {
+    filters = { ...emptyFilters(), dish: dish.trim() };
+    savePref('list.filters', filters);
+    window.history.replaceState(null, '', '#/liste');
+  }
   let rows: WineRow[] = [];
   let locations: Location[] = [];
   let furniture: Furniture[] = [];

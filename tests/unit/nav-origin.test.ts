@@ -40,7 +40,8 @@ describe('origine de navigation', () => {
       window.location.hash = `#/vin/w1?from=${encodeURIComponent(from)}`;
       return wineBack().label;
     };
-    expect(label('/accueil')).toBe('Retour à l’accueil');
+    expect(label('/stats')).toBe('Retour aux stats');
+    expect(label('/accueil')).toBe('Retour aux stats'); // ancien nom
     expect(label('/cave')).toBe('Retour à la cave');
     expect(label('/personne/p1')).toBe('Retour à la personne');
     expect(label('/historique')).toBe('Retour à l’historique');
@@ -86,15 +87,15 @@ describe('origine de navigation', () => {
     expect(wineBack().href).toBe(`#/etagere/${shelf.id}`);
   });
 
-  it('l’accueil envoie vers la fiche avec son origine', async () => {
+  it('l’écran Stats envoie vers la fiche avec son origine', async () => {
     const d = await makeDevice(await makeSheet(), 'dev-home-nav');
     await d.repo.createFurniture('Meuble A', 1);
     const shelf = (await d.repo.list('location')).find((l) => l.kind === 'shelf')!;
     const year = new Date().getFullYear();
     const wine = await d.repo.addWine(wineFields({ drink_from: year - 1, drink_until: year + 3 }), [{ location_id: shelf.id, quantity: 1, position_hint: null }]);
-    window.location.hash = '#/accueil';
+    window.location.hash = '#/stats';
     const el = await homeView(contextOf(d) as AppContext);
-    expect(el.querySelector('.tbd a.wine-card')!.getAttribute('href')).toBe(`#/vin/${wine.id}?from=%2Faccueil`);
+    expect(el.querySelector('.tbd a.btn')!.getAttribute('href')).toBe(`#/vin/${wine.id}?from=%2Fstats`);
   });
 
   it('l’onglet allumé est celui de l’origine, pas toujours la Liste', async () => {
@@ -105,13 +106,13 @@ describe('origine de navigation', () => {
     new Router(
       {} as AppContext,
       [
-        { path: '/accueil', nav: { label: 'Accueil', icon: 'home' }, render: page('a') },
+        { path: '/stats', nav: { label: 'Stats', icon: 'stats' }, render: page('a') },
         { path: '/cave', nav: { label: 'Cave', icon: 'cave' }, render: page('c') },
         { path: '/etagere/:id', parent: '/cave', render: page('e') },
         { path: '/liste', nav: { label: 'Liste', icon: 'list' }, render: page('l') },
         { path: '/vin/:id', parent: '/liste', followsOrigin: true, render: page('v') },
       ],
-      '/accueil',
+      '/stats',
     ).mount(root);
     await waitFor(() => expect(root.querySelector('nav [aria-current="page"]')).not.toBeNull());
     expect(root.querySelector('nav [aria-current="page"]')!.textContent).toContain('Cave');

@@ -64,7 +64,7 @@ export async function shoppingView(ctx: AppContext): Promise<HTMLElement> {
     });
 
     root.replaceChildren(
-      pageHeader({ title: 'Liste de courses', subtitle: entries.length === 0 ? null : `${entries.length} fiche${entries.length > 1 ? 's' : ''}`, back: '#/accueil', backLabel: 'Retour à l’accueil' }),
+      pageHeader({ title: 'Liste de courses', subtitle: entries.length === 0 ? null : `${entries.length} fiche${entries.length > 1 ? 's' : ''}`, back: '#/stats', backLabel: 'Retour aux stats' }),
       entries.length === 0
         ? h('div', { class: 'card empty muted' }, 'Rien à racheter. Ajoutez un vin depuis « À racheter » sur l’Accueil ou depuis sa fiche.')
         : h('div', { class: 'stack' }, h('ul', { class: 'card list' }, items), h('button', { class: 'btn btn--primary', type: 'button', onClick: () => void share() }, 'Partager la liste')),

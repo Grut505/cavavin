@@ -294,3 +294,11 @@
   height: 28px;
   border-radius: 5px;
 }
+
+/* Raccourcis en haut de la Cave */
+.cave-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}

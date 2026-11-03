@@ -5,6 +5,7 @@ const wrap = (body: string): string =>
 export const ICONS = {
   home: wrap('<path d="M4 11l8-7 8 7"/><path d="M6 10v9.5h12V10"/><path d="M10 19.5v-5h4v5"/>'),
   info: wrap('<circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><circle cx="12" cy="7.6" r=".9"/>'),
+  stats: wrap('<path d="M5 20V11M12 20V5M19 20v-7"/>'),
   cave: wrap('<rect x="3.5" y="3.5" width="17" height="17" rx="2"/><path d="M3.5 9.2h17M3.5 14.8h17"/>'),
   list: wrap('<path d="M8.5 6.5h12M8.5 12h12M8.5 17.5h12"/><circle cx="4.2" cy="6.5" r=".8"/><circle cx="4.2" cy="12" r=".8"/><circle cx="4.2" cy="17.5" r=".8"/>'),
   add: wrap('<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>'),

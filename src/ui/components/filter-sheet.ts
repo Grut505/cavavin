@@ -125,7 +125,13 @@ export function openFilterSheet(input: FilterSheetInput): Promise<Filters | null
         const places = sortByOrder(live.filter((l) => l.kind === 'place'));
         const toSort = live.filter((l) => l.kind === 'legacy' && (input.counts.get(l.id) ?? 0) > 0);
 
+        const dishInput = h('input', { class: 'field__input', type: 'search', placeholder: 'Ex. risotto aux champignons', autocomplete: 'off', 'aria-label': 'Plat ou ingrédient', value: draft.dish });
+        dishInput.addEventListener('input', () => {
+          draft.dish = dishInput.value;
+          refresh();
+        });
         const sections: (HTMLElement | null)[] = [
+          group('Plat', dishInput, h('p', { class: 'muted', style: 'font-size:0.8rem' }, 'Cherche dans les mets conseillés de chaque fiche, même avec des fautes de frappe.')),
           colors.length > 0
             ? group('Couleur', h('div', { class: 'chips' }, colors.map((c) => chip(colorLabel(c), draft.colors.includes(c), () => (draft.colors = toggle(draft.colors, c))))))
             : null,
