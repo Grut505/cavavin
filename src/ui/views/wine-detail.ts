@@ -158,15 +158,6 @@ export async function wineDetailView(ctx: AppContext, params: { id?: string }): 
           : h('span', { class: 'detail-hero__thumb detail-hero__thumb--empty', 'aria-hidden': 'true' }, icon('bottle')),
         h('dl', { class: 'facts' }, ...facts(wine, giftName).flatMap(([k, v]) => [h('dt', {}, k), h('dd', {}, v)])),
       ),
-      pairingsOf(wine).length > 0 && !removed
-        ? h(
-            'section',
-            { class: 'card stack', 'aria-label': 'À table' },
-            h('h2', {}, 'À table'),
-            h('p', { class: 'muted' }, 'Mets conseillés (végétariens). Touchez-en un pour voir toutes les bouteilles qui vont avec.'),
-            h('div', { class: 'chips' }, pairingsOf(wine).map((m) => h('a', { class: 'btn btn--small', href: `#/liste?plat=${encodeURIComponent(m)}` }, m))),
-          )
-        : null,
       removed
         ? null
         : h(
@@ -190,6 +181,15 @@ export async function wineDetailView(ctx: AppContext, params: { id?: string }): 
         ),
         h('button', { class: 'btn btn--small', type: 'button', onClick: () => void refreshAfter(openMergeDialog(ctx, { wine })) }, 'Fusionner avec une autre fiche'),
       ),
+      pairingsOf(wine).length > 0 && !removed
+        ? h(
+            'section',
+            { class: 'card stack', 'aria-label': 'À table' },
+            h('h2', {}, 'À table'),
+            h('p', { class: 'muted' }, 'Mets conseillés (végétariens). Touchez-en un pour voir toutes les bouteilles qui vont avec.'),
+            h('div', { class: 'chips' }, pairingsOf(wine).map((m) => h('a', { class: 'btn btn--small', href: `#/liste?plat=${encodeURIComponent(m)}` }, m))),
+          )
+        : null,
       h(
         'section',
         { class: 'card stack', 'aria-label': 'Historique des sorties' },
