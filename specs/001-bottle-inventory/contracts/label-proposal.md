@@ -61,3 +61,13 @@ Bouton « Coller depuis Claude » : l'application lit le presse-papiers (ou un c
 - Aucune photo n'est transmise par ce contrat : la miniature est ajoutée à la validation depuis l'appareil photo de l'application (facultatif).
 - Aucun secret dans le dépôt ; la seule dépendance externe est le compte Claude de l'utilisateur, hors application.
 - Vérifier que le connecteur Google Sheets du compte Claude permet l'écriture (canal 1) ; sinon le canal 2 suffit.
+
+## Canal 3 — lien de pré-remplissage (v0.11.0)
+
+Claude peut ajouter, après le JSON, un lien par bouteille : `<appli>/#/ajouter/saisie?domain=…&vintage=…&…`
+(mêmes noms que le JSON, valeurs encodées en pourcentage, champs `null` omis, mets séparés par `; `). Forme compacte
+acceptée : `?fiche=<JSON en base64url ou JSON brut>`. Le lien ouvre le formulaire d'ajout pré-rempli ; les valeurs
+passent par `parseProposals` (bornes, énumérations, mets végétariens) et **rien n'est enregistré sans validation**.
+Dans un navigateur sans cave (Safari à côté d'une PWA installée), un bandeau propose « Envoyer à ma cave »
+(proposition `source = lien` synchronisée dans l'onglet Propositions) ou « Copier pour l'appli installée ».
+Limites : taille d'une valeur 600 caractères, forme compacte 8 000 ; un lien tronqué par le chat est signalé.

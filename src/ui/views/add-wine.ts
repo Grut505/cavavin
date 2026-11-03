@@ -19,7 +19,9 @@ import {
 import { draftFromWine, emptyDraft, validateWine, type WineDraft } from '../../domain/wine';
 import type { StockInput } from '../../data/repository';
 import { makeThumbnail, toDataUrl, type Thumbnail } from '../../scan/image';
-import { proposalToDraft } from '../../scan/proposal';
+import { ProposalParseError, parseProposals, proposalToDraft, type ProposalData } from '../../scan/proposal';
+import { PrefillError, isStandalone, readPrefill } from '../../scan/prefill-link';
+import { prefillBanner } from '../components/prefill-banner';
 import { applyChanges, reconcile } from '../../scan/reconcile';
 import { pageHeader } from '../components/page-header';
 import { promptDialog } from '../components/dialog';
@@ -50,11 +52,30 @@ const COLOR_LABELS: Record<string, string> = {
   autre: 'Autre',
 };
 
+interface PrefillState {
+  data: ProposalData | null;
+  warnings: string[];
+  error?: string;
+}
+
 /** Ajout d'une bouteille (saisie manuelle ou proposition du projet Claude). */
 export async function addWineView(ctx: AppContext): Promise<HTMLElement> {
   const proposalId = hashQuery().get('proposal');
   const proposal = proposalId ? await ctx.repo.get('proposal', proposalId) : undefined;
-  return wineFormView(ctx, { proposal });
+  // Lien donné par Claude : le formulaire s'ouvre pré-rempli (rien n'est enregistré sans validation).
+  let prefill: PrefillState | undefined;
+  if (!proposal) {
+    try {
+      const raw = readPrefill(hashQuery());
+      if (raw) {
+        const { proposals, warnings } = parseProposals(JSON.stringify(raw));
+        prefill = { data: proposals[0]!, warnings };
+      }
+    } catch (e) {
+      prefill = { data: null, warnings: [], error: e instanceof PrefillError || e instanceof ProposalParseError ? e.message : 'Lien illisible.' };
+    }
+  }
+  return wineFormView(ctx, { proposal, prefill });
 }
 
 /** Modification d'une fiche existante (mêmes champs, sans la partie « emplacements »). */
@@ -71,8 +92,9 @@ export async function editWineView(ctx: AppContext, params: { id?: string }): Pr
   return wineFormView(ctx, { wine });
 }
 
-async function wineFormView(ctx: AppContext, opts: { proposal?: Proposal; wine?: Wine }): Promise<HTMLElement> {
-  const { proposal, wine: editing } = opts;
+async function wineFormView(ctx: AppContext, opts: { proposal?: Proposal; prefill?: PrefillState; wine?: Wine }): Promise<HTMLElement> {
+  const { proposal, prefill, wine: editing } = opts;
+  const source = proposal ?? prefill?.data ?? undefined; // proposition enregistrée ou données du lien
   const furniture: Furniture[] = await ctx.repo.list('furniture');
   const allLocations = await ctx.repo.list('location');
   const hasCave = allLocations.length > 0;
@@ -82,8 +104,8 @@ async function wineFormView(ctx: AppContext, opts: { proposal?: Proposal; wine?:
   // Suggestions et graphies de référence tirées de la cave (s'enrichissent à chaque fiche enregistrée).
   const vocab = buildVocabulary(await ctx.repo.list('wine'));
 
-  const initial: WineDraft = editing ? draftFromWine(editing) : proposal ? proposalToDraft(proposal) : emptyDraft();
-  const rows: Row[] = [{ location: null, quantity: proposal?.quantity ?? 1, hint: null }];
+  const initial: WineDraft = editing ? draftFromWine(editing) : source ? proposalToDraft(source) : emptyDraft();
+  const rows: Row[] = [{ location: null, quantity: source?.quantity ?? 1, hint: null }];
   const thumbs: Partial<Record<PhotoSide, Thumbnail>> = {};
   const savePhotos = async (wineId: string): Promise<void> => {
     for (const side of ['avant', 'arrière'] as const) {
@@ -535,6 +557,9 @@ async function wineFormView(ctx: AppContext, opts: { proposal?: Proposal; wine?:
     { class: 'stack form--with-bar', novalidate: true, onSubmit: (e: Event) => void onSubmit(e) },
     editing ? null : claudeProjectButton({ small: true }),
     proposal ? h('p', { class: 'alert' }, 'Pré-rempli à partir de la proposition de Claude : vérifiez, corrigez si besoin, puis choisissez l’emplacement.') : null,
+    prefill
+      ? prefillBanner(ctx, { data: prefill.data, warnings: prefill.warnings, error: prefill.error, offerHandoff: !isStandalone() && !hasCave })
+      : null,
     identity,
     ...datalists,
     photoCard,

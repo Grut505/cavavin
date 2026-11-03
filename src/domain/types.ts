@@ -157,7 +157,7 @@ export interface Photo extends Base {
 }
 
 export type ProposalStatus = 'nouvelle' | 'importée' | 'écartée';
-export type ProposalSource = 'claude' | 'paste';
+export type ProposalSource = 'claude' | 'paste' | 'lien';
 
 export interface Proposal extends Base {
   created_at: string;
