@@ -80,8 +80,9 @@ describe('annuler une sortie', () => {
     const toast = document.querySelector('.toast')!;
     expect(toast.textContent).toContain('Bouteille sortie.');
     click(byText(toast, 'button', 'Annuler'));
+    // L'annulation remet le stock puis supprime la sortie : deux écritures successives, on attend les deux.
     await waitFor(async () => expect(await stockQty(d)).toBe(2));
-    expect(await d.repo.list('outflow')).toHaveLength(0);
+    await waitFor(async () => expect(await d.repo.list('outflow')).toHaveLength(0));
     expect(document.querySelector('.toast')).toBeNull();
   });
 
@@ -94,6 +95,7 @@ describe('annuler une sortie', () => {
     expect(await stockQty(d)).toBe(0);
     click(byText(document.querySelector('.toast')!, 'button', 'Annuler'));
     await waitFor(async () => expect(await stockQty(d)).toBe(1));
+    await waitFor(async () => expect(await d.repo.list('outflow')).toHaveLength(0));
     expect((await d.repo.list('stock'))[0]?.deleted).toBe(false);
   });
 

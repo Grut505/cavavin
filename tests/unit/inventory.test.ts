@@ -78,10 +78,11 @@ describe('pointage (écran)', () => {
     expect(confirm.textContent).toContain('pas comptées comme des bouteilles bues');
     click(byText(confirm, 'button', 'Corriger'));
 
-    await waitFor(async () => expect(await qty(d, a.id)).toBe(2));
+    // Les corrections s'appliquent l'une après l'autre, puis l'écran revient à l'étagère : on attend la fin.
+    await waitFor(() => expect(window.location.hash).toBe(`#/etagere/${shelf.id}`));
+    expect(await qty(d, a.id)).toBe(2);
     expect(await qty(d, b.id)).toBe(4);
     expect(await d.repo.list('outflow')).toHaveLength(0); // une correction n'est pas une consommation
-    expect(window.location.hash).toBe(`#/etagere/${shelf.id}`);
   });
 
   it('un pointage sans écart ne touche à rien', async () => {
