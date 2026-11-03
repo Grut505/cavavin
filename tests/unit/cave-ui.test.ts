@@ -166,3 +166,54 @@ describe('vue graphique d’une étagère', () => {
     expect(el.querySelectorAll('[data-zone="none"] .sv__bottle')).toHaveLength(2);
   });
 });
+
+describe('étagère : filtre par case', () => {
+  async function setup() {
+    const { ctx, repo } = await ctxWithDevice();
+    await repo.createFurniture('Meuble A', 1);
+    const shelf = (await repo.list('location')).find((l) => l.kind === 'shelf')!;
+    const a = await repo.create('wine', wineData({ cuvee: 'Gauche' }));
+    const b = await repo.create('wine', wineData({ cuvee: 'Libre' }));
+    await repo.create('stock', { wine_id: a.id, location_id: shelf.id, quantity: 3, position_hint: 'milieu-gauche' });
+    await repo.create('stock', { wine_id: b.id, location_id: shelf.id, quantity: 2, position_hint: null });
+    const el = await shelfDetailView(ctx, { id: shelf.id });
+    document.body.append(el);
+    return { el, a, shelf };
+  }
+  const cards = (el: HTMLElement): number => el.querySelectorAll('.wine-card').length;
+  const zoneRect = (el: HTMLElement, z: string): Element => el.querySelector(`[data-zone="${z}"] [role="button"]`)!;
+
+  it('toucher une case ne garde que ses bouteilles, re-toucher ou « Tout afficher » les rend toutes', async () => {
+    const { el } = await setup();
+    expect(cards(el)).toBe(2);
+    click(zoneRect(el, 'milieu-gauche'));
+    expect(cards(el)).toBe(1);
+    expect(el.querySelector('.zone-filter')!.textContent).toContain('Milieu · gauche · 3 bouteilles');
+    expect(zoneRect(el, 'milieu-gauche').getAttribute('aria-pressed')).toBe('true');
+    click(zoneRect(el, 'milieu-gauche'));
+    expect(cards(el)).toBe(2);
+    click(zoneRect(el, 'none'));
+    expect(cards(el)).toBe(1);
+    click(el.querySelector('.zone-filter button'));
+    expect(cards(el)).toBe(2);
+  });
+
+  it('une case vide donne une liste vide, au clavier aussi', async () => {
+    const { el } = await setup();
+    zoneRect(el, 'dessus-droite').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(cards(el)).toBe(0);
+    expect(el.textContent).toContain('Aucune bouteille dans cette case');
+  });
+
+  it('toucher une bouteille ouvre sa fiche sans toucher au filtre', async () => {
+    const { el, a } = await setup();
+    click(zoneRect(el, 'none'));
+    expect(cards(el)).toBe(1);
+    window.location.hash = '';
+    click(el.querySelector('[data-zone="milieu-gauche"] .sv__bottle'));
+    expect(window.location.hash).toContain(`#/vin/${a.id}`);
+    expect(cards(el)).toBe(1); // filtre inchangé
+    expect(zoneRect(el, 'none').getAttribute('aria-pressed')).toBe('true');
+  });
+});
+

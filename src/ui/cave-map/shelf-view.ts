@@ -115,7 +115,38 @@ function fill(parent: SVGElement, items: ShelfBottle[], x0: number, y0: number, 
 }
 
 /** `highlightWineId` : les bouteilles des autres fiches sont estompées (vue « Où la trouver ? » d'une fiche). */
-export function renderShelfView(opts: { shelfName: string; bottles: ShelfBottle[]; highlightWineId?: string }): HTMLElement {
+export type ShelfZone = PositionHint | 'none';
+
+/**
+ * `onZoneSelect` : rend les cases cliquables (filtre de la liste sous le schéma) ; `selectedZone` marque la case active.
+ * Le clic ne s'écoute que sur le fond de la case et son libellé : un toucher sur une bouteille (dessinée par-dessus) garde
+ * son comportement (ouvrir la fiche) et ne déclenche jamais le filtre.
+ */
+export function renderShelfView(opts: { shelfName: string; bottles: ShelfBottle[]; highlightWineId?: string; onZoneSelect?: (zone: ShelfZone) => void; selectedZone?: ShelfZone | null }): HTMLElement {
+  const makeZoneClickable = (g: SVGElement, targets: SVGElement[], zone: ShelfZone, label: string, count: number): void => {
+    if (!opts.onZoneSelect) return;
+    const pick = (e: Event): void => {
+      if ((e.target as Element | null)?.closest('.sv__bottle')) return; // jamais sur une bouteille
+      opts.onZoneSelect!(zone);
+    };
+    const selected = opts.selectedZone === zone;
+    g.classList.add('sv__zone--clickable');
+    if (selected) g.classList.add('sv__zone--selected');
+    const main = targets[0]!;
+    main.setAttribute('role', 'button');
+    main.setAttribute('tabindex', '0');
+    main.setAttribute('aria-pressed', String(selected));
+    main.setAttribute('aria-label', `${label}, ${count === 0 ? 'vide' : `${count} bouteille${count > 1 ? 's' : ''}`}`);
+    main.addEventListener('keydown', (e) => {
+      const k = (e as KeyboardEvent).key;
+      if (k === 'Enter' || k === ' ') {
+        e.preventDefault();
+        opts.onZoneSelect!(zone);
+      }
+    });
+    for (const t of targets) t.addEventListener('click', pick);
+  };
+
   const loose = opts.bottles.filter((b) => b.zone === null);
   const height = CAB_H + (loose.length > 0 ? LOOSE_H : 0);
   const svg = s('svg', {
@@ -137,8 +168,10 @@ export function renderShelfView(opts: { shelfName: string; bottles: ShelfBottle[
   for (const [hint, z] of Object.entries(ZONES) as [PositionHint, Zone][]) {
     const items = opts.bottles.filter((b) => b.zone === hint);
     const g = s('g', { 'data-zone': hint });
-    g.append(s('rect', { class: 'sv__zone', x: z.x, y: z.y, width: z.w, height: z.h, rx: 6 }));
-    g.append(s('text', { class: 'sv__label', x: z.x + 6, y: z.y + 11 }, z.label));
+    const rect = s('rect', { class: 'sv__zone', x: z.x, y: z.y, width: z.w, height: z.h, rx: 6 });
+    const lab = s('text', { class: 'sv__label', x: z.x + 6, y: z.y + 11 }, z.label);
+    g.append(rect, lab);
+    makeZoneClickable(g, [rect, lab], hint, z.label, items.length);
     fill(g, items, z.x + 6, z.y + 16, z.w - 12, z.h - 20, opts.highlightWineId);
     svg.append(g);
   }
@@ -146,10 +179,10 @@ export function renderShelfView(opts: { shelfName: string; bottles: ShelfBottle[
   if (loose.length > 0) {
     const y = CAB_H;
     const g = s('g', { 'data-zone': 'none' });
-    g.append(
-      s('rect', { class: 'sv__loose', x: 4, y: y + 2, width: 312, height: LOOSE_H - 6, rx: 8 }),
-      s('text', { class: 'sv__label sv__label--loose', x: 12, y: y + 17 }, 'Position non précisée'),
-    );
+    const rect = s('rect', { class: 'sv__loose', x: 4, y: y + 2, width: 312, height: LOOSE_H - 6, rx: 8 });
+    const lab = s('text', { class: 'sv__label sv__label--loose', x: 12, y: y + 17 }, 'Position non précisée');
+    g.append(rect, lab);
+    makeZoneClickable(g, [rect, lab], 'none', 'Position non précisée', loose.length);
     fill(g, loose, 12, y + 22, 296, BH, opts.highlightWineId);
     svg.append(g);
   }

@@ -3,7 +3,7 @@ import type { AppContext } from '../../app';
 import { stocksAt } from '../../domain/locations';
 import { positionLabel } from '../../domain/types';
 import { bottlesLabel } from '../cave-map/cave-map';
-import { renderShelfView, shelfBottles } from '../cave-map/shelf-view';
+import { renderShelfView, shelfBottles, type ShelfZone } from '../cave-map/shelf-view';
 import { legendButton } from '../components/urgency-legend';
 import { renderWineCard } from '../components/wine-card';
 import { pageHeader } from '../components/page-header';
@@ -33,14 +33,51 @@ export async function shelfDetailView(ctx: AppContext, params: { id?: string }):
 
   // Mêmes cartes que dans la Liste (appellation, région, couleur, domaine…), avec la quantité de CET emplacement.
   const thumbs = await ctx.repo.thumbnailUrls();
-  const rows = here.map((st) => {
+  const entries = here.map((st) => {
     const wine = wines.find((w) => w.id === st.wine_id);
-    if (!wine) return h('div', { class: 'card muted' }, 'Fiche introuvable');
-    return renderWineCard(
-      { wine, quantity: st.quantity, locations: [] },
-      { href: wineHref(wine.id, `/etagere/${loc.id}`), thumb: thumbs.get(wine.id), extra: st.position_hint ? `Position : ${positionLabel(st.position_hint)}` : undefined },
-    );
+    const card = wine
+      ? renderWineCard(
+          { wine, quantity: st.quantity, locations: [] },
+          { href: wineHref(wine.id, `/etagere/${loc.id}`), thumb: thumbs.get(wine.id), extra: st.position_hint ? `Position : ${positionLabel(st.position_hint)}` : undefined },
+        )
+      : h('div', { class: 'card muted' }, 'Fiche introuvable');
+    return { st, card };
   });
+
+  // Filtre par case : un toucher sur une case de l'étagère ne garde que les cartes de cette case (re-toucher = tout).
+  let zone: ShelfZone | null = null;
+  const schema = h('div', {});
+  const filterBar = h('div', { class: 'zone-filter' });
+  const list = h('div', { class: 'stack' });
+  const bottles = shelfBottles(here, wines);
+  const draw = (): void => {
+    const shown = zone === null ? entries : entries.filter((e) => (zone === 'none' ? e.st.position_hint === null : e.st.position_hint === zone));
+    if (loc.kind === 'shelf') {
+      schema.replaceChildren(
+        renderShelfView({
+          shelfName: loc.name,
+          bottles,
+          selectedZone: zone,
+          onZoneSelect: (z) => {
+            zone = zone === z ? null : z;
+            draw();
+          },
+        }),
+      );
+    }
+    if (zone === null) filterBar.replaceChildren();
+    else {
+      const label = zone === 'none' ? 'Position non précisée' : positionLabel(zone);
+      const n = shown.reduce((sum, e) => sum + e.st.quantity, 0);
+      filterBar.replaceChildren(
+        h('span', { class: 'chip__label' }, `Case : ${label} · ${bottlesLabel(n)}`),
+        h('button', { class: 'btn btn--small', type: 'button', 'aria-label': 'Retirer le filtre de case', onClick: () => { zone = null; draw(); } }, 'Tout afficher ✕'),
+      );
+    }
+    list.replaceChildren(...(shown.length === 0 ? [h('div', { class: 'card empty muted' }, 'Aucune bouteille dans cette case.')] : shown.map((e) => e.card)));
+  };
+  draw();
+  const rows = entries;
 
   return h(
     'main',
@@ -55,9 +92,6 @@ export async function shelfDetailView(ctx: AppContext, params: { id?: string }):
     loc.kind === 'shelf' && rows.length > 0 ? h('a', { class: 'btn btn--small', href: `#/pointage/${loc.id}` }, 'Pointer cette étagère') : null,
     rows.length === 0
       ? h('div', { class: 'card empty muted' }, 'Aucune bouteille ici pour l’instant.')
-      : [
-          loc.kind === 'shelf' ? renderShelfView({ shelfName: loc.name, bottles: shelfBottles(here, wines) }) : null,
-          h('div', { class: 'stack' }, rows),
-        ],
+      : [loc.kind === 'shelf' ? schema : null, filterBar, list],
   );
 }

@@ -1023,3 +1023,14 @@ a.card--link {
   margin: 0;
   font-size: 0.95rem;
 }
+
+/* Pastille « Case : … » au-dessus de la liste d'une étagère */
+.zone-filter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.zone-filter:empty {
+  display: none;
+}
