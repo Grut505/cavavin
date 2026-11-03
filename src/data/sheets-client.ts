@@ -130,6 +130,18 @@ export class GoogleSheetsApi implements SheetsApi {
     return out;
   }
 
+  async readRanges(ranges: { tab: string; a1: string }[]): Promise<Raw[][][]> {
+    if (ranges.length === 0) return [];
+    const params = new URLSearchParams({
+      majorDimension: 'ROWS',
+      valueRenderOption: 'UNFORMATTED_VALUE',
+      dateTimeRenderOption: 'FORMATTED_STRING',
+    });
+    for (const r of ranges) params.append('ranges', `${quote(r.tab)}!${r.a1}`);
+    const res = await this.request<{ valueRanges?: { values?: Raw[][] }[] }>(`/values:batchGet?${params.toString()}`);
+    return ranges.map((_, k) => res.valueRanges?.[k]?.values ?? []);
+  }
+
   async setHeader(tab: string, headers: string[]): Promise<void> {
     const range = `${quote(tab)}!1:1`;
     await this.request(`/values/${encodeURIComponent(range)}?valueInputOption=RAW`, {

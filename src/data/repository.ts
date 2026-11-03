@@ -88,9 +88,9 @@ export class Repository {
     return includeDeleted ? all : all.filter((e) => !e.deleted);
   }
 
-  async get<K extends EntityKind>(kind: K, id: string): Promise<EntityMap[K] | undefined> {
+  async get<K extends EntityKind>(kind: K, id: string, includeDeleted = false): Promise<EntityMap[K] | undefined> {
     const e = await this.db.get(kind, id);
-    return e && !e.deleted ? e : undefined;
+    return e && (includeDeleted || !e.deleted) ? e : undefined;
   }
 
   pendingCount(): Promise<number> {

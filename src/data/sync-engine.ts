@@ -61,6 +61,8 @@ const same = (a: unknown, b: unknown): boolean => String(a ?? '') === String(b ?
 class RemoteStore {
   private index = new Map<string, Map<string, number>>();
   private journal = new Set<string>();
+  /** Photos dont la ligne n'a pas été relue (même révision que la copie locale) : à ne pas réécrire. */
+  unchangedPhotos = new Set<string>();
 
   constructor(readonly model: Record<string, TabModel>) {
     for (const kind of ENTITY_KINDS) this.reindex(KIND_TABS[kind]);
@@ -251,19 +253,90 @@ export class SyncEngine {
 
   // --- lecture de la feuille ---
 
+  /**
+   * Lecture incrémentale : les onglets légers sont lus en entier ; pour Photos (images en base64) on ne lit que
+   * l'en-tête et les colonnes id/rev/updated_at/deleted, puis seulement les lignes nouvelles ou modifiées. Le
+   * Journal n'est lu (colonne op_id seule) que s'il y a des opérations à envoyer.
+   */
   private async loadRemote(): Promise<RemoteStore> {
-    const tabs = [...ENTITY_KINDS.map((k) => KIND_TABS[k]), JOURNAL_TAB];
-    const raw = await this.deps.api.readTabs(tabs);
+    const { api, db } = this.deps;
+    const photoTab = KIND_TABS.photo;
+    const light = [...ENTITY_KINDS.map((k) => KIND_TABS[k]).filter((t) => t !== photoTab)];
+    const pending = await db.listOps();
+    const raw = await api.readTabs(light);
+    const [photoHeadRows, photoProbe, journalHead, journalIds] = await api.readRanges([
+      { tab: photoTab, a1: '1:1' },
+      { tab: photoTab, a1: 'A:D' },
+      { tab: JOURNAL_TAB, a1: '1:1' },
+      ...(pending.length > 0 ? [{ tab: JOURNAL_TAB, a1: 'A:A' }] : []),
+    ]).then((r) => [r[0]!, r[1]!, r[2]!, r[3] ?? []] as const);
+
     const model: Record<string, TabModel> = {};
-    for (const tab of tabs) {
+    for (const tab of light) {
       const rows = raw[tab] ?? [];
       const header = (rows[0] ?? []).map((h) => String(h ?? ''));
-      if (header.length === 0 || !header.includes(tab === JOURNAL_TAB ? 'op_id' : 'id')) {
-        throw new NotInitializedError();
-      }
+      if (header.length === 0 || !header.includes('id')) throw new NotInitializedError();
       model[tab] = { header, rows: rows.slice(1).map((r) => padRow(r, header.length)) };
     }
-    return new RemoteStore(model);
+    const jHeader = (journalHead[0] ?? []).map((h) => String(h ?? ''));
+    if (jHeader.length === 0 || !jHeader.includes('op_id')) throw new NotInitializedError();
+    model[JOURNAL_TAB] = { header: jHeader, rows: journalIds.slice(1).map((r) => padRow(r, jHeader.length)) };
+
+    const unchanged = await this.loadPhotos(model, photoHeadRows[0] ?? [], photoProbe, pending.map((p) => p.op));
+    const store = new RemoteStore(model);
+    store.unchangedPhotos = unchanged;
+    return store;
+  }
+
+  /** Onglet Photos : lignes légères pour celles déjà à jour localement, lignes complètes pour les autres. */
+  private async loadPhotos(model: Record<string, TabModel>, headRow: Raw[], probe: Raw[][], ops: Op[]): Promise<Set<string>> {
+    const { api, db } = this.deps;
+    const tab = KIND_TABS.photo;
+    const header = headRow.map((h) => String(h ?? ''));
+    if (header.length === 0 || !header.includes('id')) throw new NotInitializedError();
+    const common = ['id', 'rev', 'updated_at', 'deleted'];
+    const fallback = async (): Promise<Set<string>> => {
+      const rows = (await api.readTabs([tab]))[tab] ?? [];
+      model[tab] = { header, rows: rows.slice(1).map((r) => padRow(r, header.length)) };
+      return new Set();
+    };
+    if (!common.every((c, k) => header[k] === c)) return fallback(); // colonnes déplacées à la main : lecture complète
+
+    const local = new Map((await db.getAll('photo')).map((p) => [p.id, p] as const));
+    const touched = new Set(ops.filter((o) => o.entity === 'photo').map((o) => o.entity_id));
+    const rows: Raw[][] = probe.slice(1).map((r) => padRow(r, header.length));
+    const unchanged = new Set<string>();
+    const toFetch: number[] = []; // index de ligne (0 = première ligne de données)
+    rows.forEach((row, i) => {
+      const id = row[0];
+      if (id === null || id === undefined || id === '') {
+        if (row.some((c) => c !== null && c !== '')) toFetch.push(i); // ligne ajoutée à la main : on la lit en entier
+        return;
+      }
+      const l = local.get(String(id));
+      const same = l && String(l.rev) === String(row[1]) && String(l.updated_at) === String(row[2] ?? '') && l.deleted === (row[3] === true || String(row[3]).toLowerCase() === 'true');
+      if (same && !touched.has(String(id))) unchanged.add(String(id));
+      else toFetch.push(i);
+    });
+
+    // Lignes à relire, regroupées en plages contiguës ; trop de plages → lecture complète (plus simple et aussi sûr).
+    const ranges: { start: number; end: number }[] = [];
+    for (const i of toFetch) {
+      const last = ranges[ranges.length - 1];
+      if (last && last.end === i - 1) last.end = i;
+      else ranges.push({ start: i, end: i });
+    }
+    if (ranges.length > 40) return fallback();
+    if (ranges.length > 0) {
+      const got = await api.readRanges(ranges.map((r) => ({ tab, a1: `${r.start + 2}:${r.end + 2}` })));
+      ranges.forEach((r, k) => {
+        (got[k] ?? []).forEach((row, j) => {
+          if (r.start + j <= r.end) rows[r.start + j] = padRow(row, header.length);
+        });
+      });
+    }
+    model[tab] = { header, rows };
+    return unchanged;
   }
 
   /** Lignes ajoutées à la main dans la feuille (sans `id`) : on leur attribue un identifiant. */
@@ -483,14 +556,26 @@ export class SyncEngine {
     for (const kind of ENTITY_KINDS) {
       const remote = store.all(kind) as unknown as AnyEntity[];
       const remoteIds = new Set(remote.map((e) => e.id));
+      const local = new Map((await db.getAll(kind)).map((e) => [e.id, e] as const));
       for (const ent of remote) {
-        if (!pending.has(ent.id)) await db.put(kind, ent as never);
+        if (pending.has(ent.id)) continue;
+        if (kind === 'photo' && store.unchangedPhotos.has(ent.id)) continue; // ligne non relue, déjà à jour
+        const l = local.get(ent.id);
+        if (l && sameEntity(ent as unknown as Record<string, unknown>, l as unknown as Record<string, unknown>)) continue; // rien à réécrire
+        await db.put(kind, ent as never);
       }
-      for (const local of await db.getAll(kind)) {
-        if (!remoteIds.has(local.id) && !pending.has(local.id)) await db.delete(kind, local.id);
+      for (const id of local.keys()) {
+        if (!remoteIds.has(id) && !pending.has(id)) await db.delete(kind, id);
       }
     }
   }
+}
+
+/** Mêmes valeurs champ par champ (l'ordre des clés ne compte pas). */
+function sameEntity(a: Record<string, unknown>, b: Record<string, unknown>): boolean {
+  const keys = Object.keys(a);
+  if (keys.length !== Object.keys(b).length) return false;
+  return keys.every((k) => JSON.stringify(a[k] ?? null) === JSON.stringify(b[k] ?? null));
 }
 
 function padRow(row: Raw[], length: number): Raw[] {

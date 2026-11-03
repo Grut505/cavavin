@@ -717,3 +717,57 @@ a.card--link {
 .wine-card__maker {
   font-size: 0.8rem;
 }
+
+/* Ligne à glisser (swipe) : actions cachées à droite, révélées par un balayage vers la gauche */
+.swipe {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius);
+}
+.swipe__front {
+  position: relative;
+  touch-action: pan-y;
+  background: var(--bg);
+}
+.swipe__actions {
+  position: absolute;
+  inset: 0 0 0 auto;
+  display: flex;
+}
+.swipe__action {
+  border: 0;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.swipe__action--danger {
+  background: var(--danger, #b3261e);
+}
+.swipe__action:not(:last-child) {
+  border-right: 1px solid rgba(255, 255, 255, 0.35);
+}
+.swipe__inline {
+  display: none;
+}
+/* Pas d'écran tactile : les actions deviennent des boutons à côté de la ligne */
+@media (pointer: fine) {
+  .swipe--fallback {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    overflow: visible;
+  }
+  .swipe--fallback .swipe__actions {
+    display: none;
+  }
+  .swipe--fallback .swipe__front {
+    flex: 1;
+    min-width: 0;
+  }
+  .swipe--fallback .swipe__inline {
+    display: flex;
+    gap: var(--space-2);
+  }
+}

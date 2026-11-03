@@ -438,7 +438,7 @@ describe('historique des sorties', () => {
     await repo.recordOutflow(stock.id, { reason: 'broken', date: '2026-08-01', note: null });
     const view = await historyView(ctx);
     expect(view.querySelector('.app-header p')?.textContent).toBe('3 bouteilles sorties');
-    const items = [...view.querySelectorAll('li')];
+    const items = [...view.querySelectorAll('li.list__item')];
     expect(items.map((i) => i.textContent)).toEqual([
       expect.stringContaining('Offerte · 15/10/2026'),
       expect.stringContaining('Bue · 01/09/2026'),
@@ -458,13 +458,41 @@ describe('historique des sorties', () => {
     expect(view.querySelector('.app-header p')).toBeNull();
   });
 
-  it('conserve l’historique d’une fiche supprimée, sans lien', async () => {
+  it('conserve l’historique d’une fiche supprimée : badge et lien vers la fiche, qui l’indique', async () => {
     const { ctx, repo, a1 } = await setup();
     const w = await repo.addWine(wineFields(), [{ location_id: a1.id, quantity: 1, position_hint: null }]);
     await repo.recordOutflow((await repo.list('stock'))[0]!.id, { reason: 'drunk', date: '2026-10-01', note: null });
     await repo.remove('wine', w.id);
     const view = await historyView(ctx);
-    expect(view.querySelector('li a')).toBeNull();
     expect(view.textContent).toContain('Bue');
+    expect(view.querySelector('.badge')?.textContent).toBe('Fiche supprimée');
+    expect(view.querySelector('li a')?.getAttribute('href')).toBe(`#/vin/${w.id}?from=%2Fhistorique`);
+    const detail = await wineDetailView(ctx, { id: w.id });
+    expect(detail.querySelector('.alert')?.textContent).toContain('supprimée');
+    expect(detail.querySelector('a[aria-label="Modifier la fiche"]')).toBeNull();
+    expect(detail.querySelector('[aria-label="Emplacements"]')).toBeNull();
+    expect(detail.textContent).toContain('Historique');
+  });
+
+  it('supprime une sortie de l’historique après confirmation', async () => {
+    const { ctx, repo, a1 } = await setup();
+    await repo.addWine(wineFields(), [{ location_id: a1.id, quantity: 3, position_hint: null }]);
+    const stock = (await repo.list('stock'))[0]!;
+    await repo.recordOutflow(stock.id, { reason: 'drunk', date: '2026-10-01', note: null });
+    await repo.recordOutflow(stock.id, { reason: 'gifted', date: '2026-10-02', note: null });
+    const view = await historyView(ctx);
+    document.body.append(view);
+    const del = () => view.querySelector<HTMLButtonElement>('.swipe__inline button')!;
+    del().click();
+    const dialog = await vi.waitFor(() => document.querySelector('dialog')!);
+    expect(dialog.textContent).toContain('ne revient pas en stock');
+    [...dialog.querySelectorAll('button')].find((b) => b.textContent === 'Annuler')!.click(); // annulé : rien ne bouge
+    await new Promise((r) => setTimeout(r, 50));
+    expect(view.querySelectorAll('li.list__item')).toHaveLength(2);
+    del().click();
+    const dlg2 = await vi.waitFor(() => [...document.querySelectorAll('dialog')].find((d) => d.textContent?.includes('Supprimer cette sortie'))!);
+    [...dlg2.querySelectorAll('button')].find((b) => b.textContent === 'Supprimer')!.click();
+    await vi.waitFor(() => expect(view.querySelectorAll('li.list__item')).toHaveLength(1));
+    expect((await repo.list('outflow')).filter((o) => !o.deleted)).toHaveLength(1);
   });
 });

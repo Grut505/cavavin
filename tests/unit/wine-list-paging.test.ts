@@ -25,13 +25,15 @@ describe('Liste : chargement progressif', () => {
 
     await waitFor(() => expect(cards(view)).toBe(LIST_PAGE_SIZE));
     expect(view.textContent).toContain('250 fiches'); // le total reste affiché
+    const labels = [...view.querySelector('.swipe')!.querySelectorAll('.swipe__action')].map((b) => b.textContent);
+    expect(labels).toEqual(['Modifier', 'Sortir']); // actions révélées par un balayage
     const first = view.querySelector('.wine-card');
     const more = view.querySelector<HTMLButtonElement>('.list__more')!;
     expect(more.textContent).toBe('Afficher les 100 suivantes (150 restantes)');
 
     more.click();
     expect(cards(view)).toBe(200);
-    expect(view.querySelector('.wine-card')).toBe(first); // cartes déjà affichées conservées
+    expect(view.querySelector(".wine-card")).toBe(first); // cartes déjà affichées conservées
 
     view.querySelector<HTMLButtonElement>('.list__more')!.click();
     expect(cards(view)).toBe(250);

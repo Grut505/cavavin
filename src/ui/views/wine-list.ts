@@ -19,6 +19,8 @@ import { openFilterSheet } from '../components/filter-sheet';
 import { pageHeader } from '../components/page-header';
 import { searchRows } from '../../domain/search';
 import { renderWineCard } from '../components/wine-card';
+import { quickOutflow } from '../components/quick-outflow';
+import { swipeRow, type SwipeAction } from '../components/swipe-row';
 import { h } from '../dom';
 import { icon } from '../icons';
 import { MATURITY_ORDER, type Maturity } from '../../domain/maturity';
@@ -233,12 +235,19 @@ export function wineListView(ctx: AppContext): HTMLElement {
     // Chargement progressif : LIST_PAGE_SIZE cartes à la fois, la suite s'ajoute sans reconstruire les précédentes.
     observer?.disconnect();
     let shown = 0;
-    const card = (r: WineRow): HTMLElement =>
-      renderWineCard(r, {
-        thumb: thumbs.get(r.wine.id),
-        href: wineHref(r.wine.id, '/liste'),
-        giftFrom: r.wine.gift_from ? people.get(r.wine.gift_from) : null,
-      });
+    // Glisser une carte vers la gauche : Modifier, et Sortir quand il reste des bouteilles.
+    const card = (r: WineRow): HTMLElement => {
+      const actions: SwipeAction[] = [{ label: 'Modifier', run: () => void (window.location.hash = `#/vin/${r.wine.id}/modifier?from=${encodeURIComponent('/liste')}`) }];
+      if (r.quantity > 0) actions.push({ label: 'Sortir', run: () => void quickOutflow(ctx, r.wine) });
+      return swipeRow(
+        renderWineCard(r, {
+          thumb: thumbs.get(r.wine.id),
+          href: wineHref(r.wine.id, '/liste'),
+          giftFrom: r.wine.gift_from ? people.get(r.wine.gift_from) : null,
+        }),
+        actions,
+      );
+    };
     const more = h('button', { class: 'btn list__more', type: 'button' });
     const showMore = (): void => {
       const next = result.slice(shown, shown + LIST_PAGE_SIZE);

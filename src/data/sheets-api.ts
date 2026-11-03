@@ -15,6 +15,8 @@ export interface SheetsApi {
   addTabs(titles: string[]): Promise<void>;
   /** Toutes les valeurs de chaque onglet, en-têtes inclus (ligne 0). */
   readTabs(titles: string[]): Promise<Record<string, Raw[][]>>;
+  /** Plages A1 d'un onglet (« 1:1 », « A:D », « 5:9 »…) : une liste de lignes par plage, dans l'ordre demandé. */
+  readRanges(ranges: { tab: string; a1: string }[]): Promise<Raw[][][]>;
   setHeader(tab: string, headers: string[]): Promise<void>;
   /** Applique toutes les écritures de façon atomique (une seule requête). */
   applyBatch(batch: WriteBatch): Promise<void>;

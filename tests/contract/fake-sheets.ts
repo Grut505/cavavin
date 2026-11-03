@@ -9,6 +9,8 @@ export class FakeSheets implements SheetsApi {
   failNext: SheetsError | null = null;
   /** Réseau coupé : tous les appels échouent tant que c'est vrai. */
   offline = false;
+  /** Cellules lues depuis le début (pour vérifier qu'une synchro n'a pas relu toute la feuille). */
+  cellsRead = 0;
 
   private maybeFail(): void {
     if (this.offline) throw new SheetsError('Réseau indisponible', 'network');
@@ -36,8 +38,26 @@ export class FakeSheets implements SheetsApi {
       const rows = this.tabs.get(t);
       if (!rows) throw new SheetsError(`Onglet introuvable : ${t}`, 'other', 400);
       out[t] = rows.map((r) => [...r]);
+      this.cellsRead += rows.reduce((n, r) => n + r.length, 0);
     }
     return out;
+  }
+
+  async readRanges(ranges: { tab: string; a1: string }[]): Promise<Raw[][][]> {
+    this.maybeFail();
+    const col = (l: string): number => [...l].reduce((n, c) => n * 26 + c.charCodeAt(0) - 64, 0) - 1;
+    return ranges.map(({ tab, a1 }) => {
+      const rows = this.tabs.get(tab);
+      if (!rows) throw new SheetsError(`Onglet introuvable : ${tab}`, 'other', 400);
+      const byRow = /^(\d+):(\d+)$/.exec(a1);
+      const byCol = /^([A-Z]+):([A-Z]+)$/.exec(a1);
+      let out: Raw[][];
+      if (byRow) out = rows.slice(Number(byRow[1]) - 1, Number(byRow[2])).map((r) => [...r]);
+      else if (byCol) out = rows.map((r) => r.slice(col(byCol[1]!), col(byCol[2]!) + 1));
+      else throw new SheetsError(`Plage non gérée : ${a1}`, 'other', 400);
+      this.cellsRead += out.reduce((n, r) => n + r.length, 0);
+      return out;
+    });
   }
 
   async setHeader(tab: string, headers: string[]): Promise<void> {

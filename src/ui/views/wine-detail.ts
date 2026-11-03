@@ -57,7 +57,8 @@ export async function wineDetailView(ctx: AppContext, params: { id?: string }): 
   const root = h('main', { class: 'view' });
 
   async function draw(): Promise<void> {
-    const wine = params.id ? await ctx.repo.get('wine', params.id) : undefined;
+    const wine = params.id ? await ctx.repo.get('wine', params.id, true) : undefined; // une fiche supprimée reste consultable (historique)
+    const removed = wine?.deleted === true;
     if (!wine) {
       root.replaceChildren(
         pageHeader({ title: 'Fiche introuvable', back: '#/liste', backLabel: 'Retour à la liste' }),
@@ -133,12 +134,15 @@ export async function wineDetailView(ctx: AppContext, params: { id?: string }): 
     const content: (HTMLElement | null)[] = [
       pageHeader({
         title: title.primary,
-        subtitle: `${title.secondary} · ${total === 0 ? 'épuisée' : bottlesLabel(total)}`,
+        subtitle: `${title.secondary} · ${removed ? 'supprimée' : total === 0 ? 'épuisée' : bottlesLabel(total)}`,
         back: wineBack().href,
         backLabel: wineBack().label,
-        actions: [h('a', { class: 'icon-btn', href: `#/vin/${wine.id}/modifier${originQuery()}`, 'aria-label': 'Modifier la fiche' }, icon('edit'))],
+        actions: removed ? [] : [h('a', { class: 'icon-btn', href: `#/vin/${wine.id}/modifier${originQuery()}`, 'aria-label': 'Modifier la fiche' }, icon('edit'))],
       }),
-      wine.needs_review
+      removed
+        ? h('p', { class: 'alert', role: 'status' }, 'Cette fiche a été supprimée (retirée ou fusionnée avec une autre). Elle n’est plus dans votre cave ; seul son historique de sorties reste consultable.')
+        : null,
+      wine.needs_review && !removed
         ? h('p', { class: 'alert' }, 'Fiche à compléter. ', h('a', { href: `#/vin/${wine.id}/modifier${originQuery()}` }, 'Modifier la fiche'))
         : null,
       h(
@@ -154,7 +158,7 @@ export async function wineDetailView(ctx: AppContext, params: { id?: string }): 
           : h('span', { class: 'detail-hero__thumb detail-hero__thumb--empty', 'aria-hidden': 'true' }, icon('bottle')),
         h('dl', { class: 'facts' }, ...facts(wine, giftName).flatMap(([k, v]) => [h('dt', {}, k), h('dd', {}, v)])),
       ),
-      pairingsOf(wine).length > 0
+      pairingsOf(wine).length > 0 && !removed
         ? h(
             'section',
             { class: 'card stack', 'aria-label': 'À table' },
@@ -163,7 +167,9 @@ export async function wineDetailView(ctx: AppContext, params: { id?: string }): 
             h('div', { class: 'chips' }, pairingsOf(wine).map((m) => h('a', { class: 'btn btn--small', href: `#/liste?plat=${encodeURIComponent(m)}` }, m))),
           )
         : null,
-      h(
+      removed
+        ? null
+        : h(
         'section',
         { class: 'card stack', 'aria-label': 'Emplacements' },
         h('div', { class: 'home__title' }, h('h2', {}, 'Où la trouver ?'), whereViews.length > 0 ? legendButton() : null),
