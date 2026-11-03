@@ -3,7 +3,7 @@ import type { AppContext } from '../../app';
 import { OUTFLOW_REASON_LABELS, outflowsOf } from '../../domain/stock';
 import { pairingsOf } from '../../domain/pairing-list';
 import { formatDateFr, wineTitle } from '../../domain/wine';
-import type { Location, Wine } from '../../domain/types';
+import type { Wine } from '../../domain/types';
 import { bottlesLabel } from '../cave-map/cave-map';
 import { renderShelfView, shelfBottles } from '../cave-map/shelf-view';
 import { legendButton } from '../components/urgency-legend';
@@ -15,6 +15,9 @@ import { openMoveDialog } from '../components/move-dialog';
 import { openOutflowDialog, type StockChoice } from '../components/outflow-dialog';
 import { pageHeader } from '../components/page-header';
 import { colorLabel } from '../components/wine-card';
+import { styleMeter } from '../components/style-meter';
+import { urgencyTag } from '../components/urgency-tag';
+import { urgencyOf } from '../../domain/urgency';
 import { h } from '../dom';
 import { icon } from '../icons';
 import { positionLabel } from '../../domain/types';
@@ -22,7 +25,7 @@ import { originQuery, wineBack } from '../nav-origin';
 
 const eur = (n: number): string => `${n.toFixed(2).replace('.', ',')} €`;
 
-function facts(wine: Wine, giftName: string | null): [string, string][] {
+function facts(wine: Wine, giftName: string | null, showUrgency: boolean): [string, string | HTMLElement][] {
   const window =
     wine.drink_from && wine.drink_until
       ? `${wine.drink_from} – ${wine.drink_until}`
@@ -31,18 +34,12 @@ function facts(wine: Wine, giftName: string | null): [string, string][] {
         : wine.drink_until
           ? `avant ${wine.drink_until}`
           : '';
-  const style = wine.tannin
-    ? `Tanin ${wine.tannin} / 5`
-    : wine.dryness
-      ? `Sucre : ${wine.dryness}`
-      : '';
-  const rows: [string, string][] = [
+  const rows: [string, string | HTMLElement][] = [
     ['Couleur', colorLabel(wine.color)],
     ['Appellation', wine.appellation ?? ''],
     ['Région', [wine.region, wine.country].filter(Boolean).join(', ')],
     ['Format', wine.format],
-    ['Style', style],
-    ['À boire', window],
+    ['À boire', window && showUrgency ? h('span', { class: 'drink-fact' }, urgencyTag(urgencyOf(wine, new Date().getFullYear())), h('span', { class: 'muted' }, window)) : window],
     ['Note', wine.rating ? `${wine.rating} / 5` : ''],
     ['Prix d’achat', wine.purchase_price !== null ? eur(wine.purchase_price) : ''],
     ['Date d’achat', formatDateFr(wine.purchase_date)],
@@ -95,7 +92,7 @@ export async function wineDetailView(ctx: AppContext, params: { id?: string }): 
       if (await action) await draw();
     };
 
-    const stockRows = choices.map((c) =>
+    const stockRow = (c: StockChoice): HTMLElement =>
       h(
         'li',
         { class: 'stock-row', 'data-stock-id': c.stock.id },
@@ -112,26 +109,29 @@ export async function wineDetailView(ctx: AppContext, params: { id?: string }): 
           h('button', { class: 'btn btn--small', type: 'button', onClick: () => void refreshAfter(openOutflowDialog(ctx, { wine, choices, stockId: c.stock.id })) }, icon('out'), 'Sortir'),
           h('button', { class: 'btn btn--small', type: 'button', onClick: () => void refreshAfter(openMoveDialog(ctx, { wine, choices, furniture, stockId: c.stock.id })) }, icon('move'), 'Déplacer'),
         ),
-      ),
-    );
+      );
 
     // « Où la trouver ? » : pour chaque emplacement, la vue de l'étagère (bouteilles dessinées, colorées selon
     // l'échéance, position sur l'étagère) avec les bouteilles de cette fiche mises en évidence.
     const year = new Date().getFullYear();
-    const whereIds = [...new Set(choices.map((c) => c.stock.location_id))];
-    const whereViews = whereIds
-      .map((id) => locById.get(id))
-      .filter((l): l is Location => !!l && !l.deleted)
-      .map((loc) =>
-        h(
-          'div',
-          { class: 'where', 'data-location-id': loc.id },
-          h('a', { class: 'where__title', href: `#/etagere/${loc.id}` }, h('strong', { class: 'where__name' }, locationLabel(loc, furniture)), h('span', { class: 'where__go' }, 'Voir ›')),
-          loc.kind === 'shelf'
-            ? renderShelfView({ shelfName: loc.name, bottles: shelfBottles(stocksAt(stocks, loc.id), allWines, year), highlightWineId: wine.id })
-            : null,
-        ),
+    // Un bloc par emplacement qui contient la bouteille, mis en avant (liseré, pastille « ici », bouteilles de cette
+    // fiche cerclées) : nom, quantité, position, actions, puis la vue de l'étagère.
+    const byLocation = new Map<string, StockChoice[]>();
+    for (const c of choices) byLocation.set(c.stock.location_id, [...(byLocation.get(c.stock.location_id) ?? []), c]);
+    const whereViews = [...byLocation.entries()].map(([id, list]) => {
+      const loc = locById.get(id);
+      const rows = h('ul', { class: 'stock-list' }, list.map(stockRow));
+      if (!loc || loc.deleted) return h('div', { class: 'where-orphan' }, rows);
+      return h(
+        'div',
+        { class: 'where where--here', 'data-location-id': loc.id },
+        h('a', { class: 'where__title', href: `#/etagere/${loc.id}` }, h('span', { class: 'where__here' }, 'Ici'), h('strong', { class: 'where__name' }, locationLabel(loc, furniture)), h('span', { class: 'where__go' }, 'Voir ›')),
+        rows,
+        loc.kind === 'shelf'
+          ? renderShelfView({ shelfName: loc.name, bottles: shelfBottles(stocksAt(stocks, loc.id), allWines, year), highlightWineId: wine.id })
+          : null,
       );
+    });
 
     const history = outflowsOf(outflows, wine.id);
 
@@ -160,17 +160,16 @@ export async function wineDetailView(ctx: AppContext, params: { id?: string }): 
               photos.back ? h('img', { class: 'detail-hero__thumb', src: photos.back, alt: 'Étiquette (arrière)', width: '84' }) : null,
             )
           : h('span', { class: 'detail-hero__thumb detail-hero__thumb--empty', 'aria-hidden': 'true' }, icon('bottle')),
-        h('dl', { class: 'facts' }, ...facts(wine, giftName).flatMap(([k, v]) => [h('dt', {}, k), h('dd', {}, v)])),
+        h('dl', { class: 'facts' }, ...facts(wine, giftName, !removed && total > 0).flatMap(([k, v]) => [h('dt', {}, k), h('dd', {}, v)])),
       ),
+      styleMeter(wine) ? h('section', { class: 'card stack', 'aria-label': 'Style' }, h('h2', {}, 'Style'), styleMeter(wine)) : null,
       removed
         ? null
         : h(
         'section',
         { class: 'card stack', 'aria-label': 'Emplacements' },
-        h('div', { class: 'home__title' }, h('h2', {}, 'Où la trouver ?'), whereViews.length > 0 ? legendButton() : null),
-        stockRows.length > 0
-          ? h('ul', { class: 'list' }, stockRows)
-          : h('p', { class: 'muted' }, 'Plus aucune bouteille en stock.'),
+        h('div', { class: 'home__title' }, h('h2', {}, 'Où la trouver ?'), whereViews.some((v) => v.classList.contains('where')) ? legendButton() : null),
+        whereViews.length === 0 ? h('p', { class: 'muted' }, 'Plus aucune bouteille en stock.') : null,
         ...whereViews,
         h(
           'button',

@@ -27,6 +27,7 @@ describe('Liste : chargement progressif', () => {
     expect(view.textContent).toContain('250 fiches'); // le total reste affiché
     const labels = [...view.querySelector('.swipe')!.querySelectorAll('.swipe__action')].map((b) => b.textContent);
     expect(labels).toEqual(['Modifier', 'Sortir']); // actions révélées par un balayage
+    expect(view.querySelector('.wine-card .wine-card__stripe')).not.toBeNull(); // liseré couleur « à boire »
     const first = view.querySelector('.wine-card');
     const more = view.querySelector<HTMLButtonElement>('.list__more')!;
     expect(more.textContent).toBe('Afficher les 100 suivantes (150 restantes)');

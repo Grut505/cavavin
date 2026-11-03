@@ -101,17 +101,38 @@ describe('fiche détaillée', () => {
     expect(view.querySelector('.app-header h1')?.textContent).toBe('Domaine Fabre');
     expect(view.querySelector('.app-header p')?.textContent).toBe('Les Pins · 2015 · 3 bouteilles');
     const facts = view.querySelector('.facts')!.textContent!;
-    for (const expected of ['Rouge', 'Saint-Joseph', 'Vallée du Rhône, France', '75cl', 'Tanin 3 / 5', '2025 – 2031', '4 / 5', '12,50 €', '05/03/2024', 'Caviste Jean', 'Offert par Marie', 'Très bon']) {
+    for (const expected of ['Rouge', 'Saint-Joseph', 'Vallée du Rhône, France', '75cl', 'À point', '2025 – 2031', '4 / 5', '12,50 €', '05/03/2024', 'Caviste Jean', 'Offert par Marie', 'Très bon']) {
       expect(facts, expected).toContain(expected);
     }
+    expect(view.querySelector('[aria-label="Tanins : 3 sur 5"] .style-meter__pip--on')).not.toBeNull(); // tanins en visuel
+    expect(view.querySelectorAll('[aria-label="Tanins : 3 sur 5"] .style-meter__pip--on')).toHaveLength(3);
     expect(view.querySelector('a[aria-label="Modifier la fiche"]')?.getAttribute('href')).toBe(`#/vin/${w.id}/modifier`);
+  });
+
+  it('montre le statut « à boire » en couleur sur la fiche', async () => {
+    const { ctx, repo, a1 } = await setup();
+    const y = new Date().getFullYear();
+    const w = await repo.addWine(wineFields({ drink_from: y - 10, drink_until: y - 2 }), [{ location_id: a1.id, quantity: 1, position_hint: null }]);
+    const tag = (await open(ctx, w.id)).querySelector('.facts .urgency-tag')!;
+    expect(tag.getAttribute('data-urgency')).toBe('late');
+    expect(tag.textContent).toBe('En retard');
+  });
+
+  it('met en avant l’emplacement qui contient la bouteille', async () => {
+    const { ctx, repo, a1 } = await setup();
+    const w = await repo.addWine(wineFields(), [{ location_id: a1.id, quantity: 2, position_hint: null }]);
+    const view = await open(ctx, w.id);
+    const here = view.querySelector('.where--here')!;
+    expect(here.querySelector('.where__here')!.textContent).toBe('Ici');
+    expect(here.querySelectorAll('.sv__bottle--hit')).toHaveLength(2);
   });
 
   it('n’affiche pas les informations absentes', async () => {
     const { ctx, repo, a1 } = await setup();
     const w = await repo.addWine(wineFields({ color: 'blanc', dryness: 'sec' }), [{ location_id: a1.id, quantity: 1, position_hint: null }]);
-    const facts = (await open(ctx, w.id)).querySelector('.facts')!.textContent!;
-    expect(facts).toContain('Sucre : sec');
+    const view = await open(ctx, w.id);
+    const facts = view.querySelector('.facts')!.textContent!;
+    expect(view.querySelector('[aria-label="Sucre : Sec"] .style-meter__step--on')?.textContent).toBe('Sec'); // échelle de sucre en visuel
     for (const absent of ['Prix', 'Fournisseur', 'Cadeau', 'Notes', 'Note ', 'À boire']) expect(facts, absent).not.toContain(absent);
   });
 

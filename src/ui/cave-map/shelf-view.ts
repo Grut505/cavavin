@@ -65,9 +65,9 @@ export function shelfBottles(stocks: Stock[], wines: Wine[], year: number = new 
   return out;
 }
 
-function bottleEl(b: ShelfBottle, x: number, y: number, dim = false): SVGElement {
+function bottleEl(b: ShelfBottle, x: number, y: number, dim = false, hit = false): SVGElement {
   const g = s('g', {
-    class: `sv__bottle${dim ? ' sv__bottle--dim' : ''}`,
+    class: `sv__bottle${dim ? ' sv__bottle--dim' : ''}${hit ? ' sv__bottle--hit' : ''}`,
     role: 'link',
     tabindex: 0,
     'aria-label': `${b.title}, ${URGENCY_LABELS[b.urgency].toLowerCase()}${b.zone ? `, ${positionLabel(b.zone).toLowerCase()}` : ''}`,
@@ -98,7 +98,7 @@ function fill(parent: SVGElement, items: ShelfBottle[], x0: number, y0: number, 
   // si ça déborde, on réserve la dernière place au « +n »
   const shown = items.length > capacity ? capacity - 1 : items.length;
   for (let i = 0; i < shown; i++) {
-    parent.append(bottleEl(items[i]!, x0 + (i % perRow) * PITCH_X, y0 + Math.floor(i / perRow) * PITCH_Y, highlightWineId !== undefined && items[i]!.wineId !== highlightWineId));
+    parent.append(bottleEl(items[i]!, x0 + (i % perRow) * PITCH_X, y0 + Math.floor(i / perRow) * PITCH_Y, highlightWineId !== undefined && items[i]!.wineId !== highlightWineId, highlightWineId !== undefined && items[i]!.wineId === highlightWineId));
   }
   const hidden = items.length - shown;
   if (hidden > 0) {
