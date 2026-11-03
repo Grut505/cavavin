@@ -5,6 +5,7 @@ import { positionLabel } from '../../domain/types';
 import { wineTitle } from '../../domain/wine';
 import { bottlesLabel } from '../cave-map/cave-map';
 import { renderShelfView, shelfBottles } from '../cave-map/shelf-view';
+import { legendButton } from '../components/urgency-legend';
 import { pageHeader } from '../components/page-header';
 import { wineHref } from '../nav-origin';
 import { h } from '../dom';
@@ -54,6 +55,7 @@ export async function shelfDetailView(ctx: AppContext, params: { id?: string }):
       subtitle: `${subtitle} · ${total === 0 ? 'vide' : bottlesLabel(total)}`,
       back: '#/cave',
       backLabel: 'Retour à la cave',
+      actions: [loc.kind === 'shelf' && rows.length > 0 ? legendButton() : null],
     }),
     loc.kind === 'shelf' && rows.length > 0 ? h('a', { class: 'btn btn--small', href: `#/pointage/${loc.id}` }, 'Pointer cette étagère') : null,
     rows.length === 0

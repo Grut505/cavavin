@@ -3,6 +3,7 @@
 import { POSITION_COLS, POSITION_HINTS, POSITION_ROWS, positionLabel, type PositionCol, type PositionHint, type PositionRow, type Stock, type Wine } from '../../domain/types';
 import { wineTitle } from '../../domain/wine';
 import { h } from '../dom';
+import { URGENCY_LABELS, urgencyOf, type Urgency } from '../../domain/urgency';
 import { wineHref } from '../nav-origin';
 import { bottleGlyph, s } from './svg';
 import './cave-map.css';
@@ -42,10 +43,12 @@ export interface ShelfBottle {
   title: string;
   color: Wine['color'];
   zone: PositionHint | null;
+  /** Échéance de la fenêtre de garde : couleur de la bouteille dessinée. */
+  urgency: Urgency;
 }
 
 /** Une entrée par bouteille, dans l'ordre des lignes de stock. */
-export function shelfBottles(stocks: Stock[], wines: Wine[]): ShelfBottle[] {
+export function shelfBottles(stocks: Stock[], wines: Wine[], year: number = new Date().getFullYear()): ShelfBottle[] {
   const out: ShelfBottle[] = [];
   for (const st of stocks) {
     const wine = wines.find((w) => w.id === st.wine_id);
@@ -55,6 +58,7 @@ export function shelfBottles(stocks: Stock[], wines: Wine[]): ShelfBottle[] {
         title: wine ? wineTitle(wine).primary : 'Fiche introuvable',
         color: wine?.color ?? null,
         zone: st.position_hint,
+        urgency: wine ? urgencyOf(wine, year) : 'unknown',
       });
     }
   }
@@ -66,12 +70,12 @@ function bottleEl(b: ShelfBottle, x: number, y: number): SVGElement {
     class: 'sv__bottle',
     role: 'link',
     tabindex: 0,
-    'aria-label': `${b.title}${b.zone ? `, ${b.zone}` : ''}`,
+    'aria-label': `${b.title}, ${URGENCY_LABELS[b.urgency].toLowerCase()}${b.zone ? `, ${positionLabel(b.zone).toLowerCase()}` : ''}`,
   });
-  g.append(s('title', {}, b.title));
+  g.append(s('title', {}, `${b.title} · ${URGENCY_LABELS[b.urgency]}`));
   // zone tactile un peu plus large que le dessin
   g.append(s('rect', { class: 'sv__bottle-hit', x: x - 1.5, y: y - 1, width: BW + 3, height: BH + 2 }));
-  g.append(bottleGlyph(x, y, `bottle bottle--${b.color ?? 'autre'}`, SCALE));
+  g.append(bottleGlyph(x, y, `bottle u-fill u-fill--${b.urgency}`, SCALE));
   const go = (): void => {
     window.location.hash = wineHref(b.wineId); // mémorise l'étagère : le retour y ramène
   };

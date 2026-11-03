@@ -1,6 +1,7 @@
 // Schéma visuel de la cave : meubles → étagères tactiles, lieux en puces.
 import type { Furniture, Location } from '../../domain/types';
 import { sortByOrder } from '../../domain/locations';
+import type { Urgency } from '../../domain/urgency';
 import { h } from '../dom';
 import { bottleGlyph, nextId, s } from './svg';
 import './cave-map.css';
@@ -15,6 +16,8 @@ export interface CaveMapData {
   furniture: Furniture[];
   locations: Location[];
   counts: Map<string, number>;
+  /** Urgence de chaque bouteille par emplacement (la plus urgente d'abord) : colore les bouteilles dessinées. */
+  urgencies?: Map<string, Urgency[]>;
 }
 
 export interface CaveMapOptions {
@@ -31,6 +34,7 @@ function shelfRow(
   count: number,
   index: number,
   opts: CaveMapOptions,
+  urgencies: Urgency[] = [],
 ): SVGElement {
   const y = TOP + 4 + index * ROW;
   const g = s('g', {
@@ -45,7 +49,7 @@ function shelfRow(
   g.append(s('text', { class: 'shelf__count', x: W - IN - 10, y: y + 17, 'text-anchor': 'end' }, String(count)));
   const baseline = y + ROW - 8;
   const shown = Math.min(count, MAX_BOTTLES);
-  for (let k = 0; k < shown; k++) g.append(bottleGlyph(IN + 10 + k * 17, baseline - 28, 'shelf__bottle'));
+  for (let k = 0; k < shown; k++) g.append(bottleGlyph(IN + 10 + k * 17, baseline - 28, `shelf__bottle u-fill u-fill--${urgencies[k] ?? 'unknown'}`));
   if (count > MAX_BOTTLES) {
     g.append(s('text', { class: 'shelf__count', x: IN + 10 + shown * 17 + 4, y: baseline - 4 }, `+${count - MAX_BOTTLES}`));
   }
@@ -72,8 +76,14 @@ function rack(
   shelves: Location[],
   counts: Map<string, number>,
   opts: CaveMapOptions,
+  urgencies?: Map<string, Urgency[]>,
 ): HTMLElement {
-  const section = h('section', { class: 'rack', 'aria-label': furniture.name }, h('h2', {}, furniture.name));
+  const total = shelves.reduce((n, sh) => n + (counts.get(sh.id) ?? 0), 0);
+  const section = h(
+    'section',
+    { class: 'rack', 'aria-label': furniture.name },
+    h('h2', {}, furniture.name, h('span', { class: 'rack__total' }, ` · ${bottlesLabel(total)}`)),
+  );
   if (shelves.length === 0) {
     section.append(h('p', { class: 'muted rack__none' }, 'Aucune étagère dans ce meuble.'));
     return section;
@@ -108,7 +118,7 @@ function rack(
     s('rect', { class: 'rack__cavity', x: IN, y: TOP, width: W - 2 * IN, height: innerH, rx: 3 }),
     s('rect', { class: 'rack__cavity-shade', x: IN, y: TOP, width: W - 2 * IN, height: 8, rx: 3 }),
   );
-  shelves.forEach((sh, i) => svg.append(shelfRow(sh, counts.get(sh.id) ?? 0, i, opts)));
+  shelves.forEach((sh, i) => svg.append(shelfRow(sh, counts.get(sh.id) ?? 0, i, opts, urgencies?.get(sh.id))));
   section.append(svg);
   return section;
 }
@@ -119,7 +129,7 @@ export function renderCaveMap(data: CaveMapData, opts: CaveMapOptions): HTMLElem
 
   for (const f of sortByOrder(data.furniture.filter((x) => !x.deleted))) {
     const shelves = sortByOrder(locations.filter((l) => l.kind === 'shelf' && l.furniture_id === f.id));
-    root.append(rack(f, shelves, data.counts, opts));
+    root.append(rack(f, shelves, data.counts, opts, data.urgencies));
   }
 
   const places = sortByOrder(locations.filter((l) => l.kind === 'place'));
