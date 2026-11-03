@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cavavin, le teaser</title>
+<meta name="description" content="Cavavin : ma cave à vin, partout, même hors-ligne. Découvrez l'application écran par écran.">
+<meta property="og:title" content="Cavavin, ma cave à vin, partout">
+<meta property="og:description" content="Une application de cave à vin personnelle : code couleur « à boire », accords végétariens, glissements, synchro Google Sheets, hors-ligne.">
+<meta property="og:image" content="https://grut505.github.io/cavavin/teaser/img/01-cave.jpg">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#141011">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<style>
+  :root {
+    --bg: #141011; --surface: #211c1d; --text: #f3ebe4; --muted: #b3a396; --accent: #d6798a; --border: #3a3234;
+    --frame: #0b0809;
+  }
+  @media (prefers-color-scheme: light) {
+    :root { --bg: #f6f2ee; --surface: #ffffff; --text: #2a2321; --muted: #6f625a; --accent: #8a2536; --border: #e2d8d0; --frame: #1b1516; }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    min-height: 100dvh; background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: grid; grid-template-rows: auto 1fr auto; justify-items: center;
+    padding: 0 16px; padding-bottom: env(safe-area-inset-bottom);
+  }
+  header { text-align: center; padding: 28px 0 8px; max-width: 560px; }
+  h1 { margin: 0; font: 700 clamp(2rem, 6vw, 2.8rem)/1.1 Georgia, "Times New Roman", serif; letter-spacing: .01em; }
+  h1 span { color: var(--accent); }
+  header p { margin: 8px 0 0; color: var(--muted); font-size: 1.05rem; }
+  main { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 16px 0 8px; }
+  .stage { display: flex; align-items: center; gap: 12px; width: 100%; justify-content: center; }
+  .nav {
+    flex: none; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); font-size: 1.3rem; cursor: pointer; display: grid; place-items: center;
+  }
+  .nav:hover, .nav:focus-visible { border-color: var(--accent); outline: none; }
+  .phone {
+    position: relative; width: min(300px, 62vw, calc((100dvh - 340px) * 0.462)); min-width: 190px; aspect-ratio: 390 / 844; border-radius: 38px; padding: 9px;
+    background: var(--frame); box-shadow: 0 18px 50px rgb(0 0 0 / 45%), inset 0 0 0 2px #3a3234; flex: none;
+  }
+  .screen { position: relative; width: 100%; height: 100%; border-radius: 30px; overflow: hidden; background: #141011; }
+  .screen img {
+    position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .5s ease;
+  }
+  .screen img.on { opacity: 1; }
+  .caption { text-align: center; max-width: 440px; min-height: 5.2em; }
+  .caption h2 { margin: 0 0 6px; font: 700 1.35rem/1.2 Georgia, serif; }
+  .caption p { margin: 0; color: var(--muted); line-height: 1.45; }
+  .dots { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; max-width: 360px; }
+  .dot { width: 26px; height: 26px; border: 0; background: none; padding: 0; cursor: pointer; display: grid; place-items: center; }
+  .dot::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--border); transition: .2s; }
+  .dot[aria-current="true"]::before { background: var(--accent); width: 22px; border-radius: 6px; }
+  .bar { width: min(300px, 62vw, calc((100dvh - 340px) * 0.462)); min-width: 190px; height: 3px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; background: var(--accent); }
+  .play { color: var(--muted); font-size: .9rem; background: none; border: 0; cursor: pointer; text-decoration: underline; padding: 8px; }
+  footer { color: var(--muted); font-size: .8rem; text-align: center; padding: 14px 0 22px; max-width: 520px; }
+  @media (max-width: 520px) { .nav { width: 38px; height: 38px; } .stage { gap: 6px; } }
+  @media (prefers-reduced-motion: reduce) { .screen img { transition: none; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Cava<span>vin</span></h1>
+  <p>Ma cave à vin, partout, même hors-ligne.</p>
+</header>
+
+<main>
+  <div class="stage">
+    <button class="nav" id="prev" aria-label="Écran précédent">‹</button>
+    <div class="phone"><div class="screen" id="screen" aria-live="off"></div></div>
+    <button class="nav" id="next" aria-label="Écran suivant">›</button>
+  </div>
+  <div class="bar" aria-hidden="true"><i id="progress"></i></div>
+  <div class="caption" aria-live="polite"><h2 id="title"></h2><p id="text"></p></div>
+  <div class="dots" id="dots" role="tablist" aria-label="Écrans"></div>
+  <button class="play" id="play" type="button">Pause</button>
+</main>
+
+<footer>Application personnelle, installable sur l'écran d'accueil. Les données de ces écrans sont fictives.</footer>
+
+<script>
+(() => {
+  const SLIDES = [
+    ['01-cave.jpg', 'Votre cave d’un coup d’œil', 'Vos armoires dessinées, chaque bouteille colorée selon l’urgence de la boire.'],
+    ['02-legende.jpg', 'Un code couleur clair', 'En retard, à finir, à point, bientôt, trop tôt : la légende est à un toucher.'],
+    ['03-quoi-boire.jpg', 'Quoi boire ce soir ?', 'Tapez un plat : l’appli cherche les bouteilles qui s’y accordent.'],
+    ['04-liste-plat.jpg', 'Des accords végétariens', 'Même avec une faute de frappe, la liste se filtre sur les bonnes bouteilles.'],
+    ['05-liste.jpg', 'Toute la cave en liste', 'Recherche, filtres, tri ; le statut « à boire » sur chaque carte.'],
+    ['06-liste-swipe.jpg', 'Un glissement suffit', 'Glissez une carte : modifier la fiche ou sortir une bouteille.'],
+    ['07-fiche.jpg', 'Une fiche complète', 'Appellation, région, fenêtre de garde, prix, fournisseur, photos de l’étiquette.'],
+    ['08-fiche-style.jpg', 'Le style en visuel', 'Tanins et sucre se lisent d’un regard.'],
+    ['09-fiche-ou-la-trouver.jpg', 'Où est-elle ?', 'L’emplacement exact, mis en avant : étagère, case, nombre de bouteilles.'],
+    ['10-etagere-case.jpg', 'Case par case', 'Touchez une case de l’étagère pour ne voir que ses bouteilles.'],
+    ['11-stats.jpg', 'À boire, par urgence', 'Les bouteilles pressées d’abord, triées et filtrables par couleur.'],
+    ['12-ajout-lien.jpg', 'Claude lit l’étiquette, l’appli remplit la fiche', 'Un lien suffit : le formulaire s’ouvre déjà rempli, vous vérifiez et enregistrez.'],
+    ['13-historique-swipe.jpg', 'Un historique maîtrisé', 'Chaque bouteille sortie est notée ; glissez une ligne pour la supprimer.'],
+  ];
+  const DURATION = 4200;
+  const $ = (id) => document.getElementById(id);
+  const screen = $('screen'), dots = $('dots'), bar = $('progress');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let i = 0, playing = !reduce, started = 0, raf = 0, elapsed = 0;
+
+  const imgs = SLIDES.map(([src, title], k) => {
+    const im = new Image();
+    im.src = 'img/' + src; im.alt = title; im.decoding = 'async'; im.loading = k < 2 ? 'eager' : 'lazy';
+    screen.append(im);
+    return im;
+  });
+  const dotEls = SLIDES.map(([, title], k) => {
+    const b = document.createElement('button');
+    b.className = 'dot'; b.type = 'button'; b.setAttribute('role', 'tab'); b.setAttribute('aria-label', (k + 1) + '. ' + title);
+    b.addEventListener('click', () => show(k));
+    dots.append(b);
+    return b;
+  });
+
+  function show(n) {
+    i = (n + SLIDES.length) % SLIDES.length;
+    imgs.forEach((im, k) => im.classList.toggle('on', k === i));
+    dotEls.forEach((d, k) => d.setAttribute('aria-current', String(k === i)));
+    $('title').textContent = SLIDES[i][1];
+    $('text').textContent = SLIDES[i][2];
+    elapsed = 0; started = performance.now(); bar.style.width = '0%';
+    const nxt = imgs[(i + 1) % imgs.length]; nxt.loading = 'eager';
+  }
+  function tick(now) {
+    if (playing) {
+      const e = elapsed + (now - started);
+      bar.style.width = Math.min(100, (e / DURATION) * 100) + '%';
+      if (e >= DURATION) show(i + 1);
+    }
+    raf = requestAnimationFrame(tick);
+  }
+  function setPlaying(p) {
+    if (p === playing) return;
+    if (!p) elapsed += performance.now() - started; else started = performance.now();
+    playing = p; $('play').textContent = p ? 'Pause' : 'Lecture';
+  }
+  $('prev').addEventListener('click', () => show(i - 1));
+  $('next').addEventListener('click', () => show(i + 1));
+  $('play').addEventListener('click', () => setPlaying(!playing));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') show(i + 1);
+    else if (e.key === 'ArrowLeft') show(i - 1);
+    else if (e.key === ' ' && e.target === document.body) { e.preventDefault(); setPlaying(!playing); }
+  });
+  // balayage sur l'écran du téléphone
+  let sx = null;
+  screen.addEventListener('pointerdown', (e) => { sx = e.clientX; });
+  screen.addEventListener('pointerup', (e) => {
+    if (sx === null) return;
+    const dx = e.clientX - sx; sx = null;
+    if (Math.abs(dx) > 40) show(i + (dx < 0 ? 1 : -1)); else setPlaying(!playing);
+  });
+  $('play').textContent = playing ? 'Pause' : 'Lecture';
+  show(0);
+  started = performance.now();
+  raf = requestAnimationFrame(tick);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) setPlaying(false); });
+})();
+</script>
+</body>
+</html>

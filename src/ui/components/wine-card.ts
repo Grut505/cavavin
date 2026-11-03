@@ -26,14 +26,14 @@ export function locationSummary(row: WineRow): string {
 export function renderWineCard(
   row: WineRow,
   /** `extra` : ligne supplémentaire (ex. position sur l'étagère). */
-  opts: { thumb?: string; href?: string; giftFrom?: string | null; extra?: string } = {},
+  opts: { thumb?: string; href?: string; giftFrom?: string | null; extra?: string; /** Masque la ligne d'emplacement (déjà évidente : écran d'une étagère). */ noLocation?: boolean } = {},
 ): HTMLElement {
   const { wine } = row;
   // L'appellation d'abord (avec le millésime), puis la région ; domaine et cuvée en petit.
   const { primary, region, maker } = wineHeading(wine);
   const gift = wine.gift ? (opts.giftFrom ? `Offert par ${opts.giftFrom}` : 'Cadeau') : '';
   const style = wine.tannin ? `Tanin ${wine.tannin}/5` : wine.dryness ? wine.dryness.charAt(0).toUpperCase() + wine.dryness.slice(1) : '';
-  const loc = locationSummary(row);
+  const loc = opts.noLocation ? '' : locationSummary(row);
 
   // Code couleur « à boire » (bouteilles en stock seulement) : liseré à gauche et pastille.
   const urgency = row.quantity > 0 ? urgencyOf(wine, new Date().getFullYear()) : null;

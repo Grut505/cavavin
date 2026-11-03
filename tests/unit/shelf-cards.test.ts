@@ -28,6 +28,7 @@ describe('étagère : mêmes cartes que la Liste', () => {
     expect(card.textContent).toContain('Rouge');
     expect(card.textContent).toContain('Tanin 3/5');
     expect(card.textContent).toContain('Position : Milieu · droite');
+    expect(card.textContent).not.toContain('Sans emplacement'); // l'emplacement est évident ici : pas de ligne trompeuse
     expect(card.querySelector('.badge')!.textContent).toBe('×2'); // sur cette étagère, pas le total de la fiche
     expect(card.getAttribute('href')).toContain(`#/vin/${w.id}?from=`);
   });

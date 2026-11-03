@@ -7,6 +7,10 @@ Aucun serveur, aucune clé d'API.
 
 Spécifications, plans et contrats : [`specs/001-bottle-inventory/`](specs/001-bottle-inventory/) (socle), [`002-accueil-stats-a-boire`](specs/002-accueil-stats-a-boire/) (à boire, statistiques, cadeaux par personne), [`003-acces-renforce`](specs/003-acces-renforce/) (adresses autorisées, verrou Face ID), [`004-cave-principale`](specs/004-cave-principale/) (Cave en écran principal, code couleur, photos, positions) et [`005-evolutions-v0.8-v0.12`](specs/005-evolutions-v0.8-v0.12/) (liste progressive, synchro incrémentale, swipe, lien de pré-remplissage…). Historique : [`CHANGELOG.md`](CHANGELOG.md).
 
+## Teaser
+
+Un diaporama de présentation (13 écrans, données fictives) est servi avec l'application : `https://<utilisateur>.github.io/<dépôt>/teaser/`. Pour le régénérer après une évolution de l'interface : `npm run teaser` (build, serveur local, parcours automatique avec Playwright ; indiquer `PLAYWRIGHT_CORE=/chemin/vers/node_modules/playwright-core` si besoin). Sont aussi produits une vidéo (`/tmp/cavavin-teaser-video/teaser.webm`) et les images de `public/teaser/img/`.
+
 ## Fonctions
 
 - **Cave** (écran principal) : armoires dessinées, bouteilles colorées selon l'urgence (en retard, à finir, à point, bientôt, trop tôt ; légende via « i »), total par meuble, résumé « À boire » et bouton **« Quoi boire ? »** (un plat → la Liste filtrée sur les bouteilles qui vont avec, mets **végétariens**, recherche tolérante aux fautes). Toucher une étagère ouvre sa vue graphique : bouteilles dessinées dans 9 cases (dessus/milieu/dessous × gauche/centre/droite) ; toucher une case filtre la liste, toucher une bouteille ouvre sa fiche.

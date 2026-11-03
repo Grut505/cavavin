@@ -38,7 +38,7 @@ export async function shelfDetailView(ctx: AppContext, params: { id?: string }):
     const card = wine
       ? renderWineCard(
           { wine, quantity: st.quantity, locations: [] },
-          { href: wineHref(wine.id, `/etagere/${loc.id}`), thumb: thumbs.get(wine.id), extra: st.position_hint ? `Position : ${positionLabel(st.position_hint)}` : undefined },
+          { href: wineHref(wine.id, `/etagere/${loc.id}`), thumb: thumbs.get(wine.id), extra: st.position_hint ? `Position : ${positionLabel(st.position_hint)}` : undefined, noLocation: true },
         )
       : h('div', { class: 'card muted' }, 'Fiche introuvable');
     return { st, card };

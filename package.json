@@ -1,13 +1,14 @@
 {
   "name": "cavavin",
   "private": true,
-  "version": "0.12.1",
+  "version": "0.12.2",
   "type": "module",
   "description": "Gestion de cave à vin — PWA offline-first adossée à Google Sheets",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
+    "teaser": "bash scripts/teaser/run.sh",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",

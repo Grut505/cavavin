@@ -25,7 +25,7 @@ describe('swipeRow', () => {
     ptr(front, 'pointermove', 120);
     ptr(front, 'pointermove', 20);
     ptr(front, 'pointerup', 20);
-    expect(front.style.transform).toBe('translateX(-168px)'); // 2 actions de 84 px
+    expect(front.style.transform).toBe('translateX(-190px)'); // « Modifier » (92 px) + « Sortir » (74 px) + 3 espaces de 8 px
     expect(root.classList.contains('swipe--open')).toBe(true);
     const click = new MouseEvent('click', { bubbles: true, cancelable: true });
     link.dispatchEvent(click);

@@ -33,7 +33,7 @@ export const pwaOptions: Partial<VitePWAOptions> = {
     navigateFallback: 'index.html',
     // Aucun cache d'exécution (`runtimeCaching`) : les appels à Google (Sheets, connexion) ne sont
     // jamais servis depuis le cache, les données vivent dans la base locale de l'application.
-    navigateFallbackDenylist: [/^\/api\//],
+    navigateFallbackDenylist: [/^\/api\//, /\/teaser\//], // la page teaser est une page à part, pas l'application
     cleanupOutdatedCaches: true,
   },
   devOptions: { enabled: false },

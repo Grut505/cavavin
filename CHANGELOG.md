@@ -2,6 +2,7 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/). Les versions suivent `package.json`.
 
+## [0.12.2] — Teaser (diaporama + vidéo, données fictives) ; étagère : plus de ligne « Sans emplacement » trompeuse ; « Supprimer » lisible dans le swipe
 ## [0.12.1] — Documentation : README, specs, contrats, CHANGELOG
 ## [0.12.0] — Étagère : toucher une case filtre la liste des bouteilles (sans gêner le clic sur les bouteilles)
 ## [0.11.0] — Lien de Claude qui ouvre le formulaire d'ajout pré-rempli ; bandeau Safari (envoyer à la cave / copier)

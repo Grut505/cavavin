@@ -10,12 +10,13 @@ export interface SwipeAction {
   run: () => void | Promise<void>;
 }
 
-const WIDTH = 72; // largeur d'une action, en px
+const MIN_WIDTH = 72; // largeur minimale d'une action, en px
+const widthOf = (a: { label: string }): number => Math.max(MIN_WIDTH, a.label.length * 9 + 20); // « Supprimer » doit tenir
 const GAP = 8; // espace entre les actions et autour d'elles, en px
 let openRow: { close: () => void } | null = null;
 
 export function swipeRow(content: HTMLElement, actions: SwipeAction[], opts: { fallback?: boolean } = {}): HTMLElement {
-  const full = WIDTH * actions.length + GAP * (actions.length + 1);
+  const full = actions.reduce((n, a) => n + widthOf(a), 0) + GAP * (actions.length + 1);
   const front = h('div', { class: 'swipe__front' }, content);
   const buttons = actions.map((a) =>
     h(
@@ -24,7 +25,7 @@ export function swipeRow(content: HTMLElement, actions: SwipeAction[], opts: { f
         class: `swipe__action${a.tone === 'danger' ? ' swipe__action--danger' : ''}`,
         type: 'button',
         tabindex: '-1',
-        style: `width:${WIDTH}px`,
+        style: `width:${widthOf(a)}px`,
         onClick: () => {
           api.close();
           void a.run();
