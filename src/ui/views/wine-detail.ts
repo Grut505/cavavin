@@ -70,7 +70,7 @@ export async function wineDetailView(ctx: AppContext, params: { id?: string }): 
       ctx.repo.list('furniture'),
       ctx.repo.list('outflow'),
       ctx.repo.list('person', true),
-      ctx.repo.thumbnailUrls(),
+      ctx.repo.photoUrls(),
     ]);
     const mine = stocks.filter((s) => s.wine_id === wine.id);
     const active = mine.filter((s) => !s.deleted && s.quantity > 0);
@@ -85,7 +85,7 @@ export async function wineDetailView(ctx: AppContext, params: { id?: string }): 
       .sort((x, y) => x.label.localeCompare(y.label, 'fr'));
 
     const title = wineTitle(wine);
-    const thumb = thumbs.get(wine.id);
+    const photos = thumbs.get(wine.id);
     const giftName = wine.gift_from ? (persons.find((p) => p.id === wine.gift_from)?.name ?? null) : null;
 
     const refreshAfter = async (action: Promise<boolean>): Promise<void> => {
@@ -136,8 +136,13 @@ export async function wineDetailView(ctx: AppContext, params: { id?: string }): 
       h(
         'section',
         { class: 'card detail-hero' },
-        thumb
-          ? h('img', { class: 'detail-hero__thumb', src: thumb, alt: 'Étiquette', width: '84' })
+        photos?.front || photos?.back
+          ? h(
+              'div',
+              { class: 'detail-hero__photos' },
+              photos.front ? h('img', { class: 'detail-hero__thumb', src: photos.front, alt: photos.back ? 'Étiquette (avant)' : 'Étiquette', width: '84' }) : null,
+              photos.back ? h('img', { class: 'detail-hero__thumb', src: photos.back, alt: 'Étiquette (arrière)', width: '84' }) : null,
+            )
           : h('span', { class: 'detail-hero__thumb detail-hero__thumb--empty', 'aria-hidden': 'true' }, icon('bottle')),
         h('dl', { class: 'facts' }, ...facts(wine, giftName).flatMap(([k, v]) => [h('dt', {}, k), h('dd', {}, v)])),
       ),

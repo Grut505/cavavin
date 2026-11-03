@@ -142,8 +142,13 @@ export interface Outflow extends Base {
   note: string | null;
 }
 
+/** Face photographiée : l'avant sert de miniature dans les listes. */
+export type PhotoSide = 'avant' | 'arrière';
+
 export interface Photo extends Base {
   wine_id: string;
+  /** Absente (anciennes photos) = avant. */
+  side: PhotoSide | null;
   mime: string;
   width: number;
   height: number;

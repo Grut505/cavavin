@@ -15,7 +15,7 @@ Colonnes communes à tous les onglets de données : `id`, `rev`, `updated_at`, `
 | `Sorties` | wine_id, location_id, reason, date, note |
 | `Propositions` | created_at, status (`nouvelle` \| `importée` \| `écartée`), source (`claude` \| `paste`), target_wine_id, domain, cuvee, vintage, appellation, region, country, color, format, quantity, purchase_price, purchase_date, supplier, drink_from, drink_until, notes, raw_json, tannin, dryness, pairings |
 | `Personnes` | name, order |
-| `Photos` | wine_id, mime, width, height, seg_0 … seg_n (base64, ≤ 40 000 caractères par cellule) |
+| `Photos` | wine_id, mime, width, height, seg_0 … seg_n (base64, ≤ 40 000 caractères par cellule), side (`avant` \| `arrière` ; vide = avant) |
 | `_Journal` | op_id, device_id, ts, type, entity_id, payload, result |
 | `_Meta` | key, value — au minimum `schema_version` |
 
@@ -23,6 +23,7 @@ Colonnes communes à tous les onglets de données : `id`, `rev`, `updated_at`, `
 
 ## Versionnage et migrations
 
+- **v6** (2026-11) : ajout de la colonne `side` à `Photos` (face photographiée : `avant` ou `arrière`, vide = `avant`). Une bouteille peut ainsi avoir deux photos ; seule l'avant sert de miniature (`thumb_ref`). Migration automatique à la prochaine synchronisation (colonne ajoutée à droite).
 - **v5** (2026-11) : ajout de la colonne booléenne `to_buy` à `Vins` (fiche sur la liste de courses, `FALSE` par défaut). Migration automatique à la prochaine synchronisation (colonne ajoutée à droite) ; les fiches existantes restent hors liste.
 - **v4** (2026-11) : ajout de la colonne `pairings` à `Vins` et à `Propositions` (mets conseillés, texte : éléments séparés par des points-virgules, `null` si inconnu). Migration automatique à la prochaine synchronisation (colonne ajoutée à droite) ; les fiches existantes gardent la cellule vide et peuvent être complétées à la main ou par un rescan.
 - **v3** (2026-11) : ajout de l'onglet `Personnes` et des colonnes `gift`, `gift_from` à `Vins`. Migration automatique à la prochaine synchronisation (onglet créé, colonnes ajoutées à droite) pour toute feuille déjà initialisée ; une feuille jamais initialisée n'est jamais modifiée sans action de l'utilisateur.

@@ -25,4 +25,7 @@
 - **FR-003** « Compléter les mets » n'est accessible que depuis Réglages.
 - **FR-004** « À boire » : catégories repliables, lignes compactes dépliables.
 - **FR-005** La position sur l'étagère se précise sur 9 zones ; les anciennes positions sont reprises sans action de l'utilisateur.
-- **FR-006** *(à venir, voir tâches)* Ajout d'une bouteille : photo depuis la phototèque ou l'appareil photo, deux photos (avant, arrière), bouton Enregistrer toujours visible, emplacement et position choisis directement dans le formulaire, bouton « Ouvrir mon projet Claude » (adresse réglable dans Réglages).
+- **FR-006** Ajout d'une bouteille : chaque photo (avant, arrière) se prend depuis la phototèque (sélecteur sans forçage de l'appareil photo) ou l'appareil photo ; l'avant sert de miniature ; la fiche montre les deux ; la fusion de fiches garde la face de la fiche conservée et reprend celle qui manque. Donnée : colonne `side` de `Photos` (schéma v6).
+- **FR-007** Le bouton « Enregistrer » du formulaire est toujours visible (barre collante au-dessus de la navigation).
+- **FR-008** L'emplacement se choisit directement dans le formulaire (schéma de la cave, puis zone 3×3 de l'étagère, quantité), sans écran secondaire ; plusieurs emplacements possibles.
+- **FR-009** Un bouton « Ouvrir mon projet Claude » (nouvel onglet) figure sur « Ajouter » et dans le formulaire ; l'adresse (`https://…`) se règle dans Réglages, par appareil (ou `VITE_CLAUDE_PROJECT_URL` au déploiement) ; sans adresse, le bouton renvoie vers Réglages. L'adresse n'est pas dans le code publié.

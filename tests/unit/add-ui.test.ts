@@ -49,24 +49,13 @@ const submit = (root: HTMLElement): void => {
  * valide la position (zone `hint` si fournie, sinon sans précision).
  */
 async function pickShelf(view: HTMLElement, name: string, rowIndex = 0, hint?: string): Promise<void> {
-  click([...view.querySelectorAll('button')].filter((b) => /Choisir un emplacement|·/.test(b.textContent ?? ''))[rowIndex]);
-  const dlg = await waitFor(() => {
-    const d = document.querySelector('dialog');
-    if (!d || d.querySelectorAll('.shelf, .place').length === 0) throw new Error('sélecteur absent');
-    return d;
-  });
-  const target = [...dlg.querySelectorAll('.shelf, .place')].find(
-    (s) => (s.getAttribute('aria-label') ?? s.textContent ?? '').startsWith(name),
-  );
+  const rowEl = (): Element => view.querySelectorAll('[data-row]')[rowIndex]!;
+  const target = [...rowEl().querySelectorAll('.shelf, .place')].find((s) => (s.getAttribute('aria-label') ?? s.textContent ?? '').startsWith(name));
   click(target);
-  if (target?.classList.contains('shelf')) {
-    await waitFor(() => {
-      if (!document.querySelector('dialog [data-hint]')) throw new Error('étape position absente');
-    });
-    if (hint) click(document.querySelector(`dialog [data-hint="${hint}"]`));
-    click(byText(document.querySelector('dialog')!, 'button', 'Valider'));
+  if (hint) {
+    await waitFor(() => expect(rowEl().querySelector(`[data-hint="${hint}"]`)).not.toBeNull());
+    click(rowEl().querySelector(`[data-hint="${hint}"]`));
   }
-  await waitFor(() => expect(document.querySelector('dialog')).toBeNull());
 }
 
 beforeEach(() => {
@@ -216,52 +205,48 @@ describe('position sur l’étagère (choix graphique)', () => {
     await waitFor(async () => expect((await repo.list('stock'))[0]?.position_hint).toBe('milieu-droite'));
   });
 
-  it('une zone touchée deux fois est désélectionnée ; « Sans précision » ne mémorise rien', async () => {
+  it('une zone touchée deux fois est désélectionnée et rien n’est mémorisé', async () => {
     const { ctx, repo } = await setup();
     const view = await addWineView(ctx);
     document.body.append(view);
     setValue(view.querySelector('#f-domain'), 'X');
     fillRequired(view);
-    click([...view.querySelectorAll('button')].find((b) => b.textContent?.includes('Choisir un emplacement')));
-    const dlg = await waitFor(() => {
-      const d = document.querySelector('dialog');
-      if (!d || !d.querySelector('.shelf')) throw new Error('absent');
-      return d;
-    });
-    click([...dlg.querySelectorAll('.shelf')][0]);
-    await waitFor(() => expect(dlg.querySelector('[data-hint="milieu-gauche"]')).not.toBeNull());
-    click(dlg.querySelector('[data-hint="milieu-gauche"]'));
-    expect(dlg.querySelector('[data-hint="milieu-gauche"]')?.getAttribute('aria-checked')).toBe('true');
-    click(dlg.querySelector('[data-hint="milieu-gauche"]'));
-    expect(dlg.querySelector('[data-hint="milieu-gauche"]')?.getAttribute('aria-checked')).toBe('false');
-    click(dlg.querySelector('[data-hint="dessus-centre"]'));
-    click(byText(dlg, 'button', 'Sans précision'));
-    await waitFor(() => expect(document.querySelector('dialog')).toBeNull());
-    expect(view.textContent).not.toContain('Dessus');
+    const row = (): Element => view.querySelector('[data-row="0"]')!;
+    click([...row().querySelectorAll('.shelf')][0]);
+    await waitFor(() => expect(row().querySelector('[data-hint="milieu-gauche"]')).not.toBeNull());
+    click(row().querySelector('[data-hint="milieu-gauche"]'));
+    expect(row().querySelector('[data-hint="milieu-gauche"]')?.getAttribute('aria-checked')).toBe('true');
+    click(row().querySelector('[data-hint="milieu-gauche"]'));
+    expect(row().querySelector('[data-hint="milieu-gauche"]')?.getAttribute('aria-checked')).toBe('false');
+    click(row().querySelector('[data-hint="dessus-centre"]'));
+    expect(view.textContent).toContain('Dessus · centre');
+    click(row().querySelector('[data-hint="dessus-centre"]')); // seconde touche : désélection
+    expect(view.querySelector('[data-row="0"] [data-chosen="yes"]')!.textContent).not.toContain('Dessus');
     submit(view);
     await waitFor(async () => expect((await repo.list('stock'))[0]?.position_hint).toBeNull());
   });
 
-  it('montre les bouteilles déjà rangées dans chaque zone et permet de revenir au schéma', async () => {
-    const { ctx, repo } = await setup();
-    const shelf = (await repo.list('location')).find((l) => l.name === 'Étagère 1')!;
-    const w = await repo.addWine(wineFields(), [
-      { location_id: shelf.id, quantity: 2, position_hint: 'milieu-gauche' },
-    ]);
-    expect(w.id).toBeTruthy();
+  it('propose les neuf zones de l’étagère choisie, directement dans le formulaire (pas d’écran secondaire)', async () => {
+    const { ctx } = await setup();
     const view = await addWineView(ctx);
     document.body.append(view);
-    click([...view.querySelectorAll('button')].find((b) => b.textContent?.includes('Choisir un emplacement')));
-    const dlg = await waitFor(() => {
-      const d = document.querySelector('dialog');
-      if (!d || !d.querySelector('.shelf')) throw new Error('absent');
-      return d;
-    });
-    click(dlg.querySelector(`[data-location-id="${shelf.id}"]`));
-    await waitFor(() => expect(dlg.querySelector('[data-hint="milieu-gauche"]')).not.toBeNull());
-    expect(dlg.querySelector('[data-hint="milieu-gauche"]')?.getAttribute('aria-label')).toContain('2 bouteilles déjà rangées');
-    click(byText(dlg, 'button', 'Retour'));
-    await waitFor(() => expect(dlg.querySelector('.shelf')).not.toBeNull());
+    expect(document.querySelector('dialog')).toBeNull();
+    expect(view.querySelector('[data-row="0"] .shelf')).not.toBeNull(); // le schéma de la cave est déjà là
+    expect(view.querySelector('[data-row="0"] [data-hint]')).toBeNull(); // pas de zone avant d'avoir choisi une étagère
+    await pickShelf(view, 'Étagère 1');
+    expect(view.querySelectorAll('[data-row="0"] [data-hint]')).toHaveLength(9);
+    expect(document.querySelector('dialog')).toBeNull();
+  });
+
+  it('montre les bouteilles déjà rangées dans chaque zone', async () => {
+    const { ctx, repo } = await setup();
+    const shelf = (await repo.list('location')).find((l) => l.name === 'Étagère 1')!;
+    await repo.addWine(wineFields(), [{ location_id: shelf.id, quantity: 2, position_hint: 'milieu-gauche' }]);
+    const view = await addWineView(ctx);
+    document.body.append(view);
+    click(view.querySelector(`[data-row="0"] [data-location-id="${shelf.id}"]`));
+    await waitFor(() => expect(view.querySelector('[data-row="0"] [data-hint="milieu-gauche"]')).not.toBeNull());
+    expect(view.querySelector('[data-row="0"] [data-hint="milieu-gauche"]')?.getAttribute('aria-label')).toContain('2 bouteilles déjà rangées');
   });
 
   it('un lieu (pièce) n’a pas d’étape de position', async () => {

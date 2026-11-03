@@ -1,12 +1,15 @@
 // Ajout d'une bouteille : saisie manuelle ou pré-remplie depuis une proposition du projet Claude.
 import type { AppContext } from '../../app';
 import { findDuplicate } from '../../domain/duplicates';
+import { bottleCounts, stocksAt } from '../../domain/locations';
+import { urgencyByLocation } from '../../domain/urgency';
 import { buildVocabulary, canonicalize, relatedFor, type VocabEntry } from '../../domain/vocabulary';
 import {
   BOTTLE_FORMATS,
   WINE_COLORS,
   positionLabel,
   type Furniture,
+  type PhotoSide,
   type Location,
   type Person,
   type PositionHint,
@@ -22,7 +25,10 @@ import { pageHeader } from '../components/page-header';
 import { promptDialog } from '../components/dialog';
 import { askSimilar } from '../components/similar-dialog';
 import { askDuplicate } from '../components/duplicate-dialog';
-import { locationLabel, pickLocation } from '../components/location-picker';
+import { locationLabel } from '../components/location-picker';
+import { claudeProjectButton } from '../components/claude-project-link';
+import { renderCaveMap } from '../cave-map/cave-map';
+import { renderShelfPosition } from '../cave-map/shelf-position';
 import { h } from '../dom';
 import { icon } from '../icons';
 import { originQuery } from '../nav-origin';
@@ -68,13 +74,23 @@ export async function editWineView(ctx: AppContext, params: { id?: string }): Pr
 async function wineFormView(ctx: AppContext, opts: { proposal?: Proposal; wine?: Wine }): Promise<HTMLElement> {
   const { proposal, wine: editing } = opts;
   const furniture: Furniture[] = await ctx.repo.list('furniture');
-  const hasCave = (await ctx.repo.list('location')).length > 0;
+  const allLocations = await ctx.repo.list('location');
+  const hasCave = allLocations.length > 0;
+  const allStocks = await ctx.repo.list('stock');
+  const allWines = await ctx.repo.list('wine');
+  const existingPhotos = editing ? (await ctx.repo.photoUrls()).get(editing.id) : undefined;
   // Suggestions et graphies de référence tirées de la cave (s'enrichissent à chaque fiche enregistrée).
   const vocab = buildVocabulary(await ctx.repo.list('wine'));
 
   const initial: WineDraft = editing ? draftFromWine(editing) : proposal ? proposalToDraft(proposal) : emptyDraft();
   const rows: Row[] = [{ location: null, quantity: proposal?.quantity ?? 1, hint: null }];
-  let thumb: Thumbnail | undefined;
+  const thumbs: Partial<Record<PhotoSide, Thumbnail>> = {};
+  const savePhotos = async (wineId: string): Promise<void> => {
+    for (const side of ['avant', 'arrière'] as const) {
+      const th = thumbs[side];
+      if (th) await ctx.repo.setThumbnail(wineId, th, side);
+    }
+  };
 
   // --- champs ---
   const inputs = {} as Record<keyof WineDraft, HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>;
@@ -282,35 +298,47 @@ async function wineFormView(ctx: AppContext, opts: { proposal?: Proposal; wine?:
     ),
   );
 
-  // --- miniature ---
-  const thumbBox = h('div', { class: 'row' });
-  const drawThumb = (): void => {
-    const pick = h('input', { type: 'file', accept: 'image/*', capture: 'environment', hidden: true, id: 'f-photo' });
-    pick.addEventListener('change', async () => {
-      const file = pick.files?.[0];
-      if (!file) return;
-      try {
-        thumb = await makeThumbnail(file);
-      } catch {
-        thumb = undefined;
-        alertBox.replaceChildren(h('p', { class: 'alert alert--error' }, 'Photo illisible : la fiche peut être enregistrée sans photo.'));
-      }
-      drawThumb();
-    });
-    const parts: (Node | null)[] = [
-      thumb ? h('img', { src: toDataUrl(thumb), alt: 'Miniature de l’étiquette', width: '64', style: 'border-radius:8px;height:auto' }) : null,
-      pick,
-      h('label', { class: 'btn btn--small', for: 'f-photo' }, thumb ? 'Refaire la photo' : 'Photographier l’étiquette'),
-      thumb ? h('button', { class: 'btn btn--small', type: 'button', onClick: () => { thumb = undefined; drawThumb(); } }, 'Retirer') : null,
-    ];
-    thumbBox.replaceChildren(...parts.filter((n): n is Node => n !== null));
+  // --- photos : avant et arrière, depuis la phototèque ou l'appareil photo ---
+  const photoBox = h('div', { class: 'photos' });
+  const drawPhotos = (): void => {
+    const slot = (side: PhotoSide, title: string): HTMLElement => {
+      const fresh = thumbs[side];
+      const preview = fresh ? toDataUrl(fresh) : existingPhotos?.[side === 'avant' ? 'front' : 'back'];
+      const pick = (capture: boolean): HTMLElement => {
+        const id = `f-photo-${side}-${capture ? 'cam' : 'lib'}`;
+        const input = h('input', { type: 'file', accept: 'image/*', ...(capture ? { capture: 'environment' } : {}), hidden: true, id });
+        input.addEventListener('change', async () => {
+          const file = input.files?.[0];
+          if (!file) return;
+          try {
+            thumbs[side] = await makeThumbnail(file);
+          } catch {
+            delete thumbs[side];
+            alertBox.replaceChildren(h('p', { class: 'alert alert--error' }, 'Photo illisible : la fiche peut être enregistrée sans photo.'));
+          }
+          drawPhotos();
+        });
+        return h('span', {}, input, h('label', { class: 'btn btn--small', for: id }, capture ? 'Appareil photo' : 'Phototèque'));
+      };
+      return h(
+        'div',
+        { class: 'photos__slot', 'data-side': side },
+        h('strong', {}, title),
+        preview ? h('img', { src: preview, alt: `Miniature : ${title.toLowerCase()}`, width: '72', style: 'border-radius:8px;height:auto' }) : h('span', { class: 'photos__empty muted' }, 'Aucune photo'),
+        h('div', { class: 'row' }, pick(false), pick(true)),
+        fresh ? h('button', { class: 'btn btn--small', type: 'button', onClick: () => { delete thumbs[side]; drawPhotos(); } }, 'Retirer') : null,
+      );
+    };
+    photoBox.replaceChildren(slot('avant', 'Avant'), slot('arrière', 'Arrière'));
   };
-  drawThumb();
-  const photoCard = h('section', { class: 'card stack' }, h('h2', {}, 'Photo'), h('p', { class: 'muted' }, 'Facultative : une miniature aide à reconnaître la bouteille dans la liste.'), thumbBox);
+  drawPhotos();
+  const photoCard = h('section', { class: 'card stack' }, h('h2', {}, 'Photos'), h('p', { class: 'muted' }, 'Facultatif : l’avant et l’arrière de la bouteille, depuis la phototèque ou l’appareil photo. L’avant sert de miniature dans les listes.'), photoBox);
 
-  // --- emplacements ---
+  // --- emplacements : choisis directement dans le formulaire (schéma de la cave, puis zone sur l'étagère) ---
   const rowsBox = h('div', { class: 'stack' });
   const drawRows = (): void => {
+    const counts = bottleCounts(allStocks);
+    const urgencies = urgencyByLocation(allStocks, allWines, new Date().getFullYear());
     rowsBox.replaceChildren(
       ...rows.map((row, i) => {
         const qty = h('input', {
@@ -326,37 +354,41 @@ async function wineFormView(ctx: AppContext, opts: { proposal?: Proposal; wine?:
           row.quantity = Number(qty.value);
           alertBox.replaceChildren();
         });
+        const loc = row.location;
+        const hintCounts: Partial<Record<PositionHint, number>> = {};
+        if (loc) for (const st of stocksAt(allStocks, loc.id)) if (st.position_hint) hintCounts[st.position_hint] = (hintCounts[st.position_hint] ?? 0) + st.quantity;
         return h(
           'div',
-          { class: 'card stack', style: 'box-shadow:none' },
+          { class: 'card stack', style: 'box-shadow:none', 'data-row': String(i) },
           h(
             'div',
             { class: 'row' },
-            h(
-              'button',
-              {
-                class: 'btn grow',
-                type: 'button',
-                style: 'justify-content:flex-start',
-                onClick: async () => {
-                  const picked = await pickLocation(ctx, { locationId: row.location?.id, hint: row.hint });
-                  if (picked) {
-                    row.location = picked.location;
-                    row.hint = picked.hint;
-                    alertBox.replaceChildren();
-                    drawRows();
-                  }
-                },
-              },
-              icon('cave'),
-              row.location
-                ? `${locationLabel(row.location, furniture)}${row.hint ? ` · ${positionLabel(row.hint)}` : ''}`
-                : 'Choisir un emplacement',
-            ),
+            h('strong', { class: 'grow' }, rows.length > 1 ? `Emplacement ${i + 1}` : 'Emplacement'),
             rows.length > 1
               ? h('button', { class: 'icon-btn icon-btn--ghost icon-btn--danger', type: 'button', 'aria-label': 'Retirer cet emplacement', onClick: () => { rows.splice(i, 1); drawRows(); } }, icon('trash'))
               : null,
           ),
+          h('p', { class: loc ? 'alert' : 'muted', 'data-chosen': loc ? 'yes' : 'no' }, loc ? `${locationLabel(loc, furniture)}${row.hint ? ` · ${positionLabel(row.hint)}` : ''}` : 'Touchez une étagère ou un lieu dans le schéma.'),
+          renderCaveMap(
+            { furniture, locations: allLocations, counts, urgencies },
+            {
+              selectedId: loc?.id,
+              onSelect: (picked) => {
+                row.location = picked;
+                row.hint = null; // la zone dépend de l'étagère
+                alertBox.replaceChildren();
+                drawRows();
+              },
+            },
+          ),
+          loc && loc.kind === 'shelf'
+            ? h(
+                'div',
+                { class: 'stack' },
+                h('p', { class: 'muted' }, 'Position sur l’étagère (facultatif) : touchez une zone, une seconde fois pour la désélectionner.'),
+                renderShelfPosition({ shelfName: loc.name, selected: row.hint, counts: hintCounts, onChange: (hint) => { row.hint = hint; drawRows(); } }).el,
+              )
+            : null,
           h('div', { class: 'row' }, h('span', { class: 'muted' }, 'Quantité'), qty),
         );
       }),
@@ -441,7 +473,7 @@ async function wineFormView(ctx: AppContext, opts: { proposal?: Proposal; wine?:
           return;
         }
         await ctx.repo.updateWine(editing.id, fields);
-        if (thumb) await ctx.repo.setThumbnail(editing.id, thumb);
+        await savePhotos(editing.id);
         Router.go(`/vin/${editing.id}${originQuery()}`);
         return;
       }
@@ -471,14 +503,16 @@ async function wineFormView(ctx: AppContext, opts: { proposal?: Proposal; wine?:
         } else {
           await ctx.repo.completeWine(dup.wine.id, applyChanges(changes, choice.accepted));
         }
-        if (thumb && !dup.wine.thumb_ref) await ctx.repo.setThumbnail(dup.wine.id, thumb);
+        if (thumbs.avant && !dup.wine.thumb_ref) await ctx.repo.setThumbnail(dup.wine.id, thumbs.avant, 'avant');
+        if (thumbs.arrière) await ctx.repo.setThumbnail(dup.wine.id, thumbs.arrière, 'arrière');
       } else {
         const stocks = stockInputs();
         if (typeof stocks === 'string') {
           alertBox.replaceChildren(h('p', { class: 'alert alert--error' }, stocks));
           return;
         }
-        await ctx.repo.addWine(fields, stocks, thumb);
+        const created = await ctx.repo.addWine(fields, stocks);
+        await savePhotos(created.id);
         goTo = `/etagere/${stocks[0]!.location_id}`;
       }
 
@@ -494,14 +528,15 @@ async function wineFormView(ctx: AppContext, opts: { proposal?: Proposal; wine?:
   const form = h(
     'form',
     { class: 'stack', novalidate: true, onSubmit: (e: Event) => void onSubmit(e) },
+    editing ? null : claudeProjectButton({ small: true }),
     proposal ? h('p', { class: 'alert' }, 'Pré-rempli à partir de la proposition de Claude : vérifiez, corrigez si besoin, puis choisissez l’emplacement.') : null,
     identity,
     ...datalists,
     photoCard,
     ...(editing ? [] : [stockCard]),
     optional,
-    alertBox,
-    submit,
+    // Barre collante : « Enregistrer » reste visible, quel que soit le défilement.
+    h('div', { class: 'form-bar' }, alertBox, submit),
   );
 
   return h(

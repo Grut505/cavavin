@@ -26,6 +26,7 @@ Commandes : `npm test`, `npm run lint`, `npm run typecheck`, `npm run build`.
 | `VITE_GOOGLE_CLIENT_ID` | ID client OAuth « Application Web » (public par nature) |
 | `VITE_SHEET_ID` | Identifiant de la feuille (entre `/d/` et `/edit` dans l'URL) |
 | `VITE_ALLOWED_EMAILS` | Facultatif : comptes Google autorisés, séparés par des virgules (défense en profondeur ; le vrai contrôle reste le partage de la feuille) |
+| `VITE_CLAUDE_PROJECT_URL` | Facultatif : adresse de votre projet Claude (sinon à saisir dans Réglages, par appareil) |
 | `VITE_BASE` | Chemin de base (fixé par le workflow de déploiement : `/<nom-du-dépôt>/`) |
 
 En local : `.env.local` (ignoré par git). En production : **Repository variables** GitHub

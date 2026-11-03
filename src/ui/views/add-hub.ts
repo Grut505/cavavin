@@ -1,5 +1,6 @@
 // Onglet « Ajouter » : trois façons d'entrer une bouteille.
 import type { AppContext } from '../../app';
+import { claudeProjectButton } from '../components/claude-project-link';
 import { pageHeader } from '../components/page-header';
 import { openPasteDialog } from '../components/paste-dialog';
 import { promptCopy } from '../components/prompt-copy';
@@ -31,6 +32,7 @@ export async function addHubView(ctx: AppContext): Promise<HTMLElement> {
     { class: 'view' },
     pageHeader({ title: 'Ajouter' }),
     h('p', { class: 'muted' }, 'Faites lire l’étiquette par votre projet Claude, puis rangez la bouteille ici. Vous pouvez aussi tout saisir à la main.'),
+    claudeProjectButton(),
     h(
       'a',
       { class: 'card card--link', href: '#/propositions' },

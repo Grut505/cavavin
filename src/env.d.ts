@@ -11,6 +11,8 @@ interface ImportMetaEnv {
   readonly VITE_SHEET_ID: string;
   /** Comptes autorisés (facultatif) : adresses séparées par des virgules. */
   readonly VITE_ALLOWED_EMAILS?: string;
+  /** Adresse du projet Claude (facultatif ; sinon réglée dans Réglages, par appareil). */
+  readonly VITE_CLAUDE_PROJECT_URL?: string;
 }
 
 interface ImportMeta {

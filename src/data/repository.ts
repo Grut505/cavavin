@@ -9,6 +9,7 @@ import type {
   Outflow,
   OutflowReason,
   Person,
+  PhotoSide,
   PositionHint,
   Proposal,
   ProposalSource,
@@ -384,25 +385,38 @@ export class Repository {
   }
 
   /** Remplace la miniature d'une fiche (l'ancienne est supprimée). */
-  async setThumbnail(wineId: string, thumb: Thumbnail): Promise<void> {
-    for (const old of (await this.list('photo')).filter((p) => p.wine_id === wineId)) {
+  async setThumbnail(wineId: string, thumb: Thumbnail, side: PhotoSide = 'avant'): Promise<void> {
+    for (const old of (await this.list('photo')).filter((p) => p.wine_id === wineId && (p.side ?? 'avant') === side)) {
       await this.remove('photo', old.id);
     }
     const photo = await this.create('photo', {
       wine_id: wineId,
+      side,
       mime: thumb.mime,
       width: thumb.width,
       height: thumb.height,
       data: thumb.data,
     });
-    await this.patch('wine', wineId, { thumb_ref: photo.id });
+    if (side === 'avant') await this.patch('wine', wineId, { thumb_ref: photo.id });
   }
 
   /** Miniatures disponibles localement : fiche → data URL. */
   async thumbnailUrls(): Promise<Map<string, string>> {
     const out = new Map<string, string>();
     for (const p of await this.list('photo')) {
-      if (p.data) out.set(p.wine_id, `data:${p.mime};base64,${p.data}`);
+      if (p.data && (p.side ?? 'avant') === 'avant') out.set(p.wine_id, `data:${p.mime};base64,${p.data}`);
+    }
+    return out;
+  }
+
+  /** Les deux faces de chaque fiche : miniature de l'avant et de l'arrière (data URL), quand elles existent. */
+  async photoUrls(): Promise<Map<string, { front?: string; back?: string }>> {
+    const out = new Map<string, { front?: string; back?: string }>();
+    for (const p of await this.list('photo')) {
+      if (!p.data) continue;
+      const cur = out.get(p.wine_id) ?? {};
+      cur[(p.side ?? 'avant') === 'avant' ? 'front' : 'back'] = `data:${p.mime};base64,${p.data}`;
+      out.set(p.wine_id, cur);
     }
     return out;
   }
@@ -451,12 +465,13 @@ export class Repository {
     for (const o of (await this.list('outflow')).filter((x) => x.wine_id === absorbedId)) {
       await this.patch('outflow', o.id, { wine_id: keepId });
     }
-    if (!keep.thumb_ref && absorbed.thumb_ref) {
-      const photo = (await this.list('photo')).find((p) => p.id === absorbed.thumb_ref);
-      if (photo) {
-        await this.patch('photo', photo.id, { wine_id: keepId });
-        await this.patch('wine', keepId, { thumb_ref: photo.id });
-      }
+    const photos = await this.list('photo');
+    const hasFace = (wineId: string, side: PhotoSide): boolean => photos.some((p) => p.wine_id === wineId && (p.side ?? 'avant') === side);
+    for (const side of ['avant', 'arrière'] as const) {
+      const photo = photos.find((p) => p.wine_id === absorbedId && (p.side ?? 'avant') === side);
+      if (!photo || hasFace(keepId, side)) continue; // la face de la fiche conservée est gardée
+      await this.patch('photo', photo.id, { wine_id: keepId });
+      if (side === 'avant') await this.patch('wine', keepId, { thumb_ref: photo.id });
     }
     const fields = mergePatch(keep, absorbed);
     if (Object.keys(fields).length > 0) await this.patch('wine', keepId, fields);

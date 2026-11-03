@@ -26,3 +26,25 @@ describe('migration vers la v4 (mets conseillés)', () => {
     expect((await d.repo.list('wine')).find((w) => w.id === 'w-old')?.pairings).toBeNull();
   });
 });
+
+describe('migration vers la v6 (photos avant / arrière)', () => {
+  it('ajoute la colonne side à Photos et conserve les anciennes photos comme « avant »', async () => {
+    const sheets = await makeSheet();
+    const rows = sheets.tabs.get('Photos')!;
+    const keep = (rows[0] as string[]).map((h) => h !== 'side');
+    sheets.tabs.set('Photos', rows.map((r) => r.filter((_, i) => keep[i])));
+    sheets.tabs.get('_Meta')![1] = ['schema_version', 5];
+    sheets.addManualRow('Photos', { id: 'p-old', rev: 1, updated_at: '2026-01-01T00:00:00Z', deleted: false, wine_id: 'w1', mime: 'image/jpeg', width: 5, height: 5, seg_0: 'AAAA' });
+
+    const d = await makeDevice(sheets, 'dev-v5');
+    const w = await d.repo.addWine(wineFields({ domain: 'Nouveau' }), []);
+    await d.repo.setThumbnail(w.id, { mime: 'image/jpeg', width: 5, height: 5, data: 'BBBB' }, 'arrière');
+    await d.repo.sync();
+
+    expect(sheets.tabs.get('Photos')![0]).toContain('side');
+    expect(sheets.records('Photos').find((p) => p.wine_id === w.id)).toMatchObject({ side: 'arrière' });
+    const old = (await d.repo.list('photo')).find((p) => p.id === 'p-old');
+    expect(old?.side ?? 'avant').toBe('avant'); // sans côté = avant
+    expect((await d.repo.photoUrls()).get('w1')?.front).toContain('AAAA');
+  });
+});

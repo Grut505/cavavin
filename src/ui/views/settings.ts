@@ -5,6 +5,7 @@ import { ENTITY_KINDS } from '../../domain/types';
 import { Router } from '../router';
 import { formatLastSync, statusMessage, describeStatus } from '../components/sync-status';
 import { pageHeader } from '../components/page-header';
+import { claudeProjectCard } from '../components/claude-project-link';
 import { exportCard } from '../components/export-card';
 import { versionCard } from '../components/version-card';
 import { lockSettingsCard } from '../components/lock-settings';
@@ -72,6 +73,7 @@ export async function settingsView(ctx: AppContext): Promise<HTMLElement> {
       noticesLink,
       syncBtn,
     ),
+    claudeProjectCard(),
     lockSettingsCard(),
     exportCard(ctx),
     versionCard(),

@@ -1,7 +1,7 @@
 // Schéma des onglets de la feuille — voir contracts/sheet-schema.md
 import { normalizePositionHint, type EntityKind } from '../domain/types';
 
-export const SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = 6;
 
 export type FieldType = 'text' | 'int' | 'num' | 'bool';
 
@@ -76,6 +76,8 @@ const photoFields: FieldDef[] = [
   i('width'),
   i('height'),
   ...Array.from({ length: PHOTO_SEGMENTS }, (_, k) => t(`seg_${k}`, true)),
+  // v6
+  t('side', true),
 ];
 
 /** Champs propres à chaque type d'entité (hors champs communs). */

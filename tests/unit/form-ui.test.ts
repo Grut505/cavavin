@@ -48,16 +48,9 @@ function fill(view: HTMLElement, over: Partial<Record<'cuvee' | 'vintage' | 'app
   for (const [k, val] of Object.entries(v)) setValue(view.querySelector(`#f-${k}`), val);
 }
 async function pickFirstShelf(view: HTMLElement): Promise<void> {
-  click(byText(view, 'button', 'Choisir un emplacement'));
-  const dlg = await waitFor(() => {
-    const d = document.querySelector('dialog');
-    if (!d || !d.querySelector('.shelf')) throw new Error('sélecteur absent');
-    return d;
-  });
-  click(dlg.querySelector('.shelf'));
-  await waitFor(() => expect(dlg.querySelector('[data-hint]')).not.toBeNull());
-  click(byText(dlg, 'button', 'Valider'));
-  await waitFor(() => expect(document.querySelector('dialog')).toBeNull());
+  // L'emplacement se choisit directement dans le formulaire (schéma de la cave).
+  click(view.querySelector('[data-row="0"] .shelf'));
+  await waitFor(() => expect(view.querySelector('[data-row="0"] [data-chosen="yes"]')).not.toBeNull());
 }
 async function open(ctx: AppContext): Promise<HTMLElement> {
   const view = await addWineView(ctx);
