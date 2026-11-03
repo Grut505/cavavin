@@ -771,3 +771,19 @@ a.card--link {
     gap: var(--space-2);
   }
 }
+
+/* Une seule ligne (défilement horizontal si ça déborde), p. ex. le filtre par couleur des stats sur mobile */
+.chips--row {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.chips--row::-webkit-scrollbar {
+  display: none;
+}
+.chips--row > .btn {
+  flex: none;
+  padding-inline: var(--space-3);
+  white-space: nowrap;
+}

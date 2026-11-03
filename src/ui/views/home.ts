@@ -208,7 +208,7 @@ function toDrinkSection(rows: WineRow[], year: number, onDrink: Drink): HTMLElem
     );
     sortSelect.value = prefs.sort;
     controls.replaceChildren(
-      h('div', { class: 'chips', role: 'group', 'aria-label': 'Filtrer par couleur' }, chip(`Toutes (${bottlesTotal})`, null), ...colors.map((c) => chip(`${colorLabel(c.color)} (${c.bottles})`, c.color))),
+      h('div', { class: 'chips chips--row', role: 'group', 'aria-label': 'Filtrer par couleur' }, chip(`Toutes (${bottlesTotal})`, null), ...colors.map((c) => chip(`${colorLabel(c.color)} (${c.bottles})`, c.color))),
       h('label', { class: 'field', for: 'drink-sort' }, h('span', { class: 'field__label' }, 'Trier par'), sortSelect),
       h('p', { class: 'muted', style: 'font-size:0.8rem' }, DRINK_SORT_HINTS[prefs.sort]),
     );
