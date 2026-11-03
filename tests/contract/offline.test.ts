@@ -46,7 +46,7 @@ describe('session hors-ligne', () => {
     sheets.offline = true;
     const wine = await d.repo.addWine(wineFields({ notes: null }), [{ location_id: s1.id, quantity: 4, position_hint: null }]);
     const stock = (await d.repo.list('stock'))[0]!;
-    await d.repo.moveBottles(stock.id, s2.id, 1, 'gauche');
+    await d.repo.moveBottles(stock.id, s2.id, 1, 'milieu-gauche');
     await d.repo.recordOutflow(stock.id, { reason: 'drunk', date: '2026-11-01', note: 'Hier soir' });
     await d.repo.updateWine(wine.id, { notes: 'Très bon' });
     await d.repo.addPerson('Marie');
@@ -58,7 +58,7 @@ describe('session hors-ligne', () => {
     expect(await d.repo.pendingCount()).toBe(0);
     const byLoc = Object.fromEntries(sheets.records('Stocks').filter((s) => !s.deleted).map((s) => [s.location_id, s.quantity]));
     expect(byLoc).toEqual({ [s1.id]: 2, [s2.id]: 1 });
-    expect(sheets.records('Stocks').find((s) => s.location_id === s2.id)?.position_hint).toBe('gauche');
+    expect(sheets.records('Stocks').find((s) => s.location_id === s2.id)?.position_hint).toBe('milieu-gauche');
     expect(sheets.records('Sorties')).toHaveLength(1);
     expect(sheets.records('Vins')[0]?.notes).toBe('Très bon');
     expect(sheets.records('Personnes').map((p) => p.name)).toEqual(['Marie']);

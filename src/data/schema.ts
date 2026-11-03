@@ -1,5 +1,5 @@
 // Schéma des onglets de la feuille — voir contracts/sheet-schema.md
-import type { EntityKind } from '../domain/types';
+import { normalizePositionHint, type EntityKind } from '../domain/types';
 
 export const SCHEMA_VERSION = 5;
 
@@ -180,6 +180,7 @@ export function rowToEntity(kind: EntityKind, header: string[], row: Raw[]): Rec
     const k = idx.get(def.name);
     out[def.name] = decodeField(def, k === undefined ? undefined : row[k]);
   }
+  if (kind === 'stock') out.position_hint = normalizePositionHint(out.position_hint); // anciennes positions reprises
   if (kind === 'photo') {
     let data = '';
     for (let s = 0; s < PHOTO_SEGMENTS; s++) {

@@ -99,9 +99,9 @@ describe('déplacements', () => {
 
   it('mémorise la position choisie à la destination', async () => {
     const { sheets, d, s2, stock } = await cave();
-    await d.repo.moveBottles(stock.id, s2.id, 1, 'droite');
+    await d.repo.moveBottles(stock.id, s2.id, 1, 'milieu-droite');
     await d.repo.sync();
-    expect(sheets.records('Stocks').find((s) => s.location_id === s2.id)).toMatchObject({ position_hint: 'droite', quantity: 1 });
+    expect(sheets.records('Stocks').find((s) => s.location_id === s2.id)).toMatchObject({ position_hint: 'milieu-droite', quantity: 1 });
   });
 
   it('refuse quantité hors bornes ou destination identique', async () => {

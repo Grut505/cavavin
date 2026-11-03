@@ -134,12 +134,12 @@ describe('détail d’un emplacement', () => {
     await repo.createFurniture('Meuble A', 1);
     const shelf = (await repo.list('location'))[0]!;
     const wine = await repo.create('wine', wineData({ domain: 'Domaine des Lys', cuvee: 'Les Pierres' }));
-    await repo.create('stock', { wine_id: wine.id, location_id: shelf.id, quantity: 2, position_hint: 'gauche' });
+    await repo.create('stock', { wine_id: wine.id, location_id: shelf.id, quantity: 2, position_hint: 'milieu-gauche' });
     const el = await shelfDetailView(ctx, { id: shelf.id });
     expect(el.textContent).toContain('Étagère 1');
     expect(el.textContent).toContain('Domaine des Lys');
     expect(el.textContent).toContain('×2');
-    expect(el.textContent).toContain('Position : gauche');
+    expect(el.textContent).toContain('Position : Milieu · gauche');
     expect(el.querySelector(`a[href^="#/vin/${wine.id}?from="]`)).not.toBeNull(); // lien vers la fiche, qui mémorise l'étagère d'origine
   });
 
@@ -157,12 +157,12 @@ describe('vue graphique d’une étagère', () => {
     const shelf = (await repo.list('location')).find((l) => l.kind === 'shelf')!;
     const a = await repo.create('wine', wineData());
     const b = await repo.create('wine', wineData({ cuvee: 'Autre' }));
-    await repo.create('stock', { wine_id: a.id, location_id: shelf.id, quantity: 3, position_hint: 'gauche' });
+    await repo.create('stock', { wine_id: a.id, location_id: shelf.id, quantity: 3, position_hint: 'milieu-gauche' });
     await repo.create('stock', { wine_id: b.id, location_id: shelf.id, quantity: 2, position_hint: null });
 
     const el = await shelfDetailView(ctx, { id: shelf.id });
-    expect(el.querySelectorAll('[data-zone="gauche"] .sv__bottle')).toHaveLength(3);
-    expect(el.querySelectorAll('[data-zone="droite"] .sv__bottle')).toHaveLength(0);
+    expect(el.querySelectorAll('[data-zone="milieu-gauche"] .sv__bottle')).toHaveLength(3);
+    expect(el.querySelectorAll('[data-zone="milieu-droite"] .sv__bottle')).toHaveLength(0);
     expect(el.querySelectorAll('[data-zone="none"] .sv__bottle')).toHaveLength(2);
   });
 });

@@ -61,7 +61,7 @@ describe('fusion : données', () => {
     const keep = await d.repo.addWine(wineFields({ cuvee: 'Garde', region: null }), [{ location_id: a1.id, quantity: 2, position_hint: null }]);
     const gone = await d.repo.addWine(wineFields({ cuvee: 'Doublon', region: 'Rhône' }), [
       { location_id: a1.id, quantity: 1, position_hint: null },
-      { location_id: a2.id, quantity: 3, position_hint: 'gauche' },
+      { location_id: a2.id, quantity: 3, position_hint: 'milieu-gauche' },
     ]);
     // une sortie sur la fiche absorbée
     const goneStock = (await d.repo.list('stock')).find((s) => s.wine_id === gone.id && s.location_id === a2.id)!;

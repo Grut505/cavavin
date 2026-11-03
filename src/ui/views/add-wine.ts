@@ -5,6 +5,7 @@ import { buildVocabulary, canonicalize, relatedFor, type VocabEntry } from '../.
 import {
   BOTTLE_FORMATS,
   WINE_COLORS,
+  positionLabel,
   type Furniture,
   type Location,
   type Person,
@@ -349,7 +350,7 @@ async function wineFormView(ctx: AppContext, opts: { proposal?: Proposal; wine?:
               },
               icon('cave'),
               row.location
-                ? `${locationLabel(row.location, furniture)}${row.hint ? ` · ${row.hint}` : ''}`
+                ? `${locationLabel(row.location, furniture)}${row.hint ? ` · ${positionLabel(row.hint)}` : ''}`
                 : 'Choisir un emplacement',
             ),
             rows.length > 1

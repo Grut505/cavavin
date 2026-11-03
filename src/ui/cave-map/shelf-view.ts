@@ -1,6 +1,6 @@
 // Vue de face d'une étagère : chaque bouteille est dessinée dans sa zone (dessus, gauche, droite,
 // dessous) ou dans la bande « position non précisée ». Couleur = type de vin ; toucher = fiche.
-import type { PositionHint, Stock, Wine } from '../../domain/types';
+import { POSITION_COLS, POSITION_HINTS, POSITION_ROWS, positionLabel, type PositionCol, type PositionHint, type PositionRow, type Stock, type Wine } from '../../domain/types';
 import { wineTitle } from '../../domain/wine';
 import { h } from '../dom';
 import { wineHref } from '../nav-origin';
@@ -13,23 +13,28 @@ interface Zone {
   w: number;
   h: number;
   label: string;
-  /** Bande (une seule rangée, étiquette à gauche) ou demi-étagère (étiquette en haut). */
-  band: boolean;
 }
 
-const ZONES: Record<PositionHint, Zone> = {
-  dessus: { x: 14, y: 14, w: 292, h: 40, label: 'Dessus', band: true },
-  gauche: { x: 14, y: 58, w: 143, h: 64, label: 'Gauche', band: false },
-  droite: { x: 163, y: 58, w: 143, h: 64, label: 'Droite', band: false },
-  dessous: { x: 14, y: 126, w: 292, h: 40, label: 'Dessous', band: true },
-};
+// Trois rangées (dessus, milieu, dessous) de trois colonnes (gauche, centre, droite).
+const COL_W = 96;
+const ROW_H = 58;
+const GAP = 4;
+const ZONES = Object.fromEntries(
+  POSITION_HINTS.map((hint) => {
+    const [row, col] = hint.split('-') as [PositionRow, PositionCol];
+    const r = POSITION_ROWS.indexOf(row);
+    const c = POSITION_COLS.indexOf(col);
+    return [hint, { x: 14 + c * (COL_W + GAP), y: 14 + r * (ROW_H + GAP), w: COL_W, h: ROW_H, label: positionLabel(hint) } satisfies Zone];
+  }),
+) as Record<PositionHint, Zone>;
+const GRID_BOTTOM = 14 + 3 * ROW_H + 2 * GAP;
 
 const SCALE = 0.78;
 const BW = 12 * SCALE;
 const BH = 28 * SCALE;
 const PITCH_X = BW + 3.5;
 const PITCH_Y = BH + 3;
-const CAB_H = 184;
+const CAB_H = GRID_BOTTOM + 8 + 4 + 14 + 6;
 const LOOSE_H = 52;
 
 export interface ShelfBottle {
@@ -116,24 +121,20 @@ export function renderShelfView(opts: { shelfName: string; bottles: ShelfBottle[
   });
 
   // meuble : montants, fond, planche
+  const cabBottom = GRID_BOTTOM + 8;
   svg.append(
-    s('rect', { class: 'sv__frame', x: 4, y: 4, width: 312, height: 172, rx: 8 }),
-    s('rect', { class: 'sv__cavity', x: 10, y: 10, width: 300, height: 158, rx: 4 }),
-    s('rect', { class: 'sv__plank', x: 2, y: 168, width: 316, height: 10, rx: 2 }),
-    s('rect', { class: 'sv__plank-lip', x: 2, y: 168, width: 316, height: 2 }),
+    s('rect', { class: 'sv__frame', x: 4, y: 4, width: 312, height: cabBottom + 4, rx: 8 }),
+    s('rect', { class: 'sv__cavity', x: 10, y: 10, width: 300, height: cabBottom - 6, rx: 4 }),
+    s('rect', { class: 'sv__plank', x: 2, y: cabBottom + 4, width: 316, height: 10, rx: 2 }),
+    s('rect', { class: 'sv__plank-lip', x: 2, y: cabBottom + 4, width: 316, height: 2 }),
   );
 
   for (const [hint, z] of Object.entries(ZONES) as [PositionHint, Zone][]) {
     const items = opts.bottles.filter((b) => b.zone === hint);
     const g = s('g', { 'data-zone': hint });
     g.append(s('rect', { class: 'sv__zone', x: z.x, y: z.y, width: z.w, height: z.h, rx: 6 }));
-    if (z.band) {
-      g.append(s('text', { class: 'sv__label', x: z.x + 8, y: z.y + z.h / 2 + 3 }, z.label));
-      fill(g, items, z.x + 62, z.y + (z.h - BH) / 2, z.w - 70, BH);
-    } else {
-      g.append(s('text', { class: 'sv__label', x: z.x + 8, y: z.y + 12 }, z.label));
-      fill(g, items, z.x + 8, z.y + 18, z.w - 16, z.h - 22);
-    }
+    g.append(s('text', { class: 'sv__label', x: z.x + 6, y: z.y + 11 }, z.label));
+    fill(g, items, z.x + 6, z.y + 16, z.w - 12, z.h - 20);
     svg.append(g);
   }
 

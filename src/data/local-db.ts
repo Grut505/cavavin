@@ -1,7 +1,7 @@
 // Copie locale (IndexedDB) : entités, file d'opérations (outbox), métadonnées.
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import type { AnyEntity, EntityKind, EntityMap, Op } from '../domain/types';
-import { ENTITY_KINDS } from '../domain/types';
+import { ENTITY_KINDS, normalizePositionHint } from '../domain/types';
 
 interface CavavinDB extends DBSchema {
   wine: { key: string; value: EntityMap['wine'] };
@@ -17,7 +17,7 @@ interface CavavinDB extends DBSchema {
 }
 
 export const DB_NAME = 'cavavin';
-export const DB_VERSION = 2;
+export const DB_VERSION = 3;
 
 export class LocalDb {
   private constructor(private readonly db: IDBPDatabase<CavavinDB>) {}
@@ -25,12 +25,22 @@ export class LocalDb {
   static async open(name = DB_NAME): Promise<LocalDb> {
     const db = await openDB<CavavinDB>(name, DB_VERSION, {
       // Montée de version sans perte : on ne crée que les tables manquantes (v2 : `person`).
-      upgrade(database) {
+      async upgrade(database, oldVersion, _newVersion, transaction) {
         for (const kind of ENTITY_KINDS) {
           if (!database.objectStoreNames.contains(kind)) database.createObjectStore(kind, { keyPath: 'id' });
         }
         if (!database.objectStoreNames.contains('outbox')) database.createObjectStore('outbox', { autoIncrement: true });
         if (!database.objectStoreNames.contains('meta')) database.createObjectStore('meta');
+        // v3 : les positions passent de 4 zones à 9 (rangée × colonne) ; les anciennes valeurs sont reprises.
+        if (oldVersion > 0 && oldVersion < 3) {
+          const store = transaction.objectStore('stock');
+          let cursor = await store.openCursor();
+          while (cursor) {
+            const next = normalizePositionHint(cursor.value.position_hint);
+            if (next !== cursor.value.position_hint) await cursor.update({ ...cursor.value, position_hint: next });
+            cursor = await cursor.continue();
+          }
+        }
       },
     });
     return new LocalDb(db);

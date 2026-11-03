@@ -1,6 +1,7 @@
 // Détail d'un emplacement : bouteilles qui s'y trouvent (touch dans le schéma de la cave).
 import type { AppContext } from '../../app';
 import { stocksAt } from '../../domain/locations';
+import { positionLabel } from '../../domain/types';
 import { wineTitle } from '../../domain/wine';
 import { bottlesLabel } from '../cave-map/cave-map';
 import { renderShelfView, shelfBottles } from '../cave-map/shelf-view';
@@ -39,7 +40,7 @@ export async function shelfDetailView(ctx: AppContext, params: { id?: string }):
         { class: 'grow list__link', ...(wine ? { href: wineHref(wine.id, `/etagere/${loc.id}`) } : {}) },
         h('strong', {}, wine ? wineTitle(wine).primary : 'Fiche introuvable'),
         wine ? h('div', { class: 'muted' }, wineTitle(wine).secondary) : null,
-        st.position_hint ? h('div', { class: 'muted' }, `Position : ${st.position_hint}`) : null,
+        st.position_hint ? h('div', { class: 'muted' }, `Position : ${positionLabel(st.position_hint)}`) : null,
       ),
       h('span', { class: 'badge', 'aria-label': bottlesLabel(st.quantity) }, `×${st.quantity}`),
     );

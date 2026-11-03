@@ -91,26 +91,27 @@ describe('choix de la position sur l’étagère', () => {
     const onChange = vi.fn();
     const p = renderShelfPosition({ shelfName: 'Étagère 1', selected: null, onChange });
     const zone = (h: string): Element => p.el.querySelector(`[data-hint="${h}"]`)!;
-    zone('gauche').dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    expect(p.value()).toBe('gauche');
-    expect(zone('gauche').getAttribute('aria-checked')).toBe('true');
-    zone('droite').dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    expect(p.value()).toBe('droite');
-    expect(zone('gauche').getAttribute('aria-checked')).toBe('false');
-    zone('droite').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    zone('milieu-gauche').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(p.value()).toBe('milieu-gauche');
+    expect(zone('milieu-gauche').getAttribute('aria-checked')).toBe('true');
+    zone('milieu-droite').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(p.value()).toBe('milieu-droite');
+    expect(zone('milieu-gauche').getAttribute('aria-checked')).toBe('false');
+    zone('milieu-droite').dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(p.value()).toBeNull();
     expect(onChange).toHaveBeenLastCalledWith(null);
   });
 
-  it('se commande au clavier et propose les quatre zones', () => {
-    const p = renderShelfPosition({ shelfName: 'E', selected: 'dessous' });
+  it('se commande au clavier et propose les neuf zones (3 rangées × 3 colonnes)', () => {
+    const p = renderShelfPosition({ shelfName: 'E', selected: 'dessous-droite' });
     expect([...p.el.querySelectorAll('[data-hint]')].map((e) => e.getAttribute('data-hint')).sort()).toEqual(
-      ['dessous', 'dessus', 'droite', 'gauche'],
+      ['dessous-centre', 'dessous-droite', 'dessous-gauche', 'dessus-centre', 'dessus-droite', 'dessus-gauche', 'milieu-centre', 'milieu-droite', 'milieu-gauche'],
     );
-    expect(p.value()).toBe('dessous');
-    p.el.querySelector('[data-hint="dessus"]')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
-    expect(p.value()).toBe('dessus');
-    p.el.querySelector('[data-hint="dessus"]')!.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+    expect(p.value()).toBe('dessous-droite');
+    p.el.querySelector('[data-hint="dessus-gauche"]')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(p.value()).toBe('dessus-gauche');
+    p.el.querySelector('[data-hint="dessus-gauche"]')!.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
     expect(p.value()).toBeNull();
+    expect(p.el.querySelector('[data-hint="milieu-centre"]')!.getAttribute('aria-label')).toBe('Milieu · centre');
   });
 });

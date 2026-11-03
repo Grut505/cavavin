@@ -67,7 +67,7 @@ Règles : suppression d'une `Location` ou d'un `Furniture` non vide **interdite 
 | id | uuid | |
 | wine_id, location_id | uuid | paire unique (une ligne par fiche et par emplacement) |
 | quantity | entier ≥ 0 | à 0 : ligne désactivée (`deleted = true`), fiche encore listée seulement si historique |
-| position_hint | enum \| null | gauche, droite, dessus, dessous — indicatif, jamais recalculé |
+| position_hint | enum \| null | 9 zones `rangée-colonne` : rangées dessus / milieu / dessous × colonnes gauche / centre / droite (ex. `dessus-gauche`) — indicatif, jamais recalculé. Anciennes valeurs reprises à la lecture : `dessus` et `dessous` → `milieu-centre`, `gauche` → `milieu-gauche`, `droite` → `milieu-droite` |
 
 ## Outflow (sortie) — FR-012
 

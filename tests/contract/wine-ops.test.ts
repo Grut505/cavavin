@@ -19,7 +19,7 @@ describe('fiches et stocks', () => {
     const wine = await d.repo.addWine(
       fields,
       [
-        { location_id: s1.id, quantity: 3, position_hint: 'gauche' },
+        { location_id: s1.id, quantity: 3, position_hint: 'milieu-gauche' },
         { location_id: s2.id, quantity: 1, position_hint: null },
       ],
       thumb,
@@ -52,11 +52,11 @@ describe('fiches et stocks', () => {
     const fields = wineFields();
     const wine = await d.repo.addWine(fields, [{ location_id: s1.id, quantity: 2, position_hint: null }]);
     await d.repo.sync();
-    await d.repo.addStock(wine.id, { location_id: s1.id, quantity: 3, position_hint: 'dessus' });
+    await d.repo.addStock(wine.id, { location_id: s1.id, quantity: 3, position_hint: 'dessus-centre' });
     await d.repo.sync();
     let stocks = sheets.records('Stocks');
     expect(stocks).toHaveLength(1);
-    expect(stocks[0]).toMatchObject({ quantity: 5, position_hint: 'dessus' });
+    expect(stocks[0]).toMatchObject({ quantity: 5, position_hint: 'dessus-centre' });
 
     const stockId = stocks[0]!.id as string;
     await d.repo.adjustStock(stockId, -5);

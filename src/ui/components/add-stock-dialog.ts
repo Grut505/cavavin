@@ -1,6 +1,6 @@
 // « Ajouter des bouteilles » à une fiche existante : emplacement (schéma de la cave) et quantité.
 import type { AppContext } from '../../app';
-import type { Furniture, Location, PositionHint, Wine } from '../../domain/types';
+import { positionLabel, type Furniture, type Location, type PositionHint, type Wine } from '../../domain/types';
 import { wineTitle } from '../../domain/wine';
 import { h } from '../dom';
 import { icon } from '../icons';
@@ -23,7 +23,7 @@ export function openAddStockDialog(ctx: Pick<AppContext, 'repo'>, opts: { wine: 
       if (!picked) return;
       dest = picked;
       clear();
-      destBtn.replaceChildren(icon('cave'), `${locationLabel(picked.location, opts.furniture)}${picked.hint ? ` · ${picked.hint}` : ''}`);
+      destBtn.replaceChildren(icon('cave'), `${locationLabel(picked.location, opts.furniture)}${picked.hint ? ` · ${positionLabel(picked.hint)}` : ''}`);
     });
 
     const confirm = h('button', { class: 'btn btn--primary', type: 'button' }, 'Ajouter');

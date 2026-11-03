@@ -210,10 +210,10 @@ describe('position sur l’étagère (choix graphique)', () => {
     document.body.append(view);
     setValue(view.querySelector('#f-domain'), 'Domaine des Lys');
     fillRequired(view);
-    await pickShelf(view, 'Étagère 1', 0, 'droite');
-    expect(view.textContent).toContain('Meuble A · Étagère 1 · droite');
+    await pickShelf(view, 'Étagère 1', 0, 'milieu-droite');
+    expect(view.textContent).toContain('Meuble A · Étagère 1 · Milieu · droite');
     submit(view);
-    await waitFor(async () => expect((await repo.list('stock'))[0]?.position_hint).toBe('droite'));
+    await waitFor(async () => expect((await repo.list('stock'))[0]?.position_hint).toBe('milieu-droite'));
   });
 
   it('une zone touchée deux fois est désélectionnée ; « Sans précision » ne mémorise rien', async () => {
@@ -229,15 +229,15 @@ describe('position sur l’étagère (choix graphique)', () => {
       return d;
     });
     click([...dlg.querySelectorAll('.shelf')][0]);
-    await waitFor(() => expect(dlg.querySelector('[data-hint="gauche"]')).not.toBeNull());
-    click(dlg.querySelector('[data-hint="gauche"]'));
-    expect(dlg.querySelector('[data-hint="gauche"]')?.getAttribute('aria-checked')).toBe('true');
-    click(dlg.querySelector('[data-hint="gauche"]'));
-    expect(dlg.querySelector('[data-hint="gauche"]')?.getAttribute('aria-checked')).toBe('false');
-    click(dlg.querySelector('[data-hint="dessus"]'));
+    await waitFor(() => expect(dlg.querySelector('[data-hint="milieu-gauche"]')).not.toBeNull());
+    click(dlg.querySelector('[data-hint="milieu-gauche"]'));
+    expect(dlg.querySelector('[data-hint="milieu-gauche"]')?.getAttribute('aria-checked')).toBe('true');
+    click(dlg.querySelector('[data-hint="milieu-gauche"]'));
+    expect(dlg.querySelector('[data-hint="milieu-gauche"]')?.getAttribute('aria-checked')).toBe('false');
+    click(dlg.querySelector('[data-hint="dessus-centre"]'));
     click(byText(dlg, 'button', 'Sans précision'));
     await waitFor(() => expect(document.querySelector('dialog')).toBeNull());
-    expect(view.textContent).not.toContain('dessus');
+    expect(view.textContent).not.toContain('Dessus');
     submit(view);
     await waitFor(async () => expect((await repo.list('stock'))[0]?.position_hint).toBeNull());
   });
@@ -246,7 +246,7 @@ describe('position sur l’étagère (choix graphique)', () => {
     const { ctx, repo } = await setup();
     const shelf = (await repo.list('location')).find((l) => l.name === 'Étagère 1')!;
     const w = await repo.addWine(wineFields(), [
-      { location_id: shelf.id, quantity: 2, position_hint: 'gauche' },
+      { location_id: shelf.id, quantity: 2, position_hint: 'milieu-gauche' },
     ]);
     expect(w.id).toBeTruthy();
     const view = await addWineView(ctx);
@@ -258,8 +258,8 @@ describe('position sur l’étagère (choix graphique)', () => {
       return d;
     });
     click(dlg.querySelector(`[data-location-id="${shelf.id}"]`));
-    await waitFor(() => expect(dlg.querySelector('[data-hint="gauche"]')).not.toBeNull());
-    expect(dlg.querySelector('[data-hint="gauche"]')?.getAttribute('aria-label')).toContain('2 bouteilles déjà rangées');
+    await waitFor(() => expect(dlg.querySelector('[data-hint="milieu-gauche"]')).not.toBeNull());
+    expect(dlg.querySelector('[data-hint="milieu-gauche"]')?.getAttribute('aria-label')).toContain('2 bouteilles déjà rangées');
     click(byText(dlg, 'button', 'Retour'));
     await waitFor(() => expect(dlg.querySelector('.shelf')).not.toBeNull());
   });

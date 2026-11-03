@@ -1,5 +1,5 @@
 // Choix graphique de la position d'une bouteille sur une étagère (facultatif, indicatif).
-import { POSITION_HINTS, type PositionHint } from '../../domain/types';
+import { POSITION_COLS, POSITION_HINTS, POSITION_ROWS, positionLabel, type PositionCol, type PositionHint, type PositionRow } from '../../domain/types';
 import { h } from '../dom';
 import { s } from './svg';
 import './cave-map.css';
@@ -9,16 +9,23 @@ interface Zone {
   y: number;
   w: number;
   h: number;
+  /** Libellé lu à voix haute : « Dessus · gauche ». */
   label: string;
 }
 
-// Étagère vue de face : bande du dessus, deux moitiés gauche/droite, bande du dessous.
-const ZONES: Record<PositionHint, Zone> = {
-  dessus: { x: 8, y: 8, w: 304, h: 38, label: 'Dessus' },
-  gauche: { x: 8, y: 52, w: 148, h: 60, label: 'Gauche' },
-  droite: { x: 164, y: 52, w: 148, h: 60, label: 'Droite' },
-  dessous: { x: 8, y: 118, w: 304, h: 38, label: 'Dessous' },
-};
+// Étagère vue de face : trois rangées (dessus, milieu, dessous) de trois colonnes (gauche, centre, droite).
+const COL_W = 96;
+const ROW_H = 46;
+const GAP = 6;
+const ZONES = Object.fromEntries(
+  POSITION_HINTS.map((hint) => {
+    const [row, col] = hint.split('-') as [PositionRow, PositionCol];
+    const r = POSITION_ROWS.indexOf(row);
+    const c = POSITION_COLS.indexOf(col);
+    return [hint, { x: 10 + c * (COL_W + GAP), y: 10 + r * (ROW_H + GAP), w: COL_W, h: ROW_H, label: positionLabel(hint) } satisfies Zone];
+  }),
+) as Record<PositionHint, Zone>;
+const HEIGHT = 20 + 3 * ROW_H + 2 * GAP;
 
 export interface ShelfPositionPicker {
   el: HTMLElement;
@@ -34,7 +41,7 @@ export function renderShelfPosition(opts: {
 }): ShelfPositionPicker {
   let value = opts.selected;
   const svg = s('svg', {
-    viewBox: '0 0 320 164',
+    viewBox: `0 0 320 ${HEIGHT}`,
     role: 'radiogroup',
     'aria-label': `Position sur ${opts.shelfName}`,
     class: 'pos',
@@ -42,7 +49,7 @@ export function renderShelfPosition(opts: {
 
   const draw = (): void => {
     svg.replaceChildren(
-      s('rect', { class: 'pos__frame', x: 4, y: 4, width: 312, height: 156, rx: 10 }),
+      s('rect', { class: 'pos__frame', x: 4, y: 4, width: 312, height: HEIGHT - 8, rx: 10 }),
       ...POSITION_HINTS.map((hint) => {
         const z = ZONES[hint];
         const n = opts.counts?.[hint] ?? 0;
@@ -57,7 +64,8 @@ export function renderShelfPosition(opts: {
         });
         g.append(
           s('rect', { class: 'pos__hit', x: z.x, y: z.y, width: z.w, height: z.h, rx: 8 }),
-          s('text', { class: 'pos__label', x: z.x + z.w / 2, y: z.y + z.h / 2 + 4, 'text-anchor': 'middle' }, z.label),
+          s('text', { class: 'pos__label pos__label--row', x: z.x + z.w / 2, y: z.y + 18, 'text-anchor': 'middle' }, z.label.split(' · ')[0]!),
+          s('text', { class: 'pos__label', x: z.x + z.w / 2, y: z.y + 35, 'text-anchor': 'middle' }, z.label.split(' · ')[1]!),
         );
         if (n > 0) {
           g.append(

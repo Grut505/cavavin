@@ -38,8 +38,37 @@ export type BottleFormat = (typeof BOTTLE_FORMATS)[number];
 export const DRYNESS_LEVELS = ['sec', 'demi-sec', 'moelleux', 'doux'] as const;
 export type Dryness = (typeof DRYNESS_LEVELS)[number];
 
-export const POSITION_HINTS = ['gauche', 'droite', 'dessus', 'dessous'] as const;
-export type PositionHint = (typeof POSITION_HINTS)[number];
+/** Position indicative sur une étagère : rangée (dessus, milieu, dessous) × colonne (gauche, centre, droite). */
+export const POSITION_ROWS = ['dessus', 'milieu', 'dessous'] as const;
+export const POSITION_COLS = ['gauche', 'centre', 'droite'] as const;
+export type PositionRow = (typeof POSITION_ROWS)[number];
+export type PositionCol = (typeof POSITION_COLS)[number];
+export type PositionHint = `${PositionRow}-${PositionCol}`;
+export const POSITION_HINTS: readonly PositionHint[] = POSITION_ROWS.flatMap((r) => POSITION_COLS.map((c): PositionHint => `${r}-${c}`));
+
+/**
+ * Anciennes positions (4 zones) → nouvelles : « dessus » et « dessous » (sans précision de côté) deviennent
+ * « milieu-centre » ; « gauche » et « droite » (qui désignaient la rangée du milieu) restent à gauche / à droite du milieu.
+ */
+const LEGACY_HINTS: Record<string, PositionHint> = {
+  dessus: 'milieu-centre',
+  dessous: 'milieu-centre',
+  gauche: 'milieu-gauche',
+  droite: 'milieu-droite',
+};
+
+/** Position lisible quelle que soit son origine (feuille, base locale) : valeur valide, ancienne valeur reprise, sinon `null`. */
+export function normalizePositionHint(raw: unknown): PositionHint | null {
+  if (typeof raw !== 'string') return null;
+  const v = raw.trim().toLowerCase();
+  if ((POSITION_HINTS as readonly string[]).includes(v)) return v as PositionHint;
+  return LEGACY_HINTS[v] ?? null;
+}
+
+export const positionLabel = (h: PositionHint): string => {
+  const [row, col] = h.split('-') as [PositionRow, PositionCol];
+  return `${row === 'dessus' ? 'Dessus' : row === 'dessous' ? 'Dessous' : 'Milieu'} · ${col}`;
+};
 
 export const OUTFLOW_REASONS = ['drunk', 'gifted', 'broken', 'other'] as const;
 export type OutflowReason = (typeof OUTFLOW_REASONS)[number];

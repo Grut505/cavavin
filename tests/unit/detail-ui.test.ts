@@ -95,7 +95,7 @@ describe('fiche détaillée', () => {
         color: 'rouge', tannin: 3, drink_from: 2025, drink_until: 2031, rating: 4, purchase_price: 12.5, purchase_date: '2024-03-05',
         supplier: 'Caviste Jean', gift: true, gift_from: marie.id, notes: 'Très bon',
       }),
-      [{ location_id: a1.id, quantity: 3, position_hint: 'gauche' }],
+      [{ location_id: a1.id, quantity: 3, position_hint: 'milieu-gauche' }],
     );
     const view = await open(ctx, w.id);
     expect(view.querySelector('.app-header h1')?.textContent).toBe('Domaine Fabre');
@@ -118,13 +118,13 @@ describe('fiche détaillée', () => {
   it('liste les emplacements avec leurs quantités et met en évidence ceux de la fiche dans le schéma', async () => {
     const { ctx, repo, a1, b1 } = await setup();
     const w = await repo.addWine(wineFields(), [
-      { location_id: a1.id, quantity: 3, position_hint: 'droite' },
+      { location_id: a1.id, quantity: 3, position_hint: 'milieu-droite' },
       { location_id: b1.id, quantity: 2, position_hint: null },
     ]);
     const view = await open(ctx, w.id);
     const rows = [...view.querySelectorAll('li[data-stock-id]')];
     expect(rows.map((r) => r.textContent)).toEqual(expect.arrayContaining([expect.stringContaining('Meuble A · Étagère 1'), expect.stringContaining('Meuble B · Étagère 1')]));
-    expect(view.textContent).toContain('Position : droite');
+    expect(view.textContent).toContain('Position : Milieu · droite');
     expect(view.querySelector('li[data-stock-id] .badge')?.textContent).toMatch(/×[23]/);
     const marked = [...view.querySelectorAll('.shelf--selected')].map((e) => e.getAttribute('data-location-id')).sort();
     expect(marked).toEqual([a1.id, b1.id].sort());
@@ -269,15 +269,15 @@ describe('déplacer des bouteilles', () => {
     });
     click(picker.querySelector(`[data-location-id="${b1.id}"]`));
     await waitFor(() => expect(picker.querySelector('[data-hint]')).not.toBeNull());
-    click(picker.querySelector('[data-hint="droite"]'));
+    click(picker.querySelector('[data-hint="milieu-droite"]'));
     click(byText(picker, 'button', 'Valider'));
-    await waitFor(() => expect(dlg.querySelector('#mv-dest')?.textContent).toContain('Meuble B · Étagère 1 · droite'));
+    await waitFor(() => expect(dlg.querySelector('#mv-dest')?.textContent).toContain('Meuble B · Étagère 1 · Milieu · droite'));
     click(byText(dlg, 'button', 'Déplacer'));
     await noDialog();
 
     const stocks = await repo.list('stock');
     expect(stocks.find((s) => s.location_id === a1.id)?.quantity).toBe(2);
-    expect(stocks.find((s) => s.location_id === b1.id)).toMatchObject({ quantity: 1, position_hint: 'droite' });
+    expect(stocks.find((s) => s.location_id === b1.id)).toMatchObject({ quantity: 1, position_hint: 'milieu-droite' });
     await waitFor(() => expect(view.querySelectorAll('li[data-stock-id]')).toHaveLength(2));
   });
 

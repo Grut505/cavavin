@@ -15,6 +15,7 @@ import { pageHeader } from '../components/page-header';
 import { colorLabel } from '../components/wine-card';
 import { h } from '../dom';
 import { icon } from '../icons';
+import { positionLabel } from '../../domain/types';
 import { originQuery, wineBack } from '../nav-origin';
 import { Router } from '../router';
 
@@ -99,7 +100,7 @@ export async function wineDetailView(ctx: AppContext, params: { id?: string }): 
           'div',
           { class: 'grow' },
           h('strong', {}, c.label),
-          c.stock.position_hint ? h('div', { class: 'muted' }, `Position : ${c.stock.position_hint}`) : null,
+          c.stock.position_hint ? h('div', { class: 'muted' }, `Position : ${positionLabel(c.stock.position_hint)}`) : null,
         ),
         h('span', { class: 'badge', 'aria-label': bottlesLabel(c.stock.quantity) }, `×${c.stock.quantity}`),
         h('button', { class: 'btn btn--small', type: 'button', onClick: () => void refreshAfter(openOutflowDialog(ctx, { wine, choices, stockId: c.stock.id })) }, 'Sortir'),

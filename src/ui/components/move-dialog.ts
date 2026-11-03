@@ -1,7 +1,7 @@
 // « Déplacer » des bouteilles vers un autre emplacement, choisi dans le schéma de la cave (FR-011).
 import type { AppContext } from '../../app';
 import { validateMove } from '../../domain/stock';
-import type { Furniture, Location, PositionHint, Wine } from '../../domain/types';
+import { positionLabel, type Furniture, type Location, type PositionHint, type Wine } from '../../domain/types';
 import { wineTitle } from '../../domain/wine';
 import { h } from '../dom';
 import { icon } from '../icons';
@@ -53,7 +53,7 @@ export function openMoveDialog(
       errors.destination.textContent = '';
       destBtn.replaceChildren(
         icon('cave'),
-        `${locationLabel(picked.location, opts.furniture)}${picked.hint ? ` · ${picked.hint}` : ''}`,
+        `${locationLabel(picked.location, opts.furniture)}${picked.hint ? ` · ${positionLabel(picked.hint)}` : ''}`,
       );
     });
 

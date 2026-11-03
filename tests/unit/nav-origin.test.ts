@@ -77,7 +77,7 @@ describe('origine de navigation', () => {
     const d = await makeDevice(await makeSheet(), 'dev-nav-graph');
     await d.repo.createFurniture('Meuble A', 1);
     const shelf = (await d.repo.list('location')).find((l) => l.kind === 'shelf')!;
-    const wine = await d.repo.addWine(wineFields(), [{ location_id: shelf.id, quantity: 1, position_hint: 'gauche' }]);
+    const wine = await d.repo.addWine(wineFields(), [{ location_id: shelf.id, quantity: 1, position_hint: 'milieu-gauche' }]);
     window.location.hash = `#/etagere/${shelf.id}`;
     const view = await shelfDetailView(contextOf(d) as AppContext, { id: shelf.id });
     document.body.append(view);
