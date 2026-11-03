@@ -41,12 +41,10 @@ describe('bouton « À boire » de la Cave', () => {
     const early = wine({ drink_from: 2035, drink_until: 2050 });
     const el = todrinkSummary([stock(late, 2), stock(now, 6), stock(soon, 1), stock(early, 3)], [late, now, soon, early], Y);
     expect(el.getAttribute('href')).toBe('#/stats?go=a-boire');
-    const counts = [...el.querySelectorAll('.cave-todrink__count')].map((li) => [li.querySelector('.cave-todrink__l')!.textContent, li.querySelector('.cave-todrink__n')!.textContent]);
-    expect(counts).toEqual([['En retard', '2'], ['À finir', '0'], ['À point', '6'], ['À attendre', '4']]);
-    expect(el.querySelectorAll('.cave-todrink__count--zero')).toHaveLength(1); // « à finir » à 0 est estompé
     // barre proportionnelle : un segment par catégorie non vide (retard, à point, bientôt, trop tôt), largeur = nombre de bouteilles
-    const segs = [...el.querySelectorAll('.cave-todrink__seg')].map((s) => [s.className.match(/u-fill--(\w+)/)![1], (s as HTMLElement).style.flex.split(' ')[0]]);
-    expect(segs).toEqual([['late', '2'], ['now', '6'], ['soon', '1'], ['early', '3']]);
+    const segs = [...el.querySelectorAll('.cave-todrink__seg')].map((s) => [s.className.match(/u-fill--(\w+)/)![1], (s as HTMLElement).style.flex.split(' ')[0], s.textContent]);
+    expect(segs).toEqual([['late', '2', '2'], ['now', '6', '6'], ['soon', '1', '1'], ['early', '3', '3']]);
+    expect(el.querySelector('.cave-todrink__l')).toBeNull(); // plus de libellés
     expect(el.getAttribute('aria-label')).toBe('À boire : 2 en retard, 0 à finir, 6 à point, 4 à attendre. Ouvrir le détail.');
   });
 
@@ -68,7 +66,7 @@ describe('bouton « À boire » de la Cave', () => {
     const actions = el.querySelector('.cave-actions')!;
     expect(actions.children[0]!.classList.contains('cave-todrink')).toBe(true);
     expect(actions.children[1]!.textContent).toBe('Quoi boire ?');
-    const numbers = [...actions.querySelectorAll('.cave-todrink__n')].map((e) => e.textContent);
-    expect(numbers).toEqual(['2', '0', '4', '0']); // en retard, à finir, à point, à attendre
+    const numbers = [...actions.querySelectorAll('.cave-todrink__seg')].map((e) => e.textContent);
+    expect(numbers).toEqual(['2', '4']); // en retard, à point (les catégories vides n'ont pas de segment)
   });
 });

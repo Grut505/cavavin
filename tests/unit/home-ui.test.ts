@@ -179,7 +179,7 @@ describe('Cave : « À boire » et « Quoi boire »', () => {
     const el = await caveView(ctx);
     expect(el.querySelector('.cave-actions__dish')!.textContent).toBe('Quoi boire ?');
     expect(el.querySelector('.cave-actions a.cave-todrink')!.getAttribute('href')).toBe('#/stats?go=a-boire');
-    expect(el.querySelector('.cave-todrink__title')!.textContent).toBe('À boire');
+    expect(el.querySelector('.cave-todrink')!.getAttribute('aria-label')).toContain('À boire');
   });
 
   it('« Quoi boire » ouvre une fenêtre de saisie qui envoie sur la Liste filtrée, fautes de frappe tolérées', async () => {
