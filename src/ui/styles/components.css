@@ -686,6 +686,11 @@ a.card--link {
 .form-bar:empty {
   display: none;
 }
+/* Tout en bas de la page, la barre doit rester exactement où elle est collée : le formulaire déborde donc de la
+   marge basse de l'écran (même valeur que le `padding-bottom` de .view), sinon elle « remonte » d'un cran. */
+.form--with-bar {
+  margin-bottom: calc(-1 * var(--space-5));
+}
 
 /* Photos avant / arrière */
 .photos {

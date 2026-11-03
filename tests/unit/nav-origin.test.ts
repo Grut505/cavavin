@@ -57,7 +57,7 @@ describe('origine de navigation', () => {
 
     window.location.hash = `#/etagere/${shelf.id}`;
     const shelfView = await shelfDetailView(ctx, { id: shelf.id });
-    const link = shelfView.querySelector('a.list__link')!.getAttribute('href')!;
+    const link = shelfView.querySelector('a.wine-card')!.getAttribute('href')!;
     expect(link).toBe(`#/vin/${wine.id}?from=${encodeURIComponent(`/etagere/${shelf.id}`)}`);
 
     window.location.hash = link;

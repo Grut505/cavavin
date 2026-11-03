@@ -2,10 +2,10 @@
 import type { AppContext } from '../../app';
 import { stocksAt } from '../../domain/locations';
 import { positionLabel } from '../../domain/types';
-import { wineTitle } from '../../domain/wine';
 import { bottlesLabel } from '../cave-map/cave-map';
 import { renderShelfView, shelfBottles } from '../cave-map/shelf-view';
 import { legendButton } from '../components/urgency-legend';
+import { renderWineCard } from '../components/wine-card';
 import { pageHeader } from '../components/page-header';
 import { wineHref } from '../nav-origin';
 import { h } from '../dom';
@@ -31,19 +31,14 @@ export async function shelfDetailView(ctx: AppContext, params: { id?: string }):
   const subtitle =
     loc.kind === 'shelf' ? (furniture?.name ?? 'Meuble') : loc.kind === 'place' ? 'Lieu' : 'À rattacher à la cave';
 
+  // Mêmes cartes que dans la Liste (appellation, région, couleur, domaine…), avec la quantité de CET emplacement.
+  const thumbs = await ctx.repo.thumbnailUrls();
   const rows = here.map((st) => {
     const wine = wines.find((w) => w.id === st.wine_id);
-    return h(
-      'li',
-      { class: 'list__item' },
-      h(
-        wine ? 'a' : 'div',
-        { class: 'grow list__link', ...(wine ? { href: wineHref(wine.id, `/etagere/${loc.id}`) } : {}) },
-        h('strong', {}, wine ? wineTitle(wine).primary : 'Fiche introuvable'),
-        wine ? h('div', { class: 'muted' }, wineTitle(wine).secondary) : null,
-        st.position_hint ? h('div', { class: 'muted' }, `Position : ${positionLabel(st.position_hint)}`) : null,
-      ),
-      h('span', { class: 'badge', 'aria-label': bottlesLabel(st.quantity) }, `×${st.quantity}`),
+    if (!wine) return h('div', { class: 'card muted' }, 'Fiche introuvable');
+    return renderWineCard(
+      { wine, quantity: st.quantity, locations: [] },
+      { href: wineHref(wine.id, `/etagere/${loc.id}`), thumb: thumbs.get(wine.id), extra: st.position_hint ? `Position : ${positionLabel(st.position_hint)}` : undefined },
     );
   });
 
@@ -62,7 +57,7 @@ export async function shelfDetailView(ctx: AppContext, params: { id?: string }):
       ? h('div', { class: 'card empty muted' }, 'Aucune bouteille ici pour l’instant.')
       : [
           loc.kind === 'shelf' ? renderShelfView({ shelfName: loc.name, bottles: shelfBottles(here, wines) }) : null,
-          h('ul', { class: 'card list' }, rows),
+          h('div', { class: 'stack' }, rows),
         ],
   );
 }

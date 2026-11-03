@@ -23,7 +23,8 @@ export function locationSummary(row: WineRow): string {
 
 export function renderWineCard(
   row: WineRow,
-  opts: { thumb?: string; href?: string; giftFrom?: string | null } = {},
+  /** `extra` : ligne supplémentaire (ex. position sur l'étagère). */
+  opts: { thumb?: string; href?: string; giftFrom?: string | null; extra?: string } = {},
 ): HTMLElement {
   const { wine } = row;
   // L'appellation d'abord (avec le millésime), puis la région ; domaine et cuvée en petit.
@@ -51,6 +52,7 @@ export function renderWineCard(
       : null,
     maker ? h('div', { class: 'wine-card__maker muted' }, maker) : null,
     loc ? h('div', { class: 'wine-card__loc muted' }, loc) : null,
+    opts.extra ? h('div', { class: 'wine-card__loc muted' }, opts.extra) : null,
   );
 
   const qty =

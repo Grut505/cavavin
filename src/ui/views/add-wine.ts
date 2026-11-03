@@ -528,7 +528,7 @@ async function wineFormView(ctx: AppContext, opts: { proposal?: Proposal; wine?:
 
   const form = h(
     'form',
-    { class: 'stack', novalidate: true, onSubmit: (e: Event) => void onSubmit(e) },
+    { class: 'stack form--with-bar', novalidate: true, onSubmit: (e: Event) => void onSubmit(e) },
     editing ? null : claudeProjectButton({ small: true }),
     proposal ? h('p', { class: 'alert' }, 'Pré-rempli à partir de la proposition de Claude : vérifiez, corrigez si besoin, puis choisissez l’emplacement.') : null,
     identity,
