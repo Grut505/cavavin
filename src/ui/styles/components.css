@@ -828,3 +828,62 @@ a.card--link {
 .chip-color__n {
   font-weight: 700;
 }
+
+/* Fiche : « Où la trouver ? » — une ligne par emplacement, boutons d'action côte à côte */
+.stock-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--border);
+}
+.stock-row:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+.stock-row__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.stock-row__name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.stock-row__pos {
+  font-size: 0.85rem;
+  margin-top: -4px;
+}
+.stock-row__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+.stock-row__actions .btn {
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.stock-row__actions .icon svg {
+  width: 18px;
+  height: 18px;
+}
+.where__title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  text-decoration: none;
+  color: inherit;
+}
+.where__name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.where__go {
+  flex: none;
+  color: var(--accent);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}

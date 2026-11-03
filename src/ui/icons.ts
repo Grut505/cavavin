@@ -14,6 +14,7 @@ export const ICONS = {
   plus: wrap('<path d="M12 5v14M5 12h14"/>'),
   edit: wrap('<path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17z"/><path d="M13.5 6.5l3 3"/>'),
   out: wrap('<path d="M7 3h10l-1 7a4 4 0 0 1-8 0z"/><path d="M12 14v7M8.5 21h7"/>'),
+  move: wrap('<path d="M4 12h16M15 7l5 5-5 5"/><path d="M9 7L4 12l5 5" opacity=".45"/>'),
   trash: wrap('<path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/>'),
   bottle: wrap('<path d="M10 3h4v4.5c0 .8.5 1.500 1.200 2A4 4 0 0 1 17 12.800V19a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-6.200a4 4 0 0 1 1.800-3.300C9.500 9 10 8.300 10 7.500z"/><path d="M7 14h10"/>'),
   filter: wrap('<path d="M4 5h16l-6 7.500V19l-4 1.500v-8z"/>'),

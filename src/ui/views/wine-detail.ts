@@ -98,16 +98,20 @@ export async function wineDetailView(ctx: AppContext, params: { id?: string }): 
     const stockRows = choices.map((c) =>
       h(
         'li',
-        { class: 'list__item', 'data-stock-id': c.stock.id },
+        { class: 'stock-row', 'data-stock-id': c.stock.id },
         h(
           'div',
-          { class: 'grow' },
-          h('strong', {}, c.label),
-          c.stock.position_hint ? h('div', { class: 'muted' }, `Position : ${positionLabel(c.stock.position_hint)}`) : null,
+          { class: 'stock-row__head' },
+          h('strong', { class: 'stock-row__name' }, c.label),
+          h('span', { class: 'badge', 'aria-label': bottlesLabel(c.stock.quantity) }, `×${c.stock.quantity}`),
         ),
-        h('span', { class: 'badge', 'aria-label': bottlesLabel(c.stock.quantity) }, `×${c.stock.quantity}`),
-        h('button', { class: 'btn btn--small', type: 'button', onClick: () => void refreshAfter(openOutflowDialog(ctx, { wine, choices, stockId: c.stock.id })) }, 'Sortir'),
-        h('button', { class: 'btn btn--small', type: 'button', onClick: () => void refreshAfter(openMoveDialog(ctx, { wine, choices, furniture, stockId: c.stock.id })) }, 'Déplacer'),
+        c.stock.position_hint ? h('div', { class: 'muted stock-row__pos' }, `Position : ${positionLabel(c.stock.position_hint)}`) : null,
+        h(
+          'div',
+          { class: 'stock-row__actions' },
+          h('button', { class: 'btn btn--small', type: 'button', onClick: () => void refreshAfter(openOutflowDialog(ctx, { wine, choices, stockId: c.stock.id })) }, icon('out'), 'Sortir'),
+          h('button', { class: 'btn btn--small', type: 'button', onClick: () => void refreshAfter(openMoveDialog(ctx, { wine, choices, furniture, stockId: c.stock.id })) }, icon('move'), 'Déplacer'),
+        ),
       ),
     );
 
@@ -122,7 +126,7 @@ export async function wineDetailView(ctx: AppContext, params: { id?: string }): 
         h(
           'div',
           { class: 'where', 'data-location-id': loc.id },
-          h('a', { class: 'where__title', href: `#/etagere/${loc.id}` }, h('strong', {}, locationLabel(loc, furniture)), h('span', { class: 'muted' }, ' · voir l’étagère ›')),
+          h('a', { class: 'where__title', href: `#/etagere/${loc.id}` }, h('strong', { class: 'where__name' }, locationLabel(loc, furniture)), h('span', { class: 'where__go' }, 'Voir ›')),
           loc.kind === 'shelf'
             ? renderShelfView({ shelfName: loc.name, bottles: shelfBottles(stocksAt(stocks, loc.id), allWines, year), highlightWineId: wine.id })
             : null,
