@@ -1,7 +1,7 @@
 {
   "name": "cavavin",
   "private": true,
-  "version": "0.9.3",
+  "version": "0.9.4",
   "type": "module",
   "description": "Gestion de cave à vin — PWA offline-first adossée à Google Sheets",
   "scripts": {

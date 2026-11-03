@@ -237,8 +237,8 @@ export function wineListView(ctx: AppContext): HTMLElement {
     let shown = 0;
     // Glisser une carte vers la gauche : Modifier, et Sortir quand il reste des bouteilles.
     const card = (r: WineRow): HTMLElement => {
-      const actions: SwipeAction[] = [{ label: 'Modifier', run: () => void (window.location.hash = `#/vin/${r.wine.id}/modifier?from=${encodeURIComponent('/liste')}`) }];
-      if (r.quantity > 0) actions.push({ label: 'Sortir', run: () => void quickOutflow(ctx, r.wine) });
+      const actions: SwipeAction[] = [{ label: 'Modifier', icon: 'edit', run: () => void (window.location.hash = `#/vin/${r.wine.id}/modifier?from=${encodeURIComponent('/liste')}&direct=1`) }];
+      if (r.quantity > 0) actions.push({ label: 'Sortir', icon: 'out', run: () => void quickOutflow(ctx, r.wine) });
       return swipeRow(
         renderWineCard(r, {
           thumb: thumbs.get(r.wine.id),

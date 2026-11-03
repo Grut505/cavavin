@@ -348,6 +348,14 @@ describe('modifier une fiche', () => {
   const submit = (v: HTMLElement): void => void v.querySelector('form')!.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
   const val = (v: HTMLElement, id: string): string => (v.querySelector(`#f-${id}`) as HTMLInputElement).value;
 
+  it('modification lancée par un balayage depuis la Liste : le retour ramène à la Liste', async () => {
+    const { ctx, w } = await withWine();
+    window.location.hash = `#/vin/${w.id}/modifier?from=%2Fliste&direct=1`;
+    const view = await editWineView(ctx, { id: w.id });
+    expect(view.querySelector('.app-header a')?.getAttribute('href')).toBe('#/liste');
+    window.location.hash = '';
+  });
+
   it('pré-remplit le formulaire, sans la partie emplacements', async () => {
     const { ctx, w } = await withWine();
     const view = await editWineView(ctx, { id: w.id });

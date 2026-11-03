@@ -1,18 +1,21 @@
 // Ligne « à glisser » (mobile) : un balayage vers la gauche révèle des actions (modifier, sortir, supprimer…).
 // Souris : pas de balayage ; `fallback` affiche alors les actions en boutons discrets à côté de la ligne.
 import { h } from '../dom';
+import { icon, type IconName } from '../icons';
 
 export interface SwipeAction {
   label: string;
+  icon?: IconName;
   tone?: 'default' | 'danger';
   run: () => void | Promise<void>;
 }
 
-const WIDTH = 84; // largeur d'une action, en px
+const WIDTH = 72; // largeur d'une action, en px
+const GAP = 8; // espace entre les actions et autour d'elles, en px
 let openRow: { close: () => void } | null = null;
 
 export function swipeRow(content: HTMLElement, actions: SwipeAction[], opts: { fallback?: boolean } = {}): HTMLElement {
-  const full = WIDTH * actions.length;
+  const full = WIDTH * actions.length + GAP * (actions.length + 1);
   const front = h('div', { class: 'swipe__front' }, content);
   const buttons = actions.map((a) =>
     h(
@@ -27,7 +30,8 @@ export function swipeRow(content: HTMLElement, actions: SwipeAction[], opts: { f
           void a.run();
         },
       },
-      a.label,
+      a.icon ? icon(a.icon) : null,
+      h('span', {}, a.label),
     ),
   );
   const root = h(

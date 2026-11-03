@@ -31,7 +31,7 @@ import { renderCaveMap } from '../cave-map/cave-map';
 import { renderShelfPosition } from '../cave-map/shelf-position';
 import { h } from '../dom';
 import { icon } from '../icons';
-import { originQuery } from '../nav-origin';
+import { originPath, originQuery } from '../nav-origin';
 import { hashQuery } from '../query';
 import { Router } from '../router';
 
@@ -475,7 +475,7 @@ async function wineFormView(ctx: AppContext, opts: { proposal?: Proposal; wine?:
         }
         await ctx.repo.updateWine(editing.id, fields);
         await savePhotos(editing.id);
-        Router.go(`/vin/${editing.id}${originQuery()}`);
+        Router.go(leaveTo(editing.id).replace(/^#/, ''));
         return;
       }
 
@@ -526,6 +526,10 @@ async function wineFormView(ctx: AppContext, opts: { proposal?: Proposal; wine?:
     }
   };
 
+  // Modification lancée par un balayage depuis une liste (`direct=1`) : on revient à cette liste, pas à la fiche.
+  const direct = hashQuery().get('direct') === '1';
+  const leaveTo = (wineId: string): string => (direct && originPath() ? `#${originPath()}` : `#/vin/${wineId}${originQuery()}`);
+
   const form = h(
     'form',
     { class: 'stack form--with-bar', novalidate: true, onSubmit: (e: Event) => void onSubmit(e) },
@@ -545,7 +549,8 @@ async function wineFormView(ctx: AppContext, opts: { proposal?: Proposal; wine?:
     { class: 'view' },
     pageHeader({
       title: editing ? 'Modifier la fiche' : 'Ajouter une bouteille',
-      back: editing ? `#/vin/${editing.id}${originQuery()}` : '#/ajouter',
+      back: editing ? leaveTo(editing.id) : '#/ajouter',
+      backLabel: editing && direct && originPath() ? (originPath() === '/liste' ? 'Retour à la liste' : 'Retour') : undefined,
     }),
     form,
   );
