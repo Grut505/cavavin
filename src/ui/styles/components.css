@@ -708,3 +708,7 @@ a.card--link {
   flex-direction: column;
   gap: var(--space-2);
 }
+
+.wine-card__maker {
+  font-size: 0.8rem;
+}

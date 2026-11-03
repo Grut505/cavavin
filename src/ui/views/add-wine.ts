@@ -172,10 +172,8 @@ async function wineFormView(ctx: AppContext, opts: { proposal?: Proposal; wine?:
     'section',
     { class: 'card stack' },
     h('h2', {}, 'La bouteille'),
-    text('domain', 'Domaine', { enterkeyhint: 'next' }),
-    text('cuvee', 'Cuvée *', { required: true, placeholder: 'Ex. Les Pierres (— si aucune)' }),
+    text('appellation', 'Appellation *', { required: true, list: 'dl-appellation', enterkeyhint: 'next' }),
     text('vintage', 'Millésime *', { required: true, inputmode: 'numeric', placeholder: '2019 ou NV', maxlength: '4', list: 'dl-vintage' }),
-    text('appellation', 'Appellation *', { required: true, list: 'dl-appellation' }),
     h(
       'div',
       { class: 'row' },
@@ -193,6 +191,9 @@ async function wineFormView(ctx: AppContext, opts: { proposal?: Proposal; wine?:
       h('div', { class: 'grow' }, select('format', 'Format *', BOTTLE_FORMATS.map((f): [string, string] => [f, f]), { required: true })),
     ),
     styleRow,
+    // Souvent introuvables sur l'étiquette : facultatifs.
+    text('domain', 'Domaine (facultatif)'),
+    text('cuvee', 'Cuvée (facultatif)', { placeholder: 'Ex. Les Pierres' }),
     h(
       'div',
       { class: 'row' },

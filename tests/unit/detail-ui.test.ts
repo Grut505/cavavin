@@ -115,7 +115,7 @@ describe('fiche détaillée', () => {
     for (const absent of ['Prix', 'Fournisseur', 'Cadeau', 'Notes', 'Note ', 'À boire']) expect(facts, absent).not.toContain(absent);
   });
 
-  it('liste les emplacements avec leurs quantités et met en évidence ceux de la fiche dans le schéma', async () => {
+  it('liste les emplacements avec leurs quantités et montre, pour chacun, la vue de l’étagère avec les bouteilles de la fiche en évidence', async () => {
     const { ctx, repo, a1, b1 } = await setup();
     const w = await repo.addWine(wineFields(), [
       { location_id: a1.id, quantity: 3, position_hint: 'milieu-droite' },
@@ -126,18 +126,33 @@ describe('fiche détaillée', () => {
     expect(rows.map((r) => r.textContent)).toEqual(expect.arrayContaining([expect.stringContaining('Meuble A · Étagère 1'), expect.stringContaining('Meuble B · Étagère 1')]));
     expect(view.textContent).toContain('Position : Milieu · droite');
     expect(view.querySelector('li[data-stock-id] .badge')?.textContent).toMatch(/×[23]/);
-    const marked = [...view.querySelectorAll('.shelf--selected')].map((e) => e.getAttribute('data-location-id')).sort();
-    expect(marked).toEqual([a1.id, b1.id].sort());
-    // Les étagères sans cette fiche du même meuble sont visibles mais pas en évidence.
-    expect(view.querySelectorAll('.shelf').length).toBe(3);
+    // « Où la trouver ? » reprend la vue des emplacements : une vue d'étagère par emplacement de la fiche
+    const views = [...view.querySelectorAll('.where')].map((e) => e.getAttribute('data-location-id')).sort();
+    expect(views).toEqual([a1.id, b1.id].sort());
+    const a1View = view.querySelector(`.where[data-location-id="${a1.id}"]`)!;
+    expect(a1View.querySelectorAll('.sv__bottle')).toHaveLength(3); // les 3 bouteilles dessinées
+    expect(a1View.querySelector('[data-zone="milieu-droite"] .sv__bottle')).not.toBeNull(); // à la bonne position
+    expect(a1View.querySelector('a.where__title')!.getAttribute('href')).toBe(`#/etagere/${a1.id}`);
+    expect(view.querySelector('button[aria-label="Légende des couleurs"]')).not.toBeNull();
   });
 
-  it('limite le schéma aux meubles où se trouve la fiche', async () => {
+  it('estompe les bouteilles des autres fiches sur l’étagère', async () => {
+    const { ctx, repo, a1 } = await setup();
+    const w = await repo.addWine(wineFields({ cuvee: 'Celle-ci' }), [{ location_id: a1.id, quantity: 1, position_hint: null }]);
+    await repo.addWine(wineFields({ cuvee: 'Une autre' }), [{ location_id: a1.id, quantity: 2, position_hint: null }]);
+    const view = await open(ctx, w.id);
+    const bottles = [...view.querySelectorAll(`.where[data-location-id="${a1.id}"] .sv__bottle`)];
+    expect(bottles).toHaveLength(3);
+    expect(bottles.filter((b) => b.classList.contains('sv__bottle--dim'))).toHaveLength(2); // les deux autres
+  });
+
+  it('ne montre que les emplacements où se trouve la fiche', async () => {
     const { ctx, repo, a1 } = await setup();
     const w = await repo.addWine(wineFields(), [{ location_id: a1.id, quantity: 1, position_hint: null }]);
     const view = await open(ctx, w.id);
+    expect(view.querySelectorAll('.where')).toHaveLength(1);
     expect(view.textContent).toContain('Meuble A');
-    expect(view.querySelector('.rack[aria-label="Meuble B"]')).toBeNull();
+    expect(view.textContent).not.toContain('Meuble B');
   });
 
   it('une fiche introuvable est signalée', async () => {
@@ -365,15 +380,22 @@ describe('modifier une fiche', () => {
     const { ctx, repo, w } = await withWine();
     const view = await editWineView(ctx, { id: w.id });
     document.body.append(view);
-    setValue(view.querySelector('#f-cuvee'), '');
-    submit(view);
-    await waitFor(() => expect(view.querySelector('#e-cuvee')?.textContent).toContain('obligatoire'));
-    setValue(view.querySelector('#f-cuvee'), 'N');
-    expect(view.querySelector('#e-cuvee')?.textContent).toBe('');
     setValue(view.querySelector('#f-appellation'), '');
     submit(view);
     await waitFor(() => expect(view.querySelector('#e-appellation')?.textContent).toContain('obligatoire'));
-    expect((await repo.get('wine', w.id))?.cuvee).toBe('Les Pins');
+    expect((await repo.get('wine', w.id))?.cuvee).toBe('Les Pins'); // rien n'est enregistré tant que la fiche est invalide
+    setValue(view.querySelector('#f-appellation'), 'Saint-Joseph');
+    expect(view.querySelector('#e-appellation')?.textContent).toBe('');
+  });
+
+  it('une cuvée effacée est enregistrée « sans cuvée » (facultative)', async () => {
+    const { ctx, repo, w } = await withWine();
+    const view = await editWineView(ctx, { id: w.id });
+    document.body.append(view);
+    setValue(view.querySelector('#f-cuvee'), '');
+    submit(view);
+    await waitFor(async () => expect((await repo.get('wine', w.id))?.cuvee).toBe('—'));
+    expect(view.querySelector('#e-cuvee')?.textContent).toBe('');
   });
 
   it('refuse de prendre l’identité (domaine, cuvée, millésime) d’une autre fiche', async () => {

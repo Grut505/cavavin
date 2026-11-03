@@ -1,11 +1,13 @@
 // Fiche détaillée d'une bouteille : informations, emplacements en évidence, actions, historique.
 import type { AppContext } from '../../app';
-import { bottleCounts } from '../../domain/locations';
 import { OUTFLOW_REASON_LABELS, outflowsOf } from '../../domain/stock';
 import { pairingsOf } from '../../domain/pairing-list';
 import { formatDateFr, wineTitle } from '../../domain/wine';
-import type { Furniture, Location, Wine } from '../../domain/types';
-import { renderCaveMap, bottlesLabel } from '../cave-map/cave-map';
+import type { Location, Wine } from '../../domain/types';
+import { bottlesLabel } from '../cave-map/cave-map';
+import { renderShelfView, shelfBottles } from '../cave-map/shelf-view';
+import { legendButton } from '../components/urgency-legend';
+import { stocksAt } from '../../domain/locations';
 import { openAddStockDialog } from '../components/add-stock-dialog';
 import { locationLabel } from '../components/location-picker';
 import { openMergeDialog } from '../components/merge-dialog';
@@ -17,7 +19,6 @@ import { h } from '../dom';
 import { icon } from '../icons';
 import { positionLabel } from '../../domain/types';
 import { originQuery, wineBack } from '../nav-origin';
-import { Router } from '../router';
 
 const eur = (n: number): string => `${n.toFixed(2).replace('.', ',')} €`;
 
@@ -64,6 +65,7 @@ export async function wineDetailView(ctx: AppContext, params: { id?: string }): 
       );
       return;
     }
+    const allWines = await ctx.repo.list('wine');
     const [stocks, locations, furniture, outflows, persons, thumbs] = await Promise.all([
       ctx.repo.list('stock'),
       ctx.repo.list('location'),
@@ -108,17 +110,23 @@ export async function wineDetailView(ctx: AppContext, params: { id?: string }): 
       ),
     );
 
-    // Schéma de la cave limité aux meubles (et lieux) où se trouve la fiche, emplacements en évidence.
-    const where = new Set(active.map((s) => s.location_id));
-    const mapLocations: Location[] = locations.filter((l) => !l.deleted && where.has(l.id));
-    const furnitureIds = new Set(mapLocations.filter((l) => l.kind === 'shelf').map((l) => l.furniture_id));
-    const mapFurniture: Furniture[] = furniture.filter((f) => furnitureIds.has(f.id));
-    const mapShelves = locations.filter((l) => !l.deleted && l.kind === 'shelf' && furnitureIds.has(l.furniture_id));
-    const mapData = {
-      furniture: mapFurniture,
-      locations: [...mapShelves, ...mapLocations.filter((l) => l.kind !== 'shelf')],
-      counts: bottleCounts(stocks),
-    };
+    // « Où la trouver ? » : pour chaque emplacement, la vue de l'étagère (bouteilles dessinées, colorées selon
+    // l'échéance, position sur l'étagère) avec les bouteilles de cette fiche mises en évidence.
+    const year = new Date().getFullYear();
+    const whereIds = [...new Set(choices.map((c) => c.stock.location_id))];
+    const whereViews = whereIds
+      .map((id) => locById.get(id))
+      .filter((l): l is Location => !!l && !l.deleted)
+      .map((loc) =>
+        h(
+          'div',
+          { class: 'where', 'data-location-id': loc.id },
+          h('a', { class: 'where__title', href: `#/etagere/${loc.id}` }, h('strong', {}, locationLabel(loc, furniture)), h('span', { class: 'muted' }, ' · voir l’étagère ›')),
+          loc.kind === 'shelf'
+            ? renderShelfView({ shelfName: loc.name, bottles: shelfBottles(stocksAt(stocks, loc.id), allWines, year), highlightWineId: wine.id })
+            : null,
+        ),
+      );
 
     const history = outflowsOf(outflows, wine.id);
 
@@ -158,13 +166,11 @@ export async function wineDetailView(ctx: AppContext, params: { id?: string }): 
       h(
         'section',
         { class: 'card stack', 'aria-label': 'Emplacements' },
-        h('h2', {}, 'Où la trouver ?'),
+        h('div', { class: 'home__title' }, h('h2', {}, 'Où la trouver ?'), whereViews.length > 0 ? legendButton() : null),
         stockRows.length > 0
           ? h('ul', { class: 'list' }, stockRows)
           : h('p', { class: 'muted' }, 'Plus aucune bouteille en stock.'),
-        mapFurniture.length > 0 || mapData.locations.some((l) => l.kind !== 'shelf')
-          ? renderCaveMap(mapData, { onSelect: (loc) => Router.go(`/etagere/${loc.id}`), highlightIds: [...where] })
-          : null,
+        ...whereViews,
         h(
           'button',
           { class: 'btn btn--small', type: 'button', onClick: () => void refreshAfter(openAddStockDialog(ctx, { wine, furniture })) },

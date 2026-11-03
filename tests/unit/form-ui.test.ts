@@ -64,28 +64,28 @@ beforeEach(() => {
 });
 
 describe('champs obligatoires', () => {
-  it('étoile et attribut « required » sur cuvée, millésime, appellation, couleur, format — et eux seuls', async () => {
+  it('étoile et attribut « required » sur millésime, appellation, couleur, format — et eux seuls', async () => {
     const { ctx } = await setup();
     const view = await addWineView(ctx);
     const label = (id: string): string => view.querySelector(`label[for="f-${id}"] .field__label`)?.textContent ?? '';
-    for (const id of ['cuvee', 'vintage', 'appellation', 'color', 'format']) {
+    for (const id of ['vintage', 'appellation', 'color', 'format']) {
       expect(label(id), id).toMatch(/ \*$/);
       expect(view.querySelector(`#f-${id}`)?.hasAttribute('required'), id).toBe(true);
     }
-    for (const id of ['domain', 'region', 'country', 'tannin', 'dryness', 'drink_from', 'drink_until', 'purchase_price', 'supplier', 'notes']) {
+    for (const id of ['domain', 'cuvee', 'region', 'country', 'tannin', 'dryness', 'drink_from', 'drink_until', 'purchase_price', 'supplier', 'notes']) {
       expect(label(id), id).not.toMatch(/\*/);
       expect(view.querySelector(`#f-${id}`)?.hasAttribute('required'), id).toBe(false);
     }
   });
 
-  it('s’enregistre sans domaine', async () => {
+  it('s’enregistre sans domaine ni cuvée (facultatifs), et la cuvée absente est enregistrée « — »', async () => {
     const { ctx, repo } = await setup();
     const view = await open(ctx);
-    fill(view);
+    fill(view, { cuvee: '' });
     await pickFirstShelf(view);
     submit(view);
     await waitFor(async () => expect(await repo.list('wine')).toHaveLength(1));
-    expect((await repo.list('wine'))[0]).toMatchObject({ domain: '', cuvee: 'Les Pierres', vintage: 2019, appellation: 'Saint-Joseph', color: 'rouge', format: '75cl' });
+    expect((await repo.list('wine'))[0]).toMatchObject({ domain: '', cuvee: '—', vintage: 2019, appellation: 'Saint-Joseph', color: 'rouge', format: '75cl' });
   });
 
   it('accepte « NV » comme millésime', async () => {
@@ -107,15 +107,16 @@ describe('les erreurs disparaissent dès que l’on saisit', () => {
     const { ctx } = await setup();
     const view = await open(ctx);
     submit(view);
-    await waitFor(() => expect(errorOf(view, 'cuvee')).toContain('obligatoire'));
-    for (const id of ['cuvee', 'vintage', 'appellation', 'color']) {
+    await waitFor(() => expect(errorOf(view, 'appellation')).toContain('obligatoire'));
+    for (const id of ['vintage', 'appellation', 'color']) {
       expect(invalid(view, id), id).toBe(true);
     }
-    setValue(view.querySelector('#f-cuvee'), 'L');
-    expect(errorOf(view, 'cuvee')).toBe('');
-    expect(invalid(view, 'cuvee')).toBe(false);
+    expect(errorOf(view, 'cuvee')).toBe(''); // la cuvée n'est jamais en erreur
+    setValue(view.querySelector('#f-appellation'), 'S');
+    expect(errorOf(view, 'appellation')).toBe('');
+    expect(invalid(view, 'appellation')).toBe(false);
     // Les autres champs obligatoires restent signalés tant qu'ils ne sont pas remplis.
-    for (const id of ['vintage', 'appellation', 'color']) {
+    for (const id of ['vintage', 'color']) {
       expect(errorOf(view, id), id).toContain('obligatoire');
       expect(invalid(view, id), id).toBe(true);
     }
@@ -148,12 +149,12 @@ describe('les erreurs disparaissent dès que l’on saisit', () => {
     const { ctx } = await setup();
     const view = await open(ctx);
     submit(view);
-    await waitFor(() => expect(errorOf(view, 'cuvee')).toContain('obligatoire'));
-    setValue(view.querySelector('#f-cuvee'), 'abc');
-    setValue(view.querySelector('#f-cuvee'), '');
-    expect(errorOf(view, 'cuvee')).toBe('');
+    await waitFor(() => expect(errorOf(view, 'appellation')).toContain('obligatoire'));
+    setValue(view.querySelector('#f-appellation'), 'abc');
+    setValue(view.querySelector('#f-appellation'), '');
+    expect(errorOf(view, 'appellation')).toBe('');
     submit(view);
-    await waitFor(() => expect(errorOf(view, 'cuvee')).toContain('obligatoire'));
+    await waitFor(() => expect(errorOf(view, 'appellation')).toContain('obligatoire'));
   });
 });
 

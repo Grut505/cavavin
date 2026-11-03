@@ -15,10 +15,10 @@ async function setup(withWines = true) {
   if (withWines) {
     const add = (over: Parameters<typeof wineFields>[0], qty: number, shelf = 0) =>
       d.repo.addWine(wineFields(over), [{ location_id: shelves[shelf]!.id, quantity: qty, position_hint: null }]);
-    await add({ domain: 'Fabre', cuvee: 'Les Pins', vintage: 2015, color: 'rouge', country: 'France' }, 3);
-    await add({ domain: 'Alba', cuvee: 'Vieux', vintage: 2010, color: 'rouge', country: 'France' }, 12, 1);
-    await add({ domain: 'Zeta', cuvee: 'Blanc', vintage: 2021, color: 'blanc', country: 'Italie' }, 1, 1);
-    const spent = await add({ domain: 'Épuisé', cuvee: 'X', vintage: 2012, color: 'rouge', country: 'France' }, 1);
+    await add({ domain: 'Fabre', cuvee: 'Les Pins', vintage: 2015, color: 'rouge', country: 'France', appellation: 'Saint-Joseph', region: 'Vallée du Rhône' }, 3);
+    await add({ domain: 'Alba', cuvee: 'Vieux', vintage: 2010, color: 'rouge', country: 'France', appellation: 'Bandol', region: 'Provence' }, 12, 1);
+    await add({ domain: 'Zeta', cuvee: 'Blanc', vintage: 2021, color: 'blanc', country: 'Italie', appellation: 'Soave', region: 'Vénétie' }, 1, 1);
+    const spent = await add({ domain: 'Épuisé', cuvee: 'X', vintage: 2012, color: 'rouge', country: 'France', appellation: 'Zzz' }, 1);
     const stock = (await d.repo.list('stock')).find((s) => s.wine_id === spent.id)!;
     await d.repo.adjustStock(stock.id, -1);
   }
@@ -29,7 +29,11 @@ const click = (el: Element | null | undefined): void => {
   if (!el) throw new Error('élément introuvable');
   el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 };
+/** Domaine de chaque carte (en petit, sous l'appellation : « Domaine · Cuvée »). */
 const domains = (root: HTMLElement): string[] =>
+  [...root.querySelectorAll('.wine-card')].map((c) => (c.querySelector('.wine-card__maker')?.textContent ?? '').split(' · ')[0]!);
+/** Titre de chaque carte : l'appellation et le millésime. */
+const headings = (root: HTMLElement): string[] =>
   [...root.querySelectorAll('.wine-card__domain')].map((e) => e.textContent ?? '');
 const byText = (root: ParentNode, sel: string, text: string): Element | undefined =>
   [...root.querySelectorAll(sel)].find((e) => e.textContent?.includes(text));
@@ -46,7 +50,7 @@ beforeEach(() => {
 });
 
 describe('liste des fiches', () => {
-  it('affiche d’abord un état de chargement puis les fiches triées par domaine', async () => {
+  it('affiche d’abord un état de chargement puis les fiches triées par appellation', async () => {
     const { ctx } = await setup();
     const view = await open(ctx);
     expect(view.querySelector('.skeleton')).not.toBeNull();
@@ -55,12 +59,15 @@ describe('liste des fiches', () => {
     expect(view.querySelector('.skeleton')).toBeNull();
   });
 
-  it('affiche domaine, cuvée, millésime, couleur, emplacement et quantité', async () => {
+  it('met l’appellation en valeur (avec le millésime et la région), le domaine et la cuvée en petit', async () => {
     const { ctx } = await setup();
     const view = await open(ctx);
     await waitFor(() => expect(domains(view)).toHaveLength(3));
+    expect(headings(view)).toEqual(['Bandol · 2010', 'Saint-Joseph · 2015', 'Soave · 2021']);
     const fabre = [...view.querySelectorAll('.wine-card')].find((c) => c.textContent?.includes('Fabre'))!;
-    expect(fabre.textContent).toContain('Les Pins · 2015');
+    expect(fabre.querySelector('.wine-card__domain')!.textContent).toBe('Saint-Joseph · 2015');
+    expect(fabre.querySelector('.wine-card__title')!.textContent).toBe('Vallée du Rhône · France');
+    expect(fabre.querySelector('.wine-card__maker')!.textContent).toBe('Fabre · Les Pins');
     expect(fabre.textContent).toContain('Rouge');
     expect(fabre.textContent).toContain('Meuble A · Étagère 1');
     expect(fabre.querySelector('.badge')?.textContent).toBe('×3');

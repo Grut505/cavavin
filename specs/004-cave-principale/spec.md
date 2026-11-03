@@ -29,3 +29,9 @@
 - **FR-007** Le bouton « Enregistrer » du formulaire est toujours visible (barre collante au-dessus de la navigation).
 - **FR-008** L'emplacement se choisit directement dans le formulaire (schéma de la cave, puis zone 3×3 de l'étagère, quantité), sans écran secondaire ; plusieurs emplacements possibles.
 - **FR-009** Un bouton « Ouvrir mon projet Claude » (nouvel onglet) figure sur « Ajouter » et dans le formulaire ; l'adresse (`https://…`) se règle dans Réglages, par appareil (ou `VITE_CLAUDE_PROJECT_URL` au déploiement) ; sans adresse, le bouton renvoie vers Réglages. L'adresse n'est pas dans le code publié.
+
+## Compléments (2026-11-03)
+
+- **FR-010** « Où la trouver ? » d'une fiche reprend la vue des emplacements : pour chaque emplacement, la vue de l'étagère (bouteilles dessinées, code couleur, position 3×3), les bouteilles de cette fiche en évidence et les autres estompées, avec la légende « i » et un lien vers l'étagère.
+- **FR-011** Dans les listes (Liste, fiches d'une personne, À racheter, lignes de « À boire »), l'**appellation** fait le titre, avec le millésime ; la région vient en deuxième ligne ; domaine et cuvée en petit. Tri par défaut de la Liste : appellation. La recherche pèse d'abord l'appellation, puis la région.
+- **FR-012** Le **domaine** et la **cuvée** sont facultatifs dans le formulaire (placés après les champs principaux) ; une cuvée absente est enregistrée « — » ; sans domaine ni cuvée, le titre d'une fiche retombe sur l'appellation. Obligatoires : appellation, millésime (ou NV), couleur, format.

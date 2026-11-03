@@ -129,10 +129,10 @@ export function validateWine(draft: WineDraft, now: Date = new Date()): Validati
   const bad = (field: keyof WineDraft, message: string): void => void issues.push({ field, message });
   const maxVintage = now.getUTCFullYear() + 1;
 
-  // Obligatoires : cuvée, millésime, appellation, couleur, format. Tout le reste est facultatif.
+  // Obligatoires : millésime, appellation, couleur, format. Le domaine et la cuvée (souvent introuvables) sont
+  // facultatifs : une cuvée vide est enregistrée comme « sans cuvée » (—).
   const domain = text(draft.domain) ?? '';
-  const cuvee = text(draft.cuvee);
-  if (!cuvee) bad('cuvee', 'La cuvée est obligatoire.');
+  const cuvee = text(draft.cuvee) ?? NO_CUVEE;
   const appellation = text(draft.appellation);
   if (!appellation) bad('appellation', 'L’appellation est obligatoire.');
 
@@ -217,7 +217,7 @@ export function validateWine(draft: WineDraft, now: Date = new Date()): Validati
     ok: true,
     value: {
       domain,
-      cuvee: cuvee!,
+      cuvee,
       vintage,
       appellation: appellation!,
       region: text(draft.region),
@@ -240,12 +240,30 @@ export function validateWine(draft: WineDraft, now: Date = new Date()): Validati
   };
 }
 
-/** Titre d'affichage d'une fiche : le domaine s'il existe, sinon la cuvée ; le reste en sous-titre. */
-export function wineTitle(w: Pick<Wine, 'domain' | 'cuvee' | 'vintage'>): { primary: string; secondary: string } {
+/**
+ * Titre d'affichage d'une fiche : le domaine s'il existe, sinon la cuvée, sinon l'appellation ; le reste en sous-titre.
+ */
+export function wineTitle(w: Pick<Wine, 'domain' | 'cuvee' | 'vintage'> & { appellation?: string | null }): { primary: string; secondary: string } {
   const cuvee = w.cuvee && w.cuvee !== NO_CUVEE ? w.cuvee : '';
   const vintage = w.vintage ?? 'NV';
   if (w.domain) return { primary: w.domain, secondary: [cuvee, vintage].filter((x) => x !== '').join(' · ') };
-  return { primary: cuvee || 'Sans nom', secondary: String(vintage) };
+  if (cuvee) return { primary: cuvee, secondary: String(vintage) };
+  return { primary: w.appellation || 'Sans nom', secondary: String(vintage) };
+}
+
+/**
+ * Titre des listes : l'appellation d'abord (c'est ce qu'on regarde le plus), avec le millésime ; la région en
+ * deuxième ligne ; domaine et cuvée en petit. Sans appellation, on retombe sur le titre habituel.
+ */
+export function wineHeading(w: Pick<Wine, 'domain' | 'cuvee' | 'vintage' | 'appellation' | 'region' | 'country'>): { primary: string; region: string; maker: string } {
+  const cuvee = w.cuvee && w.cuvee !== NO_CUVEE ? w.cuvee : '';
+  const maker = [w.domain, cuvee].filter(Boolean).join(' · ');
+  if (!w.appellation) {
+    // Sans appellation : le domaine (ou la cuvée) fait le titre, la cuvée reste visible en petit.
+    const primary = w.domain || cuvee || 'Sans nom';
+    return { primary: `${primary} · ${w.vintage ?? 'NV'}`, region: [w.region, w.country].filter(Boolean).join(' · '), maker: w.domain ? cuvee : '' };
+  }
+  return { primary: `${w.appellation} · ${w.vintage ?? 'NV'}`, region: [w.region, w.country].filter(Boolean).join(' · '), maker };
 }
 
 /** Fiche existante → brouillon de formulaire (pour la modification). */
@@ -253,7 +271,7 @@ export function draftFromWine(w: Wine): WineDraft {
   const s = (v: string | number | null): string => (v === null ? '' : String(v));
   return {
     domain: w.domain,
-    cuvee: w.cuvee,
+    cuvee: w.cuvee === NO_CUVEE ? '' : w.cuvee,
     vintage: w.vintage === null ? 'NV' : String(w.vintage),
     appellation: s(w.appellation),
     region: s(w.region),

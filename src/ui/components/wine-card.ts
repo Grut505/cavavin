@@ -1,6 +1,6 @@
 // Carte de fiche pour les listes : miniature, identité, couleur, emplacements, quantité.
 import type { WineRow } from '../../domain/query';
-import { wineTitle } from '../../domain/wine';
+import { wineHeading } from '../../domain/wine';
 import { h } from '../dom';
 import { icon } from '../icons';
 
@@ -26,8 +26,8 @@ export function renderWineCard(
   opts: { thumb?: string; href?: string; giftFrom?: string | null } = {},
 ): HTMLElement {
   const { wine } = row;
-  const { primary, secondary } = wineTitle(wine);
-  const meta = [wine.appellation, wine.region].filter(Boolean).join(' · ');
+  // L'appellation d'abord (avec le millésime), puis la région ; domaine et cuvée en petit.
+  const { primary, region, maker } = wineHeading(wine);
   const gift = wine.gift ? (opts.giftFrom ? `Offert par ${opts.giftFrom}` : 'Cadeau') : '';
   const style = wine.tannin ? `Tanin ${wine.tannin}/5` : wine.dryness ? wine.dryness.charAt(0).toUpperCase() + wine.dryness.slice(1) : '';
   const loc = locationSummary(row);
@@ -40,15 +40,16 @@ export function renderWineCard(
     'div',
     { class: 'wine-card__body' },
     h('strong', { class: 'wine-card__domain' }, primary),
-    h('div', { class: 'wine-card__title' }, secondary),
-    wine.color || meta || style || gift
+    region ? h('div', { class: 'wine-card__title' }, region) : null,
+    wine.color || style || gift
       ? h(
           'div',
           { class: 'wine-card__meta muted' },
           wine.color ? h('span', { class: `dot dot--${wine.color}`, 'aria-hidden': 'true' }) : null,
-          [colorLabel(wine.color), style, meta, gift].filter(Boolean).join(' · '),
+          [colorLabel(wine.color), style, gift].filter(Boolean).join(' · '),
         )
       : null,
+    maker ? h('div', { class: 'wine-card__maker muted' }, maker) : null,
     loc ? h('div', { class: 'wine-card__loc muted' }, loc) : null,
   );
 

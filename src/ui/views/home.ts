@@ -29,7 +29,7 @@ import {
 import { OUTFLOW_REASON_LABELS } from '../../domain/stock';
 import { OUTFLOW_REASONS, WINE_COLORS, type Outflow, type Wine, type WineColor } from '../../domain/types';
 import { URGENCY_LABELS, URGENCY_ORDER, type Urgency } from '../../domain/urgency';
-import { wineTitle } from '../../domain/wine';
+import { wineHeading } from '../../domain/wine';
 import { wineHref } from '../nav-origin';
 import { loadPref, savePref } from '../prefs';
 import { hashQuery } from '../query';
@@ -52,7 +52,7 @@ type Drink = (wine: Wine) => void;
 /** Ligne compacte « ● Domaine · cuvée · millésime ×2 » : un tap la déplie (garde, emplacement, actions). */
 function compactRow(e: MaturityEntry, year: number, onDrink: Drink): HTMLElement {
   const w = e.row.wine;
-  const t = wineTitle(w);
+  const t = wineHeading(w);
   const window = windowText(w);
   const where = e.row.locations.map((l) => l.label).join(' + ') || 'Sans emplacement';
   const late = e.info.category === 'late' && w.drink_until !== null ? `dépassée depuis ${year - w.drink_until} an${year - w.drink_until > 1 ? 's' : ''}` : '';
@@ -66,7 +66,7 @@ function compactRow(e: MaturityEntry, year: number, onDrink: Drink): HTMLElement
         'summary',
         { class: 'tbd__row-sum' },
         w.color ? h('span', { class: `dot dot--${w.color}`, 'aria-hidden': 'true' }) : null,
-        h('span', { class: 'tbd__row-title' }, h('strong', {}, t.primary), h('span', { class: 'muted' }, ` ${t.secondary}`)),
+        h('span', { class: 'tbd__row-title' }, h('strong', {}, t.primary), h('span', { class: 'muted' }, t.region ? ` ${t.region}` : '')),
         h('span', { class: 'badge', 'aria-label': bottles(e.row.quantity) }, `×${e.row.quantity}`),
       ),
       h(

@@ -19,11 +19,11 @@ interface Field {
 function fieldsOf(row: WineRow): Field[] {
   const w = row.wine;
   return [
-    { weight: 5, text: normalizeText(w.domain) },
-    { weight: 4, text: normalizeText(w.cuvee) },
-    { weight: 4, text: normalizeText(w.appellation) },
+    { weight: 5, text: normalizeText(w.appellation) },
+    { weight: 4, text: normalizeText(w.region) },
+    { weight: 3, text: normalizeText(w.domain) },
+    { weight: 3, text: normalizeText(w.cuvee) },
     { weight: 3, text: w.vintage === null ? 'nv non millesime' : String(w.vintage) },
-    { weight: 2, text: normalizeText(w.region) },
     { weight: 2, text: normalizeText(w.country) },
     { weight: 2, text: row.locations.map((l) => normalizeText(l.label)).join(' ') },
     { weight: 1, text: COLOR_WORDS[w.color ?? ''] ?? '' },

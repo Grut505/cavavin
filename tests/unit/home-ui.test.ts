@@ -39,7 +39,7 @@ describe('écran Stats', () => {
   it('classe les bouteilles en catégories d’urgence repliables, avec des lignes compactes qui se déplient', async () => {
     const { d, ctx, shelf } = await setup();
     const year = new Date().getFullYear();
-    const late = await d.repo.create('wine', wineData({ cuvee: 'Passée', drink_from: year - 10, drink_until: year - 2, purchase_price: 30, color: 'rouge', region: 'Bordeaux' }));
+    const late = await d.repo.create('wine', wineData({ cuvee: 'Passée', appellation: 'Pauillac', drink_from: year - 10, drink_until: year - 2, purchase_price: 30, color: 'rouge', region: 'Bordeaux' }));
     const finishing = await d.repo.create('wine', wineData({ cuvee: 'Pressée', drink_from: year - 3, drink_until: year + 1, color: 'blanc' }));
     const now = await d.repo.create('wine', wineData({ cuvee: 'Prête', drink_from: year - 1, drink_until: year + 9, color: 'blanc' }));
     await d.repo.create('stock', { wine_id: late.id, location_id: shelf.id, quantity: 2, position_hint: null });
@@ -54,7 +54,8 @@ describe('écran Stats', () => {
     expect(el.querySelector('.tbd--late .badge')!.textContent).toBe('2'); // bouteilles, pas fiches
 
     const row = el.querySelector('.tbd--late .tbd__row')!;
-    expect(row.querySelector('summary')!.textContent).toContain('Passée');
+    expect(row.querySelector('summary')!.textContent).toContain('Pauillac'); // l'appellation d'abord
+    expect(row.querySelector('summary')!.textContent).toContain('Bordeaux');
     expect(row.querySelector('summary')!.textContent).toContain('×2');
     expect(row.textContent).toContain('dépassée depuis 2 ans'); // détail dans la partie dépliée
     expect(row.querySelector('a[href^="#/vin/"]')!.getAttribute('href')).toContain('?from=%2Fstats');

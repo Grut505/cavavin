@@ -93,12 +93,13 @@ describe('ajout manuel', () => {
     setValue(view.querySelector('#f-vintage'), '1500');
     submit(view);
     await waitFor(() => expect(view.querySelector('#e-vintage')?.textContent).toContain('Millésime invalide'));
-    expect(view.querySelector('#e-cuvee')?.textContent).toContain('obligatoire');
+    expect(view.querySelector('#e-cuvee')?.textContent).toBe(''); // facultative
     expect(view.querySelector('#e-appellation')?.textContent).toContain('obligatoire');
     expect(view.querySelector('#e-color')?.textContent).toContain('obligatoire');
-    // Le domaine, lui, est facultatif.
+    // Le domaine et la cuvée sont facultatifs : jamais en erreur.
     expect(view.querySelector('#e-domain')?.textContent).toBe('');
-    expect(view.querySelector('#f-cuvee')?.getAttribute('aria-invalid')).toBe('true');
+    expect(view.querySelector('#f-cuvee')?.getAttribute('aria-invalid')).toBeNull();
+    expect(view.querySelector('#f-appellation')?.getAttribute('aria-invalid')).toBe('true');
     expect(await repo.list('wine')).toHaveLength(0);
   });
 

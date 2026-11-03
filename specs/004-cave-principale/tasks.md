@@ -8,4 +8,5 @@
 - [X] T006 Ajout : photo depuis la phototèque, deux photos (avant/arrière), schéma v6
 - [X] T007 Ajout : bouton Enregistrer toujours visible, emplacement et position intégrés au formulaire
 - [X] T008 Bouton « Ouvrir mon projet Claude » + adresse dans Réglages
+- [X] T010 « Où la trouver ? » en vue d'étagère ; appellation en valeur dans les listes ; cuvée facultative (FR-010 à FR-012)
 - [ ] T009 Vérifier sur iPhone : choix de la phototèque, deux photos, barre « Enregistrer » collante, couleurs d'urgence lisibles, 5 onglets

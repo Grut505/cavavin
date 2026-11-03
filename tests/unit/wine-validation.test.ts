@@ -1,10 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { emptyDraft, formatDateFr, validateWine, wineTitle, type WineDraft } from '../../src/domain/wine';
+import { emptyDraft, formatDateFr, validateWine, wineHeading, wineTitle, type WineDraft } from '../../src/domain/wine';
 
-/** Fiche valide minimale : cuvée, millésime, appellation, couleur et format sont les seuls obligatoires. */
+/** Fiche valide minimale : millésime, appellation, couleur et format sont les seuls obligatoires. */
 const draft = (over: Partial<WineDraft> = {}): WineDraft => ({
   ...emptyDraft(),
-  cuvee: 'Les Pierres',
   vintage: '2019',
   appellation: 'Saint-Joseph',
   color: 'rouge',
@@ -18,13 +17,13 @@ const issues = (d: WineDraft): string[] => {
 };
 
 describe('champs obligatoires', () => {
-  it('accepte une fiche réduite aux cinq champs obligatoires', () => {
+  it('accepte une fiche réduite aux quatre champs obligatoires (ni domaine ni cuvée)', () => {
     const r = validateWine(draft(), NOW);
     expect(r.ok).toBe(true);
     if (r.ok) {
       expect(r.value).toMatchObject({
         domain: '',
-        cuvee: 'Les Pierres',
+        cuvee: '—', // pas de cuvée : enregistrée comme « sans cuvée »
         vintage: 2019,
         appellation: 'Saint-Joseph',
         color: 'rouge',
@@ -43,17 +42,17 @@ describe('champs obligatoires', () => {
     }
   });
 
-  it('exige cuvée, millésime, appellation, couleur et format — et eux seuls', () => {
-    expect(issues(emptyDraft()).sort()).toEqual(['appellation', 'color', 'cuvee', 'vintage']);
-    expect(issues(draft({ cuvee: ' ' }))).toEqual(['cuvee']);
+  it('exige millésime, appellation, couleur et format — et eux seuls', () => {
+    expect(issues(emptyDraft()).sort()).toEqual(['appellation', 'color', 'vintage']);
+    expect(issues(draft({ cuvee: ' ' }))).toEqual([]); // la cuvée est facultative
     expect(issues(draft({ vintage: '' }))).toEqual(['vintage']);
     expect(issues(draft({ appellation: '' }))).toEqual(['appellation']);
     expect(issues(draft({ color: '' }))).toEqual(['color']);
     expect(issues(draft({ format: '' }))).toEqual(['format']);
   });
 
-  it('le domaine, la région, le pays, le tanin, le sucre et la fenêtre de garde sont facultatifs', () => {
-    for (const f of ['domain', 'region', 'country', 'tannin', 'dryness', 'drink_from', 'drink_until', 'supplier', 'notes'] as const) {
+  it('le domaine, la cuvée, la région, le pays, le tanin, le sucre et la fenêtre de garde sont facultatifs', () => {
+    for (const f of ['domain', 'cuvee', 'region', 'country', 'tannin', 'dryness', 'drink_from', 'drink_until', 'supplier', 'notes'] as const) {
       expect(issues(draft({ [f]: '' })), f).toEqual([]);
     }
     expect(validateWine(draft({ domain: '  Domaine   X ' }), NOW)).toMatchObject({ ok: true, value: { domain: 'Domaine X' } });
@@ -141,5 +140,25 @@ describe('wineTitle', () => {
   it('ignore la cuvée « — » des anciennes fiches', () => {
     expect(wineTitle({ domain: 'Fabre', cuvee: '—', vintage: 2015 })).toEqual({ primary: 'Fabre', secondary: '2015' });
     expect(wineTitle({ domain: '', cuvee: '—', vintage: null })).toEqual({ primary: 'Sans nom', secondary: 'NV' });
+  });
+});
+
+describe('titres sans domaine ni cuvée', () => {
+  it('retombe sur l’appellation', () => {
+    expect(wineTitle({ domain: '', cuvee: '—', vintage: 2019, appellation: 'Saint-Joseph' })).toEqual({ primary: 'Saint-Joseph', secondary: '2019' });
+    expect(wineTitle({ domain: '', cuvee: '—', vintage: null })).toEqual({ primary: 'Sans nom', secondary: 'NV' });
+    expect(wineTitle({ domain: 'Gramenon', cuvee: 'La Mémé', vintage: 2020, appellation: 'Côtes-du-Rhône' })).toEqual({ primary: 'Gramenon', secondary: 'La Mémé · 2020' });
+  });
+
+  it('titre des listes : appellation et millésime d’abord, région ensuite, domaine et cuvée en petit', () => {
+    expect(wineHeading({ domain: 'Gramenon', cuvee: 'La Mémé', vintage: 2020, appellation: 'Côtes-du-Rhône', region: 'Vallée du Rhône', country: 'France' })).toEqual({
+      primary: 'Côtes-du-Rhône · 2020',
+      region: 'Vallée du Rhône · France',
+      maker: 'Gramenon · La Mémé',
+    });
+    expect(wineHeading({ domain: '', cuvee: '—', vintage: null, appellation: 'Champagne', region: null, country: null })).toEqual({ primary: 'Champagne · NV', region: '', maker: '' });
+    // sans appellation : le domaine (ou la cuvée) fait le titre
+    expect(wineHeading({ domain: 'Gramenon', cuvee: 'La Mémé', vintage: 2020, appellation: null, region: null, country: null })).toEqual({ primary: 'Gramenon · 2020', region: '', maker: 'La Mémé' });
+    expect(wineHeading({ domain: '', cuvee: 'La Mémé', vintage: 2020, appellation: null, region: null, country: null }).primary).toBe('La Mémé · 2020');
   });
 });

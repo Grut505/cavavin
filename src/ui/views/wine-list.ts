@@ -26,7 +26,7 @@ import { hashQuery } from '../query';
 import { wineHref } from '../nav-origin';
 import { loadPref, savePref } from '../prefs';
 
-const DEFAULT_SORT: SortSpec = { key: 'domain', dir: 'asc' };
+const DEFAULT_SORT: SortSpec = { key: 'appellation', dir: 'asc' }; // l'appellation est ce qu'on regarde le plus
 
 function normalizeSort(raw: unknown): SortSpec | null {
   const r = raw as Partial<SortSpec> | null;

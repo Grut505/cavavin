@@ -65,9 +65,9 @@ export function shelfBottles(stocks: Stock[], wines: Wine[], year: number = new 
   return out;
 }
 
-function bottleEl(b: ShelfBottle, x: number, y: number): SVGElement {
+function bottleEl(b: ShelfBottle, x: number, y: number, dim = false): SVGElement {
   const g = s('g', {
-    class: 'sv__bottle',
+    class: `sv__bottle${dim ? ' sv__bottle--dim' : ''}`,
     role: 'link',
     tabindex: 0,
     'aria-label': `${b.title}, ${URGENCY_LABELS[b.urgency].toLowerCase()}${b.zone ? `, ${positionLabel(b.zone).toLowerCase()}` : ''}`,
@@ -91,14 +91,14 @@ function bottleEl(b: ShelfBottle, x: number, y: number): SVGElement {
 }
 
 /** Place les bouteilles dans un rectangle ; renvoie le nombre de bouteilles qui n'ont pas tenu. */
-function fill(parent: SVGElement, items: ShelfBottle[], x0: number, y0: number, w: number, hgt: number): number {
+function fill(parent: SVGElement, items: ShelfBottle[], x0: number, y0: number, w: number, hgt: number, highlightWineId?: string): number {
   const perRow = Math.max(1, Math.floor((w + 3.5) / PITCH_X));
   const rows = Math.max(1, Math.floor((hgt + 3) / PITCH_Y));
   const capacity = perRow * rows;
   // si ça déborde, on réserve la dernière place au « +n »
   const shown = items.length > capacity ? capacity - 1 : items.length;
   for (let i = 0; i < shown; i++) {
-    parent.append(bottleEl(items[i]!, x0 + (i % perRow) * PITCH_X, y0 + Math.floor(i / perRow) * PITCH_Y));
+    parent.append(bottleEl(items[i]!, x0 + (i % perRow) * PITCH_X, y0 + Math.floor(i / perRow) * PITCH_Y, highlightWineId !== undefined && items[i]!.wineId !== highlightWineId));
   }
   const hidden = items.length - shown;
   if (hidden > 0) {
@@ -114,7 +114,8 @@ function fill(parent: SVGElement, items: ShelfBottle[], x0: number, y0: number, 
   return hidden;
 }
 
-export function renderShelfView(opts: { shelfName: string; bottles: ShelfBottle[] }): HTMLElement {
+/** `highlightWineId` : les bouteilles des autres fiches sont estompées (vue « Où la trouver ? » d'une fiche). */
+export function renderShelfView(opts: { shelfName: string; bottles: ShelfBottle[]; highlightWineId?: string }): HTMLElement {
   const loose = opts.bottles.filter((b) => b.zone === null);
   const height = CAB_H + (loose.length > 0 ? LOOSE_H : 0);
   const svg = s('svg', {
@@ -138,7 +139,7 @@ export function renderShelfView(opts: { shelfName: string; bottles: ShelfBottle[
     const g = s('g', { 'data-zone': hint });
     g.append(s('rect', { class: 'sv__zone', x: z.x, y: z.y, width: z.w, height: z.h, rx: 6 }));
     g.append(s('text', { class: 'sv__label', x: z.x + 6, y: z.y + 11 }, z.label));
-    fill(g, items, z.x + 6, z.y + 16, z.w - 12, z.h - 20);
+    fill(g, items, z.x + 6, z.y + 16, z.w - 12, z.h - 20, opts.highlightWineId);
     svg.append(g);
   }
 
@@ -149,7 +150,7 @@ export function renderShelfView(opts: { shelfName: string; bottles: ShelfBottle[
       s('rect', { class: 'sv__loose', x: 4, y: y + 2, width: 312, height: LOOSE_H - 6, rx: 8 }),
       s('text', { class: 'sv__label sv__label--loose', x: 12, y: y + 17 }, 'Position non précisée'),
     );
-    fill(g, loose, 12, y + 22, 296, BH);
+    fill(g, loose, 12, y + 22, 296, BH, opts.highlightWineId);
     svg.append(g);
   }
 
