@@ -223,21 +223,23 @@ describe('liste des fiches', () => {
 });
 
 describe('recherche', () => {
-  const type = (view: HTMLElement, text: string): void => {
+  /** La recherche est temporisée (~120 ms) : on laisse passer le délai avant de vérifier. */
+  const type = async (view: HTMLElement, text: string): Promise<void> => {
     const input = view.querySelector('#wine-search') as HTMLInputElement;
     input.value = text;
     input.dispatchEvent(new Event('input', { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 200));
   };
 
   it('filtre en direct pendant la frappe, sans tenir compte des accents ni de la casse', async () => {
     const { ctx } = await setup();
     const view = await open(ctx);
     await waitFor(() => expect(domains(view)).toHaveLength(3));
-    type(view, 'ALB');
+    await type(view, 'ALB');
     expect(domains(view)).toEqual(['Alba']);
-    type(view, 'zeta');
+    await type(view, 'zeta');
     expect(domains(view)).toEqual(['Zeta']);
-    type(view, '');
+    await type(view, '');
     expect(domains(view)).toEqual(['Alba', 'Fabre', 'Zeta']);
   });
 
@@ -245,7 +247,7 @@ describe('recherche', () => {
     const { ctx } = await setup();
     const view = await open(ctx);
     await waitFor(() => expect(domains(view)).toHaveLength(3));
-    type(view, 'rouge');
+    await type(view, 'rouge');
     expect(view.querySelector('[role=status][aria-live=polite]')?.textContent).toBe('2 résultats pour « rouge »');
   });
 
@@ -253,9 +255,9 @@ describe('recherche', () => {
     const { ctx } = await setup();
     const view = await open(ctx);
     await waitFor(() => expect(domains(view)).toHaveLength(3));
-    type(view, 'etagere 2');
+    await type(view, 'etagere 2');
     expect(domains(view).sort()).toEqual(['Alba', 'Zeta']);
-    type(view, '2015');
+    await type(view, '2015');
     expect(domains(view)).toEqual(['Fabre']);
   });
 
@@ -264,9 +266,9 @@ describe('recherche', () => {
     localStorage.setItem('cavavin.list.filters', JSON.stringify({ colors: ['rouge'] }));
     const view = await open(ctx);
     await waitFor(() => expect(domains(view)).toEqual(['Alba', 'Fabre']));
-    type(view, 'a');
+    await type(view, 'a');
     expect(domains(view).sort()).toEqual(['Alba', 'Fabre']);
-    type(view, 'zeta');
+    await type(view, 'zeta');
     expect(domains(view)).toEqual([]);
     expect(view.textContent).toContain('Aucun résultat');
   });
@@ -275,7 +277,7 @@ describe('recherche', () => {
     const { ctx } = await setup();
     const view = await open(ctx);
     await waitFor(() => expect(domains(view)).toHaveLength(3));
-    type(view, 'introuvable');
+    await type(view, 'introuvable');
     expect(view.textContent).toContain('Aucune fiche ne correspond à « introuvable »');
     click(byText(view, '.empty button', 'Effacer la recherche'));
     expect((view.querySelector('#wine-search') as HTMLInputElement).value).toBe('');

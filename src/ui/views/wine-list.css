@@ -1,0 +1,6 @@
+
+/* Bouton « Afficher les N suivantes » en bas de la Liste (chargement progressif) */
+.list__more {
+  width: 100%;
+  margin-top: var(--space-2);
+}

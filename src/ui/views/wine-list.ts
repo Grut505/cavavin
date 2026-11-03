@@ -61,6 +61,9 @@ function normalizeFilters(raw: unknown): Filters | null {
   };
 }
 
+/** Cartes affichées par paquet : la suite se charge au défilement (ou au bouton). */
+export const LIST_PAGE_SIZE = 100;
+
 const plural = (n: number, one: string, many: string): string => `${n} ${n > 1 ? many : one}`;
 
 export function wineListView(ctx: AppContext): HTMLElement {
@@ -111,9 +114,11 @@ export function wineListView(ctx: AppContext): HTMLElement {
     enterkeyhint: 'search',
     id: 'wine-search',
   });
+  let typing: ReturnType<typeof setTimeout> | undefined;
   searchInput.addEventListener('input', () => {
     query = searchInput.value;
-    draw();
+    clearTimeout(typing); // pas de reconstruction à chaque lettre
+    typing = setTimeout(draw, 120);
   });
 
   const toolbar = h(
@@ -149,6 +154,8 @@ export function wineListView(ctx: AppContext): HTMLElement {
       saveAndDraw();
     }
   });
+
+  let observer: IntersectionObserver | undefined;
 
   function draw(): void {
     const filtered = queryRows(rows, filters, sort);
@@ -223,11 +230,38 @@ export function wineListView(ctx: AppContext): HTMLElement {
       );
       return;
     }
-    list.replaceChildren(...result.map((r) => renderWineCard(r, {
-          thumb: thumbs.get(r.wine.id),
-          href: wineHref(r.wine.id, '/liste'),
-          giftFrom: r.wine.gift_from ? people.get(r.wine.gift_from) : null,
-        })));
+    // Chargement progressif : LIST_PAGE_SIZE cartes à la fois, la suite s'ajoute sans reconstruire les précédentes.
+    observer?.disconnect();
+    let shown = 0;
+    const card = (r: WineRow): HTMLElement =>
+      renderWineCard(r, {
+        thumb: thumbs.get(r.wine.id),
+        href: wineHref(r.wine.id, '/liste'),
+        giftFrom: r.wine.gift_from ? people.get(r.wine.gift_from) : null,
+      });
+    const more = h('button', { class: 'btn list__more', type: 'button' });
+    const showMore = (): void => {
+      const next = result.slice(shown, shown + LIST_PAGE_SIZE);
+      shown += next.length;
+      more.remove();
+      list.append(...next.map(card));
+      if (shown < result.length) {
+        more.textContent = `Afficher les ${Math.min(LIST_PAGE_SIZE, result.length - shown)} suivantes (${result.length - shown} restantes)`;
+        list.append(more);
+        if (typeof IntersectionObserver !== 'undefined') {
+          observer = new IntersectionObserver((entries) => {
+            if (entries.some((e) => e.isIntersecting)) {
+              observer?.disconnect();
+              showMore();
+            }
+          }, { rootMargin: '300px' });
+          observer.observe(more);
+        }
+      }
+    };
+    more.addEventListener('click', showMore);
+    list.replaceChildren();
+    showMore();
   }
 
   async function load(): Promise<void> {
@@ -258,7 +292,10 @@ export function wineListView(ctx: AppContext): HTMLElement {
   }
 
   const unsubscribe = ctx.repo.subscribe(() => {
-    if (!root.isConnected) return unsubscribe();
+    if (!root.isConnected) {
+      observer?.disconnect();
+      return unsubscribe();
+    }
     void load();
   });
   void load();
