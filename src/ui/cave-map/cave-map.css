@@ -298,14 +298,17 @@
 /* Raccourcis en haut de la Cave : résumé « À boire » (large) et « Quoi boire ? » */
 .cave-actions {
   display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: var(--space-3);
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--space-2);
   margin-bottom: var(--space-4);
 }
 .cave-actions__dish {
-  min-height: 100%;
-  white-space: normal;
-  text-align: center;
+  white-space: nowrap;
+  padding: 0 var(--space-3);
+  min-height: 0;
+  height: 34px;
+  font-size: 0.85rem;
 }
 .cave-todrink {
   display: flex;

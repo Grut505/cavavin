@@ -50,7 +50,7 @@ export async function caveView(ctx: AppContext): Promise<HTMLElement> {
     'div',
     { class: 'cave-actions' },
     todrinkSummary(stocks, wines, new Date().getFullYear()),
-    h('button', { class: 'btn btn--primary cave-actions__dish', type: 'button', onClick: () => openDishDialog(rows) }, 'Quoi boire ?'),
+    h('button', { class: 'btn btn--small btn--primary cave-actions__dish', type: 'button', onClick: () => openDishDialog(rows) }, 'Quoi boire ?'),
   );
 
   return h(
