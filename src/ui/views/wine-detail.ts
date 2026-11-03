@@ -45,7 +45,6 @@ function facts(wine: Wine, giftName: string | null): [string, string][] {
     ['Prix d’achat', wine.purchase_price !== null ? eur(wine.purchase_price) : ''],
     ['Date d’achat', formatDateFr(wine.purchase_date)],
     ['Fournisseur', wine.supplier ?? ''],
-    ['Mets conseillés', pairingsOf(wine).join(', ')],
     ['Cadeau', wine.gift ? (giftName ? `Offert par ${giftName}` : 'Oui') : ''],
     ['Notes', wine.notes ?? ''],
   ];
@@ -141,6 +140,15 @@ export async function wineDetailView(ctx: AppContext, params: { id?: string }): 
           : h('span', { class: 'detail-hero__thumb detail-hero__thumb--empty', 'aria-hidden': 'true' }, icon('bottle')),
         h('dl', { class: 'facts' }, ...facts(wine, giftName).flatMap(([k, v]) => [h('dt', {}, k), h('dd', {}, v)])),
       ),
+      pairingsOf(wine).length > 0
+        ? h(
+            'section',
+            { class: 'card stack', 'aria-label': 'À table' },
+            h('h2', {}, 'À table'),
+            h('p', { class: 'muted' }, 'Mets conseillés (végétariens). Touchez-en un pour voir toutes les bouteilles qui vont avec.'),
+            h('div', { class: 'chips' }, pairingsOf(wine).map((m) => h('a', { class: 'btn btn--small', href: `#/accueil?plat=${encodeURIComponent(m)}` }, m))),
+          )
+        : null,
       h(
         'section',
         { class: 'card stack', 'aria-label': 'Emplacements' },

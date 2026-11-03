@@ -35,6 +35,7 @@ import { OUTFLOW_REASONS, WINE_COLORS, type Outflow, type Wine, type WineColor }
 import { wineTitle } from '../../domain/wine';
 import { wineHref } from '../nav-origin';
 import { loadPref, savePref } from '../prefs';
+import { hashQuery } from '../query';
 import { Router } from '../router';
 import { pageHeader } from '../components/page-header';
 import { quickOutflow } from '../components/quick-outflow';
@@ -276,6 +277,9 @@ function dishSection(rows: WineRow[], thumbs: Map<string, string>, year: number,
       ? h('a', { class: 'btn btn--small', href: '#/mets' }, 'Compléter les mets des fiches sans mets')
       : null,
   );
+  // Arrivé depuis un met de la fiche (« À table ») : la recherche est déjà lancée.
+  const preset = hashQuery().get('plat');
+  if (preset) input.value = preset;
   search();
   return h(
     'section',
