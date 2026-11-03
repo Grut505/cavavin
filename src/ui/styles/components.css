@@ -1014,3 +1014,12 @@ a.card--link {
   stroke-width: 1.6;
   filter: drop-shadow(0 0 3px var(--accent));
 }
+
+.where--here .stock-row__head {
+  justify-content: flex-start;
+  gap: var(--space-3);
+}
+.where--here .stock-row__pos {
+  margin: 0;
+  font-size: 0.95rem;
+}

@@ -92,17 +92,19 @@ export async function wineDetailView(ctx: AppContext, params: { id?: string }): 
       if (await action) await draw();
     };
 
-    const stockRow = (c: StockChoice): HTMLElement =>
+    const stockRow = (c: StockChoice, named: boolean): HTMLElement =>
       h(
         'li',
         { class: 'stock-row', 'data-stock-id': c.stock.id },
         h(
           'div',
           { class: 'stock-row__head' },
-          h('strong', { class: 'stock-row__name' }, c.label),
+          // Dans un bloc d'emplacement, le nom est déjà en titre : on ne répète que la quantité et la position.
+          named ? h('strong', { class: 'stock-row__name' }, c.label) : null,
           h('span', { class: 'badge', 'aria-label': bottlesLabel(c.stock.quantity) }, `×${c.stock.quantity}`),
+          !named && c.stock.position_hint ? h('span', { class: 'stock-row__pos' }, `Position : ${positionLabel(c.stock.position_hint)}`) : null,
         ),
-        c.stock.position_hint ? h('div', { class: 'muted stock-row__pos' }, `Position : ${positionLabel(c.stock.position_hint)}`) : null,
+        named && c.stock.position_hint ? h('div', { class: 'muted stock-row__pos' }, `Position : ${positionLabel(c.stock.position_hint)}`) : null,
         h(
           'div',
           { class: 'stock-row__actions' },
@@ -120,7 +122,7 @@ export async function wineDetailView(ctx: AppContext, params: { id?: string }): 
     for (const c of choices) byLocation.set(c.stock.location_id, [...(byLocation.get(c.stock.location_id) ?? []), c]);
     const whereViews = [...byLocation.entries()].map(([id, list]) => {
       const loc = locById.get(id);
-      const rows = h('ul', { class: 'stock-list' }, list.map(stockRow));
+      const rows = h('ul', { class: 'stock-list' }, list.map((c) => stockRow(c, !loc || loc.deleted)));
       if (!loc || loc.deleted) return h('div', { class: 'where-orphan' }, rows);
       return h(
         'div',

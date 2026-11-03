@@ -144,7 +144,9 @@ describe('fiche détaillée', () => {
     ]);
     const view = await open(ctx, w.id);
     const rows = [...view.querySelectorAll('li[data-stock-id]')];
-    expect(rows.map((r) => r.textContent)).toEqual(expect.arrayContaining([expect.stringContaining('Meuble A · Étagère 1'), expect.stringContaining('Meuble B · Étagère 1')]));
+    expect(rows).toHaveLength(2);
+    expect([...view.querySelectorAll('.where__name')].map((n) => n.textContent).sort()).toEqual(['Meuble A · Étagère 1', 'Meuble B · Étagère 1']);
+    expect(view.textContent!.split('Meuble A · Étagère 1').length - 1).toBe(1); // le nom de l'emplacement n'apparaît qu'une fois
     expect(view.textContent).toContain('Position : Milieu · droite');
     expect(view.querySelector('li[data-stock-id] .badge')?.textContent).toMatch(/×[23]/);
     // « Où la trouver ? » reprend la vue des emplacements : une vue d'étagère par emplacement de la fiche
@@ -201,7 +203,7 @@ describe('sortir une bouteille', () => {
     const view = await open(s.ctx, w.id);
     return { ...s, w, view };
   }
-  const rowOf = (view: HTMLElement, label: string): Element => byText(view, 'li[data-stock-id]', label)!;
+  const rowOf = (view: HTMLElement, label: string): Element => [...view.querySelectorAll('li[data-stock-id]')].find((li) => (li.closest('.where') ?? li).textContent?.includes(label))!;
 
   it('propose le motif « bue », la quantité 1 et la date du jour, et décrémente le stock choisi', async () => {
     const { repo, view, a1, w } = await withWine();
