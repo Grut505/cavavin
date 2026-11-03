@@ -9,4 +9,5 @@
 - [X] T007 Ajout : bouton Enregistrer toujours visible, emplacement et position intégrés au formulaire
 - [X] T008 Bouton « Ouvrir mon projet Claude » + adresse dans Réglages
 - [X] T010 « Où la trouver ? » en vue d'étagère ; appellation en valeur dans les listes ; cuvée facultative (FR-010 à FR-012)
+- [X] T011 Résumé visuel « À boire » (barre + compteurs, « À attendre ») et bouton « Quoi boire ? » (FR-013)
 - [ ] T009 Vérifier sur iPhone : choix de la phototèque, deux photos, barre « Enregistrer » collante, couleurs d'urgence lisibles, 5 onglets

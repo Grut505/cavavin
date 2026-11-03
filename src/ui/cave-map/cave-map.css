@@ -295,24 +295,77 @@
   border-radius: 5px;
 }
 
-/* Raccourcis en haut de la Cave */
+/* Raccourcis en haut de la Cave : résumé « À boire » (large) et « Quoi boire ? » */
 .cave-actions {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 2fr 1fr;
   gap: var(--space-3);
   margin-bottom: var(--space-4);
 }
-
-/* Fiche : « Où la trouver ? » — bouteilles des autres fiches estompées */
-.sv__bottle--dim {
-  opacity: 0.32;
+.cave-actions__dish {
+  min-height: 100%;
+  white-space: normal;
+  text-align: center;
 }
-.where {
+.cave-todrink {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-}
-.where__title {
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  color: var(--text);
   text-decoration: none;
-  color: inherit;
+}
+.cave-todrink:hover,
+.cave-todrink:focus-visible {
+  border-color: var(--accent);
+}
+.cave-todrink__title {
+  font-size: 0.95rem;
+}
+.cave-todrink__bar {
+  display: flex;
+  height: 10px;
+  gap: 2px;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.cave-todrink__seg {
+  min-width: 6px;
+}
+.cave-todrink__counts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-1);
+}
+.cave-todrink__count {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.cave-todrink__count--zero {
+  opacity: 0.55;
+}
+.cave-todrink__n {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.cave-todrink__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.cave-todrink__l {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  line-height: 1.1;
 }

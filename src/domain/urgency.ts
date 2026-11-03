@@ -47,3 +47,18 @@ export function urgencyByLocation(stocks: Stock[], wines: Wine[], year: number):
   for (const list of out.values()) list.sort((a, b) => rank(a) - rank(b));
   return out;
 }
+
+/** Bouteilles en stock par catégorie d'urgence (toutes les catégories présentes, à 0 si vides). */
+export function urgencyCounts(stocks: Stock[], wines: Wine[], year: number): Record<Urgency, number> {
+  const out = Object.fromEntries(URGENCY_ORDER.map((u) => [u, 0])) as Record<Urgency, number>;
+  const byWine = new Map(wines.filter((w) => !w.deleted).map((w) => [w.id, urgencyOf(w, year)] as const));
+  for (const st of stocks) {
+    if (st.deleted || st.quantity <= 0) continue;
+    const u = byWine.get(st.wine_id);
+    if (u) out[u] += st.quantity;
+  }
+  return out;
+}
+
+/** « À attendre » : fenêtre de garde pas encore ouverte (bientôt ou trop tôt). */
+export const waitingCount = (c: Record<Urgency, number>): number => c.soon + c.early;

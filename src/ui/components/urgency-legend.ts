@@ -14,6 +14,7 @@ export function openUrgencyLegend(): void {
         h('li', { class: 'legend__item' }, h('span', { class: `legend__swatch u-fill u-fill--${u}`, 'aria-hidden': 'true' }), h('div', {}, h('strong', {}, URGENCY_LABELS[u]), h('div', { class: 'muted' }, URGENCY_HINTS[u]))),
       ),
     ),
+    h('p', { class: 'muted' }, 'Dans le résumé « À boire » de la Cave, « À attendre » regroupe Bientôt et Trop tôt.'),
     h('p', { class: 'muted' }, 'La pastille rouge sur l’onglet Cave compte les bouteilles en retard ou à finir : celles à boire en priorité.'),
     h('div', { class: 'dialog__actions' }, h('button', { class: 'btn btn--primary', type: 'button', onClick: () => close(true) }, 'Fermer')),
   ]);

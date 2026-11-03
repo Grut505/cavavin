@@ -177,15 +177,16 @@ describe('Cave : « À boire » et « Quoi boire »', () => {
   it('« À boire » renvoie vers l’écran Stats', async () => {
     const { ctx } = await withPairings();
     const el = await caveView(ctx);
-    expect([...el.querySelectorAll('.cave-actions .btn')].map((b) => b.textContent)).toEqual(['À boire', 'Quoi boire']);
-    expect(el.querySelector('.cave-actions a')!.getAttribute('href')).toBe('#/stats?go=a-boire');
+    expect(el.querySelector('.cave-actions__dish')!.textContent).toBe('Quoi boire ?');
+    expect(el.querySelector('.cave-actions a.cave-todrink')!.getAttribute('href')).toBe('#/stats?go=a-boire');
+    expect(el.querySelector('.cave-todrink__title')!.textContent).toBe('À boire');
   });
 
   it('« Quoi boire » ouvre une fenêtre de saisie qui envoie sur la Liste filtrée, fautes de frappe tolérées', async () => {
     const { ctx } = await withPairings();
     const el = await caveView(ctx);
     document.body.append(el);
-    click([...el.querySelectorAll('.cave-actions button')].find((b) => b.textContent === 'Quoi boire'));
+    click([...el.querySelectorAll('.cave-actions button')].find((b) => b.textContent === 'Quoi boire ?'));
     const dlg = await waitFor(() => {
       const d = document.querySelector('dialog');
       if (!d) throw new Error('fenêtre absente');
@@ -212,7 +213,7 @@ describe('Cave : « À boire » et « Quoi boire »', () => {
     const { ctx } = await withPairings();
     const el = await caveView(ctx);
     document.body.append(el);
-    click([...el.querySelectorAll('.cave-actions button')].find((b) => b.textContent === 'Quoi boire'));
+    click([...el.querySelectorAll('.cave-actions button')].find((b) => b.textContent === 'Quoi boire ?'));
     const dlg = await waitFor(() => document.querySelector('dialog')!);
     click([...dlg.querySelectorAll('button')].find((b) => b.textContent === 'Chercher'));
     expect(document.querySelector('dialog')).not.toBeNull();

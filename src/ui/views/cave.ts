@@ -4,6 +4,7 @@ import { bottleCounts } from '../../domain/locations';
 import { renderCaveMap, bottlesLabel } from '../cave-map/cave-map';
 import { buildRows } from '../../domain/query';
 import { openDishDialog } from '../components/dish-dialog';
+import { todrinkSummary } from '../components/todrink-summary';
 import { urgencyByLocation } from '../../domain/urgency';
 import { legendButton } from '../components/urgency-legend';
 import { pageHeader } from '../components/page-header';
@@ -48,8 +49,8 @@ export async function caveView(ctx: AppContext): Promise<HTMLElement> {
   const shortcuts = h(
     'div',
     { class: 'cave-actions' },
-    h('a', { class: 'btn btn--primary', href: '#/stats?go=a-boire' }, 'À boire'),
-    h('button', { class: 'btn btn--primary', type: 'button', onClick: () => openDishDialog(rows) }, 'Quoi boire'),
+    todrinkSummary(stocks, wines, new Date().getFullYear()),
+    h('button', { class: 'btn btn--primary cave-actions__dish', type: 'button', onClick: () => openDishDialog(rows) }, 'Quoi boire ?'),
   );
 
   return h(
