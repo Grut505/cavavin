@@ -5,7 +5,21 @@ vivent dans **votre Google Sheet**, lue et écrite depuis le navigateur ; une co
 rend l'application utilisable hors-ligne, et les modifications sont synchronisées au retour du réseau.
 Aucun serveur, aucune clé d'API.
 
-Spécification, plan et contrats : [`specs/001-bottle-inventory/`](specs/001-bottle-inventory/) (socle) et [`specs/002-accueil-stats-a-boire/`](specs/002-accueil-stats-a-boire/) (Accueil : à boire, statistiques, cadeaux par personne), [`specs/003-acces-renforce/`](specs/003-acces-renforce/) (adresses autorisées, verrou Face ID).
+Spécifications, plans et contrats : [`specs/001-bottle-inventory/`](specs/001-bottle-inventory/) (socle), [`002-accueil-stats-a-boire`](specs/002-accueil-stats-a-boire/) (à boire, statistiques, cadeaux par personne), [`003-acces-renforce`](specs/003-acces-renforce/) (adresses autorisées, verrou Face ID), [`004-cave-principale`](specs/004-cave-principale/) (Cave en écran principal, code couleur, photos, positions) et [`005-evolutions-v0.8-v0.12`](specs/005-evolutions-v0.8-v0.12/) (liste progressive, synchro incrémentale, swipe, lien de pré-remplissage…). Historique : [`CHANGELOG.md`](CHANGELOG.md).
+
+## Fonctions
+
+- **Cave** (écran principal) : armoires dessinées, bouteilles colorées selon l'urgence (en retard, à finir, à point, bientôt, trop tôt ; légende via « i »), total par meuble, résumé « À boire » et bouton **« Quoi boire ? »** (un plat → la Liste filtrée sur les bouteilles qui vont avec, mets **végétariens**, recherche tolérante aux fautes). Toucher une étagère ouvre sa vue graphique : bouteilles dessinées dans 9 cases (dessus/milieu/dessous × gauche/centre/droite) ; toucher une case filtre la liste, toucher une bouteille ouvre sa fiche.
+- **Stats** : « À boire » par catégorie (repliable, tri et filtre par couleur), à racheter et liste de courses, répartitions cliquables qui ouvrent la Liste préfiltrée, valeur, consommation, maturité.
+- **Liste** : recherche, filtres, tri ; chargement progressif par 100 fiches ; cartes avec liseré et pastille de statut « à boire » ; **glisser une carte** vers la gauche : *Modifier* / *Sortir*.
+- **Fiche** : informations, statut à boire, style (tanins, sucre) en visuel, « Où la trouver ? » (emplacement mis en avant, sortir / déplacer), mets conseillés, historique, fusion de doublons, deux photos (avant/arrière). Une fiche supprimée ou fusionnée reste consultable depuis l'historique, signalée comme supprimée.
+- **Ajouter** : saisie (appellation d'abord, emplacement et position 3×3 dans le formulaire, bouton Enregistrer toujours visible), propositions du projet Claude, **lien de pré-remplissage** donné par Claude (voir ci-dessous).
+- **Réglages** : historique des sorties (**glisser une ligne** pour la supprimer, avec confirmation), personnes (cadeaux), cave, export CSV, pointage d'inventaire d'une étagère, verrou Face ID, projet Claude, version et mise à jour.
+- **Synchronisation incrémentale** : seules les lignes modifiées sont relues (l'onglet Photos, lourd, est lu par colonnes d'identification puis ligne par ligne si besoin ; le Journal seulement quand des modifications partent).
+
+## Lien de pré-remplissage (Claude → application)
+
+Claude peut répondre, en plus du JSON, par un lien `…/#/ajouter/saisie?domain=…&vintage=…` qui ouvre le formulaire d'ajout déjà rempli (rien n'est enregistré sans votre validation ; valeurs vérifiées comme un collage de JSON). Sur iPhone, un lien touché dans Claude s'ouvre dans Safari, qui a des données séparées de l'appli installée : un bandeau propose alors « Envoyer à ma cave » (la fiche arrive dans *Propositions* à la synchronisation) ou « Copier pour l'appli installée ». Format : [`label-proposal.md`](specs/001-bottle-inventory/contracts/label-proposal.md).
 
 ## Installation
 
@@ -17,7 +31,7 @@ cp .env.example .env.local   # puis renseigner les deux variables ci-dessous
 npm run dev                  # http://localhost:5173
 ```
 
-Commandes : `npm test`, `npm run lint`, `npm run typecheck`, `npm run build`.
+Commandes : `npm test` (tous les tests), `npm run test:logic` (sans les écrans), `npm run test:watch`, `npm run lint`, `npm run typecheck`, `npm run format`, `npm run build`, `npm run preview`. Avant chaque livraison : lint + tests au vert, et numéro de version incrémenté dans `package.json`.
 
 ## Variables d'environnement
 
@@ -65,7 +79,7 @@ voir [`contracts/sheet-schema.md`](specs/001-bottle-inventory/contracts/sheet-sc
 
 ## Version et mises à jour
 
-- La version est affichée dans **Réglages → Version** (et sur l'écran de connexion et de verrouillage) : `v0.2.0 · 4ddf001 · 02/11/2026 18:42` = numéro (`package.json`, à incrémenter à chaque livraison notable), commit déployé et date de construction.
+- La version est affichée dans **Réglages → Version** (et sur l'écran de connexion et de verrouillage) : `v0.12.0 · 6f45e3e · 03/11/2026 18:42` = numéro (`package.json`, à incrémenter à chaque livraison notable), commit déployé et date de construction.
 - L'application installée (PWA) cherche une nouvelle version à l'ouverture, au retour au premier plan, au retour du réseau et toutes les 30 minutes. Trouvée dans les 15 premières secondes après l'ouverture, elle est **appliquée automatiquement** ; sinon un bandeau « Nouvelle version disponible — Mettre à jour » apparaît.
 - Réglages → Version : « Rechercher une mise à jour », et « Forcer le rafraîchissement » si la version reste bloquée (vide les fichiers de l'application ; les données et la connexion ne sont pas touchées).
 
@@ -80,3 +94,7 @@ voir [`contracts/sheet-schema.md`](specs/001-bottle-inventory/contracts/sheet-sc
 Le jeton d'accès dure environ une heure et n'a pas de refresh token. À l'ouverture, l'application tente un
 renouvellement silencieux ; sinon le bandeau **Reconnecter** (un tap) relance la connexion. Les
 modifications locales sont conservées et reprennent leur envoi dès la reconnexion.
+
+## À vérifier sur iPhone (en attente)
+
+Vérifications manuelles non automatisables, suivies dans les `tasks.md` : 001 (T077 charge 500–1000 fiches, T078 parcours complet, T081 évaluation de lecture d'étiquette), 002 (T009), 003 (T004 Face ID), 004 (T009 photothèque, barre Enregistrer, couleurs, mise à jour automatique). Côté réglages : recopier `claude-project/INSTRUCTIONS.md` dans le projet Claude (liens de pré-remplissage), saisir l'adresse du projet dans Réglages sur chaque appareil, décider de passer l'écran de consentement Google « En production » (sinon le consentement expire tous les 7 jours).

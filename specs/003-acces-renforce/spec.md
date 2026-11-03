@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-02
 
-**Status**: Draft
+**Status**: Delivered (vérification iPhone en attente)
 
 **Input**: User description: « Seuls moi et ma femme doivent pouvoir se connecter » ; liste d'adresses autorisées en plus du partage de la feuille ; verrou Face ID (web).
 

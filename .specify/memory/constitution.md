@@ -1,6 +1,7 @@
 <!--
 Sync Impact Report
-- Version change: (template, non ratifiée) → 1.0.0
+- Version change: 1.0.0 → 1.0.1 (2026-11-03, PATCH : TODO clos, précision sur les réglages locaux)
+- Version change (antérieur): (template, non ratifiée) → 1.0.0
 - Principes modifiés : aucun renommage (première rédaction) ; 5 principes définis
 - Sections ajoutées : Contraintes techniques, Workflow de développement, Governance
 - Sections supprimées : aucune
@@ -9,10 +10,9 @@ Sync Impact Report
   - ✅ .specify/templates/spec-template.md (aucun changement requis)
   - ✅ .specify/templates/tasks-template.md (aucun changement requis)
   - ✅ .specify/templates/checklist-template.md (aucun changement requis)
-- TODO différés :
-  - TODO(SHEET_SCHEMA): structure exacte de la Google Sheet non relue (accès non vérifié) ;
-    à documenter dans la première spec.
-  - TODO(STACK): choix framework/outillage (vanilla JS vs. framework léger) laissé au plan.
+- TODO clos : SHEET_SCHEMA (schéma documenté dans specs/001/contracts/sheet-schema.md, version 6) et STACK (TypeScript + Vite, dépendance unique `idb`).
+- Précision (IV) : les réglages propres à l'appareil (adresse du projet Claude, verrou Face ID, préférences d'affichage) peuvent rester
+  dans le navigateur : ce ne sont pas des données de cave.
 -->
 # Cavavin Constitution
 
@@ -92,4 +92,4 @@ redéfinition incompatible d'un principe, MINOR pour l'ajout d'un principe/secti
 vérifier la conformité ; toute complexité additionnelle MUST être justifiée dans le plan.
 Les directives de développement courantes sont dans `CLAUDE.md` et le plan en cours.
 
-**Version**: 1.0.0 | **Ratified**: 2026-11-01 | **Last Amended**: 2026-11-01
+**Version**: 1.0.1 | **Ratified**: 2026-11-01 | **Last Amended**: 2026-11-03

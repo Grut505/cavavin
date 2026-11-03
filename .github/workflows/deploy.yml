@@ -35,6 +35,7 @@ jobs:
           VITE_SHEET_ID: ${{ vars.VITE_SHEET_ID }}
           # Facultatif : adresses Google autorisées, séparées par des virgules (défense en profondeur).
           VITE_ALLOWED_EMAILS: ${{ vars.VITE_ALLOWED_EMAILS }}
+          VITE_CLAUDE_PROJECT_URL: ${{ vars.VITE_CLAUDE_PROJECT_URL }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

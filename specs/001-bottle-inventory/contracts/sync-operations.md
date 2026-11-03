@@ -7,7 +7,7 @@ Toute modification utilisateur est enregistrée localement **puis** ajoutée à 
 ```json
 { "op_id": "uuid", "device_id": "uuid", "ts": "2026-11-01T10:00:00Z",
   "type": "create|patch|qty_delta|move|delete",
-  "entity": "wine|location|furniture|stock|outflow", "entity_id": "uuid",
+  "entity": "wine|location|furniture|stock|outflow|photo|proposal|person", "entity_id": "uuid",
   "base_rev": 4, "payload": { } }
 ```
 
@@ -29,7 +29,7 @@ Toute modification utilisateur est enregistrée localement **puis** ajoutée à 
 2. **Ordre** : les opérations d'une même entité sont appliquées dans l'ordre de `ts`.
 3. **Aucune perte silencieuse** : tout résultat `conflict_lww` ou `clamped` crée un avis visible (`meta.sync_notices`) jusqu'à acquittement.
 4. **Reprise** : après interruption, l'outbox est rejouée ; l'idempotence garantit l'absence de double application.
-5. **Pull** : `values.batchGet` de tous les onglets ; une ligne distante remplace la ligne locale si `rev` distant > `rev` local **et** aucune opération en attente sur cette entité ; sinon l'opération est rejouée par-dessus.
+5. **Pull** (incrémental depuis v0.9.0) : `values.batchGet` des onglets légers en entier ; pour `Photos` (images en base64), lecture de l'en-tête et des colonnes `id, rev, updated_at, deleted`, puis des seules lignes nouvelles ou dont la révision diffère de la copie locale (repli : lecture complète si les colonnes ont été déplacées ou si plus de 40 plages sont à relire) ; `_Journal` : en-tête seul, plus la colonne `op_id` uniquement s'il y a des opérations en attente. La copie locale n'est réécrite que pour les lignes dont le contenu a changé ; une ligne distante remplace la ligne locale si `rev` distant > `rev` local **et** aucune opération en attente sur cette entité ; sinon l'opération est rejouée par-dessus.
 6. **Quotas** : regroupement en `batchUpdate` ; pas plus de 1 cycle de sync / 15 s ; backoff exponentiel sur HTTP 429/5xx.
 7. **Jeton expiré / 401** : arrêt de la sync, bandeau « Reconnecter », outbox intacte. **403** : écran « accès refusé ».
 

@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-01
 
-**Status**: Draft
+**Status**: Delivered (vérifications iPhone en attente)
 
 **Input**: User description: "Application web mobile (iPhone 16 minimum) pour gérer mon stock de vin : scanner l'étiquette d'une bouteille, indiquer son emplacement dans la cave, et c'est référencé. Recherche, liste avec tri et filtres. Utilisable hors-ligne. Données dans la Google Sheet existante. Accès réservé à moi et ma femme. Visuel simple, sobre et pro."
 

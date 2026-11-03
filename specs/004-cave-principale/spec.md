@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-03
 
-**Status**: In progress
+**Status**: Delivered (vérification iPhone en attente)
 
 **Input**: « La cave doit être l'écran principal, avec en exergue les bouteilles à boire en priorité (code couleur selon l'échéance, légende « i »), les mêmes couleurs sur l'écran des emplacements où les bouteilles sont aussi dessinées ; deux boutons en haut : « À boire » (→ stats) et « Quoi boire » (fenêtre de saisie → Liste filtrée) ; « Compléter les mets » dans Réglages ; « À boire maintenant » plus lisible (catégories repliables) ; l'ancien Accueil devient un onglet de stats ; à l'ajout : photo depuis la phototèque, deux photos (avant/arrière), bouton vers le projet Claude (configurable dans Réglages), bouton Enregistrer toujours visible, emplacement directement accessible, position précise 3×3 (anciennes positions reprises) ; total de bouteilles à côté de chaque titre d'emplacement. »
 

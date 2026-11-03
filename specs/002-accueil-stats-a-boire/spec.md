@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-02
 
-**Status**: Draft
+**Status**: Delivered (vérification iPhone en attente)
 
 **Input**: User description: "Accueil : stats globales (répartition couleur/région/millésime/appellation, valeur et prix, consommation dans le temps depuis l'historique des sorties, maturité), module « quoi boire et quand » (règles sur la fenêtre de garde : à boire maintenant / bientôt / en retard / trop tôt), fiche personne listant les bouteilles offertes (en stock et déjà sorties) avec filtre « Offert par » dans la Liste. Nouvel onglet « Accueil » (À boire en haut, puis stats) ; barre à 5 onglets. Fonctionne hors-ligne, données locales."
 

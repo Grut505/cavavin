@@ -31,7 +31,7 @@ Colonnes communes à tous les onglets de données : `id`, `rev`, `updated_at`, `
 
 - `_Meta.schema_version` = entier. L'application refuse d'écrire si la version de la feuille est **supérieure** à celle qu'elle connaît (invite à mettre à jour l'application).
 - Migration = ajout de colonnes/onglets uniquement (rétro-compatible) ; toute migration destructive est interdite sans nouvelle version majeure de la constitution.
-- Création initiale (« Initialiser ma cave ») : crée les onglets manquants, écrit les en-têtes, `schema_version = 3`, lance l'import.
+- Création initiale (« Initialiser ma cave ») : crée les onglets manquants, écrit les en-têtes, `schema_version = 6`, lance l'import.
 
 ## Import de l'onglet d'origine (FR-004b)
 
